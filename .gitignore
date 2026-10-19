@@ -1,0 +1,14 @@
+data/
+MAGFiLO_1.0_Kaggle_2026/
+outputs/
+artifacts/
+solar_artifacts/
+submission.csv
+*.pt
+*.pth
+*.ckpt
+*.zip
+__pycache__/
+.pytest_cache/
+.venv/
+.ipynb_checkpoints/

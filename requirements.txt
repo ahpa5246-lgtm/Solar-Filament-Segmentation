@@ -1,0 +1,9 @@
+# Tested architectural API requirements; Kaggle's pre-installed torch may be newer.
+# Pin final environment after the first successful GPU run for exact reproducibility.
+torch==2.6.0
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+scipy==1.13.1
+scikit-image==0.24.0
+pycocotools==2.0.8
+pytest==8.3.4
