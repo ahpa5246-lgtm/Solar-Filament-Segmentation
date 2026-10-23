@@ -13,7 +13,7 @@ The original split has **565 training and 142 validation observations**, with no
 | Detector | 0.362862 | 0.636935 | 0.569701 | 895 | 681 | 671 | 0.567893 | 0.571520 |
 | Detector + plain refiner | 0.404278 | 0.671161 | 0.602356 | 946 | 629 | 620 | 0.600635 | 0.604087 |
 
-Refinement increases local micro PQ by **0.041416**, about **11.4% relative**. These are paired cached observations but a paired CI for this comparison has not yet been computed. Separate macro-observation bootstrap estimates (2,000 resamples) are detector 0.360689, 95% CI [0.334518, 0.384997], and plain refiner 0.397622, CI [0.369754, 0.423281]. Macro intervals and micro PQ are different aggregates.
+Refinement increases local micro PQ by **0.041416**, about **11.4% relative**. The paired macro-observation PQ gain is 0.036933, bootstrap 95% CI [0.027194, 0.046946] (2,000 resamples); this is a different aggregate from the micro gain. Separate macro-observation bootstrap estimates (2,000 resamples) are detector 0.360689, 95% CI [0.334518, 0.384997], and plain refiner 0.397622, CI [0.369754, 0.423281]. Macro intervals and micro PQ are different aggregates.
 
 The refiner improves both matched overlap and recognition; removing it would discard a measured benefit. Precision and recall near 0.60 show substantial false positives and misses. Matched-mask median IoU rises from 0.632653 to 0.677419. Split/merge heuristics count 23/51 for the detector and 21/48 after refinement across annotator variants. These heuristics do not prove physical failure causes or establish that merging is the dominant limitation.
 
@@ -46,3 +46,18 @@ Machine-readable measurements: [V5_CACHED_REPLAY.json](V5_CACHED_REPLAY.json). O
 The private immutable dataset cache has verified Kaggle `isPrivate=true` metadata. CPU notebook `solar-filament-research-v6-audit`, version 2, completed with all three source-artifact fingerprints enforced and reproduced the table above. See `V5_PRIVATE_CACHE.json` and `V6_KAGGLE_CPU_EXECUTION.json`.
 
 The next experiment is inference-only: exact archived best-refiner checkpoint, original detector crops, plain versus four-flip logit averaging, thresholds 0.65/0.75/0.85/0.90, and any-overlap union versus mask-IoU NMS versus retaining masks. Selection uses only the fixed date-isolated tuning observations. Only the selected candidate and the original flip4/0.85/union baseline are compared on confirmation observations. Plain replay must reproduce cached micro PQ within 0.005 before selection. Original V5 holdout reuse remains a limitation. No test inference or official submission is performed. Kaggle execution is limited to 1,200 seconds with a minimum remaining quota guard; the application inference budget is 1,000 seconds. Although T4×2 is allocated, only device 0 is used. A separate read-only review verified original crop/TTA parity and identified a runner status check that was corrected before launch.
+
+## Mask-area error profile (CPU replay)
+
+Counts include all 229 annotator variants, not independent physical objects. Strict-IoU>0.5 presence is descriptive, not per-bin PQ.
+
+| Native GT area | GT count | Detector matched | Plain-refiner matched | Plain-refiner recall |
+|---|---:|---:|---:|---:|
+| <1,024 pixels | 664 | 312 | 357 | 0.537651 |
+| 1,024–4,095 | 698 | 456 | 468 | 0.670487 |
+| 4,096–16,383 | 197 | 123 | 117 | 0.593909 |
+| 16,384–65,535 | 7 | 4 | 4 | 0.571429 |
+
+Small objects account for 307 of the 620 remaining false negatives (49.5%). Refinement helps that group but does not close its recall gap. The medium-large group loses six matches after refinement, warranting overlays before modifying topology. At least a quarter of the unmatched ground truths have zero overlap with any cached prediction; the median best IoU among unmatched truths is 0.131396 after refinement. This supports testing proposal recall/resolution, but does not distinguish absent proposals from filtering or prior overlap union. Bounding-box aspect ratio ≥5 has only 26 GT instances across annotator variants, so it cannot establish elongated morphology as the dominant failure mode.
+
+The minimum-area failure argues against discarding small predictions as a general solution. First inspect private overlays and complete the matched flip4 replay; then test native-resolution proposals on the same dates without replacing the preserved baseline.
