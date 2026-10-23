@@ -301,3 +301,19 @@ def test_error_profile_distinguishes_missed_thin_objects_and_false_positives():
     empty=instance_profile([],[])
     assert empty['truth']['all']=={'total':0,'matched':0}
     assert empty['unmatched_truth_best_iou']==[]
+
+
+def test_archived_detector_uses_original_small_anchors_and_mask_pool():
+    from pathlib import Path
+    from solar.v6_resolution_audit import original_detector,select_pilot_dates
+    source=Path(__file__).resolve().parents[1]/'notebooks/baselines/v5_training_session_v3.ipynb'
+    model=original_detector(source)
+    assert model.rpn.anchor_generator.sizes==((16,),(32,),(64,),(128,),(256,))
+    assert model.roi_heads.mask_roi_pool.output_size==(28,28)
+    assert model.transform.min_size==(1024,)
+    training={'20260101120000Bh'}
+    validation={f'202601{day:02d}130000Bh':{} for day in range(1,20)}
+    tune,confirm=select_pilot_dates(training,validation,4)
+    assert len(tune)==len(confirm)==4
+    assert not {s[:8] for s in tune}&{s[:8] for s in confirm}
+    assert not {s[:8] for s in tune+confirm}&{s[:8] for s in training}

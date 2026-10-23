@@ -60,3 +60,19 @@ def test_refiner_notebook_is_private_and_has_explicit_inference_budget(tmp_path)
     source='\n'.join(''.join(c['source']) for c in nb['cells'] if c['cell_type']=='code')
     ast.parse(source)
     assert 'seconds=1000' in source
+
+
+def test_resolution_notebook_mounts_both_exact_checkpoints(tmp_path):
+    import ast,json,subprocess,sys
+    from pathlib import Path
+    root=Path(__file__).resolve().parents[1]
+    out=tmp_path/'pilot.ipynb'
+    subprocess.run([sys.executable,str(root/'scripts/build_v6_resolution_notebook.py'),'--output',str(out)],check=True)
+    notebook=json.loads(out.read_text());metadata=json.loads((tmp_path/'kernel-metadata.json').read_text())
+    code=''.join(notebook['cells'][1]['source']);ast.parse(code)
+    assert metadata['id'].endswith('-resolution') and metadata['is_private'] and metadata['enable_gpu']
+    assert "one('best_detector.pt'),one('best_refiner.pt')" in code
+    assert 'from solar.v6_resolution_audit import run' in code
+    workflow=(root/'.github/workflows/resolution-audit.yml').read_text()
+    assert 'V6_KAGGLE_RESOLUTION_EXECUTION.json' in workflow
+    assert 'V6_KAGGLE_REFINER_EXECUTION.json' not in workflow

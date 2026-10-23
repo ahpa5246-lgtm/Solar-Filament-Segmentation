@@ -5,8 +5,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def build(out):
-    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py','v5_replay.py','v6_refiner_audit.py']}
+def build(out,experiment="refiner"):
+    if experiment not in {"refiner","resolution"}:raise ValueError("Unknown inference experiment")
+    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py','v5_replay.py','v6_refiner_audit.py','v6_resolution_audit.py']}
     baseline=(ROOT/'notebooks/baselines/v5_training_session_v3.ipynb').read_text()
     code="""import sys,json,subprocess
 from pathlib import Path
@@ -34,9 +35,17 @@ result=run(one('MAGFiLO_1.0_Annotations_kaggle2026_train.json'),one('training_ma
 print('Inference-only local validation complete. No training, test inference, or official submission.')
 print(json.dumps({'selected':result['selected'],'confirmation_gain_supported':result['confirmation_gain_supported']},indent=2))
 """
+    if experiment=='resolution':
+        code=code.replace('from solar.v6_refiner_audit import run','from solar.v6_resolution_audit import run')
+        code=code.replace("one('best_refiner.pt'),source_path", "one('best_detector.pt'),one('best_refiner.pt'),source_path")
     ast.parse(code)
     cells=[{'cell_type':'markdown','metadata':{},'source':['# V6 bounded refiner replay\n','Private inference experiment. No training or test labels. V5 Public PQ baseline remains 0.32.\n','Reuses the exact archived V5/v3 checkpoint and Apache-2.0 attributed architecture from Nomannic.\n','Compares plain/flip4, four thresholds and three overlap policies, with separate dates for tuning and confirmation.\n']},
            {'cell_type':'code','metadata':{},'execution_count':None,'outputs':[],'source':code.splitlines(keepends=True)}]
+    if experiment=='resolution':
+        cells[0]['source']=['# V6 native-resolution detector pilot\n',
+                            'Private checkpoint-only inference. No training or test inference.\n',
+                            'Exact Apache-attributed V5 architecture, 1024 versus 2048, union versus mask NMS.\n',
+                            'Fixed 16 tuning and 16 confirmation observations on separate dates.\n']
     out=Path(out);out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({'nbformat':4,'nbformat_minor':5,'metadata':{'kernelspec':{'display_name':'Python 3','language':'python','name':'python3'}},'cells':cells},indent=1)+'\n')
     meta={'id':'minahussain111/solar-filament-research-v6-refiner','title':'solar-filament-research-v6-refiner',
@@ -44,6 +53,9 @@ print(json.dumps({'selected':result['selected'],'confirmation_gain_supported':re
           'enable_gpu':True,'machine_shape':'NvidiaTeslaT4','enable_internet':True,
           'dataset_sources':['minahussain111/solar-filament-v5-v3-cache-356bd788'],
           'competition_sources':['filament-segmentation-2026'],'kernel_sources':[],'model_sources':[]}
+    if experiment=='resolution':
+        meta['id']=meta['id'].replace('-refiner','-resolution')
+        meta['title']=meta['title'].replace('-refiner','-resolution')
     (out.parent/'kernel-metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
 
 
