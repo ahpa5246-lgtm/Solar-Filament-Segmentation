@@ -88,7 +88,11 @@ def main():
             report['stage']='verify_privacy_and_provenance'
             meta_path=api.dataset_metadata(CACHE_ID,str(root/'remote-metadata'))
             remote=json.loads(Path(meta_path).read_text())
+            report['metadata_root_keys']=sorted(remote)
+            remote=remote.get('info') or remote
+            report['metadata_info_keys']=sorted(remote)
             private=remote.get('isPrivate',remote.get('is_private'))
+            report['reported_private']=private
             if private not in [True,'true','True']:raise RuntimeError('Private status could not be verified; refusing use')
             description=remote.get('description','')
             if MARKER not in description:raise RuntimeError('Existing dataset provenance differs; refusing reuse')
