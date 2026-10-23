@@ -40,8 +40,8 @@ jobs:
           diagnostic=pathlib.Path('reports/V5_SOURCE_ACCESS.md')
           diagnostic.write_text('# V5 source retrieval diagnostics\n\nSanitized CLI responses only; no model outputs or credentials.\n\n')
           for name,slug,folder in [
-              ('V5 Version 5','minahussain111/solar-filament-research-v5/5','/tmp/v5-source'),
-              ('V5 Version 5 output inventory','minahussain111/solar-filament-research-v5/5','/tmp/v5-output-inventory'),
+              ('V5 Version 5','minahussain111/solar-filament-research-v5/v5','/tmp/v5-source'),
+              ('V5 Version 5 output inventory','minahussain111/solar-filament-research-v5/v5','/tmp/v5-output-inventory'),
               ('Latest V5 source (NOT Version 5 provenance)','minahussain111/solar-filament-research-v5','/tmp/v5-latest-source'),
               ('Official evaluation','azimahmadzadeh/self-evaluation-notebook','/tmp/official-source')]:
               pathlib.Path(folder).mkdir(parents=True,exist_ok=True)
@@ -56,6 +56,16 @@ jobs:
               with summary.open('a') as handle: handle.write(message)
               with diagnostic.open('a') as handle: handle.write(message)
               if result.returncode: failures.append(name)
+              if name=='V5 Version 5' and result.returncode==0:
+                  import json, hashlib
+                  from scripts.audit_v5_source import _source, _redact
+                  paths=list(pathlib.Path(folder).glob('*.ipynb'))
+                  if len(paths)==1:
+                      raw=paths[0].read_bytes(); notebook=json.loads(raw)
+                      terms=['all_dice','best_strategy','use_refiner','train_observations','validation_observations','train_test_split','random_state','score_threshold','mask_threshold','merge_overlapping_rles']
+                      lines=[line for cell in notebook.get('cells',[]) if cell.get('cell_type')=='code' for line in _source(cell).splitlines() if any(term in line for term in terms)]
+                      review=pathlib.Path('reports/V5_VERSION5_SOURCE_REVIEW.md')
+                      review.write_text('# V5 Version 5 source review\n\nVersion label `v5` verified with the official SDK; session status COMPLETE. Source download may omit execution outputs; no accuracy inferred.\n\nSHA256: `'+hashlib.sha256(raw).hexdigest()+'`\n\nSelected source statements for forensic review (not executed):\n\n```python\n'+_redact('\n'.join(lines))[:18000]+'\n```\n')
               if name=='Official evaluation' and result.returncode==0:
                   import json, hashlib, ast
                   from scripts.audit_v5_source import _source, _redact
@@ -90,6 +100,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add reports/V5_SOURCE_ACCESS.md
+          if [ -f reports/V5_VERSION5_SOURCE_REVIEW.md ]; then git add reports/V5_VERSION5_SOURCE_REVIEW.md; fi
           if [ -f reports/V5_IDENTITY.json ]; then git add reports/V5_IDENTITY.json; fi
           if [ -f reports/OFFICIAL_EVALUATOR_EXCERPTS.md ]; then git add reports/OFFICIAL_EVALUATOR_EXCERPTS.md; fi
           if git diff --cached --quiet; then exit 0; fi

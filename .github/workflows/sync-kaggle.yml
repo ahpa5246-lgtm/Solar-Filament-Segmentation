@@ -155,7 +155,7 @@ jobs:
         if: ${{ env.CHOICE == 'v6' }}
         run: |
           mkdir -p v6-review/v5-version-5 v6-review/official-evaluation
-          kaggle kernels pull minahussain111/solar-filament-research-v5/5 -p v6-review/v5-version-5
+          kaggle kernels pull minahussain111/solar-filament-research-v5/v5 -p v6-review/v5-version-5
           kaggle kernels pull azimahmadzadeh/self-evaluation-notebook -p v6-review/official-evaluation
       - name: Retain V6 source audit inputs
         if: ${{ env.CHOICE == 'v6' }}
