@@ -17,6 +17,10 @@ A reproducible Python research implementation for [Solar Filament Segmentation C
 
 The organizers changed the primary metric to **Panoptic Quality (PQ)**, where instance grouping and spurious/missed detections are critical. The competition's research-quality assessment also evaluates morphology, code readability, and reproducibility; leaderboard position is not a sufficient win condition.
 
+## Measured V5 validation replay
+
+[The recovered-artifact audit](reports/V5_MEASURED_AUDIT_2026-10-24.md) measured local PQ **0.3629 detector-only** and **0.4043 detector + plain refiner** on 142 validation observations / 229 annotation variants. These are cached tuning-validation results, **not Kaggle scores**; V5's best official Public score remains **0.32**. Ten dates overlap the original training split. Minimum-area filtering failed to improve a separate date-isolated confirmation and was rejected.
+
 ## V6 audit and experiment tools
 
 [V6 audit status and blockers](reports/V6_AUDIT_2026-10-23.md) distinguishes source findings from unmeasured failure modes. `solar.v6_forensics` evaluates independent overlapping instance masks, retains every annotation variant, reports canonical and public-reference PQ separately, produces IoU/Dice distributions and contour overlays, and bootstraps by physical observation. Original V5 fitting and holdout manifests are mandatory; a newly generated split cannot validate an already trained model.

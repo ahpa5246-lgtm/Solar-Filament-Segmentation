@@ -25,7 +25,8 @@ def test_cpu_audit_notebook_cannot_request_gpu(tmp_path):
     build(tmp_path/'audit.ipynb')
     metadata=json.loads((tmp_path/'kernel-metadata.json').read_text())
     assert metadata['is_private'] is True and metadata['enable_gpu'] is False
-    assert metadata['kernel_sources']==['minahussain111/solar-filament-research-v5']
+    assert metadata['kernel_sources']==[]
+    assert metadata['dataset_sources']==['minahussain111/solar-filament-v5-v3-cache-356bd788']
     notebook=json.loads((tmp_path/'audit.ipynb').read_text())
     for cell in notebook['cells']:
         if cell['cell_type']=='code':ast.parse(''.join(cell['source']))
@@ -40,3 +41,10 @@ def test_artifact_fingerprint_rejects_changed_cached_inputs(tmp_path):
     assert verify_artifacts({'cache.pkl':path},expected)==expected
     path.write_bytes(b'changed')
     with pytest.raises(ValueError,match='fingerprint'):verify_artifacts({'cache.pkl':path},expected)
+
+
+def test_private_cache_excludes_test_predictions_and_raw_labels():
+    from scripts.prepare_v5_private_cache import metadata,FILES
+    assert metadata()['isPrivate'] is True
+    assert 'test_predictions_2048.pkl' not in FILES
+    assert not any('Annotations' in name or 'crop_masks' in name for name in FILES)

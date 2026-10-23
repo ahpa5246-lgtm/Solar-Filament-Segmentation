@@ -44,8 +44,8 @@ print('These are cached LOCAL validation results, not official Kaggle scores.')
     out=Path(out);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(nb,indent=1)+'\n')
     meta={'id':'minahussain111/solar-filament-research-v6-audit','title':'solar-filament-research-v6-audit','code_file':out.name,
           'language':'python','kernel_type':'notebook','is_private':True,'enable_gpu':False,'enable_internet':True,
-          'dataset_sources':[],'competition_sources':['filament-segmentation-2026'],
-          'kernel_sources':['minahussain111/solar-filament-research-v5'],'model_sources':[]}
+          'dataset_sources':['minahussain111/solar-filament-v5-v3-cache-356bd788'],'competition_sources':['filament-segmentation-2026'],
+          'kernel_sources':[],'model_sources':[]}
     (out.parent/'kernel-metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
 
 

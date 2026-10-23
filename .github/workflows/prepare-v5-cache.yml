@@ -1,0 +1,44 @@
+name: Prepare private V5 cache and execute V6 CPU replay
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/prepare-v5-cache.yml'
+      - 'scripts/prepare_v5_private_cache.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: v5-private-cache
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      KAGGLE_USERNAME: minahussain111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install official CLI and fingerprint-validation dependencies
+        run: |
+          python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9' numpy==1.26.4 scipy==1.13.1 opencv-python-headless==4.10.0.84 pycocotools==2.0.8
+          python -m pip install -e . --no-deps
+      - name: Create private cache, without modifying original artifacts
+        run: python scripts/prepare_v5_private_cache.py
+      - name: Execute one CPU replay against verified private cache
+        run: python scripts/run_v6_cpu_audit.py
+      - name: Persist provenance and aggregate execution report only
+        if: ${{ always() }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ -f reports/V5_PRIVATE_CACHE.json ]; then git add reports/V5_PRIVATE_CACHE.json; fi
+          if [ -f reports/V6_KAGGLE_CPU_EXECUTION.json ]; then git add reports/V6_KAGGLE_CPU_EXECUTION.json; fi
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record private V5 cache and CPU replay provenance [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
