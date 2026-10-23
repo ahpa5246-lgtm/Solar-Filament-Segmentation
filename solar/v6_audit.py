@@ -47,7 +47,15 @@ def measure(gt, pred):
     tp,fp,fn = len(values), len(pa)-len(values), len(ga)-len(values)
     denominator = tp+.5*(fp+fn)
     total = sum(values)
+    reference_tp=int(valid.sum())
+    reference_fp=int(np.count_nonzero(~valid.any(axis=0)))
+    reference_fn=int(np.count_nonzero(~valid.any(axis=1)))
+    reference_sum=float(iou[valid].sum())
+    reference_denominator=reference_tp+.5*(reference_fp+reference_fn)
     return {
+        'pq_reference':reference_sum/reference_denominator if reference_denominator else 0.,
+        'reference_tp':reference_tp,'reference_fp':reference_fp,'reference_fn':reference_fn,
+        'reference_sum_iou':reference_sum,
         'pq_local':total/denominator if denominator else 1.,
         'sq':total/tp if tp else (1. if not denominator else 0.),
         'rq':tp/denominator if denominator else 1.,
@@ -82,16 +90,16 @@ def partition(records, seed=42):
                  for group in (set(days)-tuning-confirmation,tuning,confirmation))
 
 
-def bootstrap(observations, seed=42, n=2000):
+def bootstrap(observations, seed=42, n=2000, metric="pq_local"):
     """Macro-observation PQ; average annotators first, bootstrap observations."""
     if not observations or n < 1 or any(not rows for rows in observations.values()):
         raise ValueError('Need nonempty observation groups and positive replicates')
-    scores = np.array([np.mean([r['pq_local'] for r in rows]) for rows in observations.values()])
+    scores = np.array([np.mean([r[metric] for r in rows]) for rows in observations.values()])
     rng = np.random.default_rng(seed)
     samples = [float(rng.choice(scores,len(scores),replace=True).mean()) for _ in range(n)]
     low,high = np.quantile(samples,[.025,.975])
     return {'estimate':float(scores.mean()),'low':float(low),'high':float(high),
-            'unit':'observation','aggregation':'macro observation; annotators averaged',
+            'metric':metric,'unit':'observation','aggregation':'macro observation; annotators averaged',
             'observations':len(scores),'replicates':n,'seed':seed}
 
 

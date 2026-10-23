@@ -19,9 +19,9 @@ The organizers changed the primary metric to **Panoptic Quality (PQ)**, where in
 
 ## V6 audit and experiment tools
 
-[V6 audit status and blockers](reports/V6_AUDIT_2026-10-23.md) distinguishes source findings from unmeasured failure modes. `solar.v6_forensics` evaluates independent overlapping instance masks, retains every annotation variant, produces IoU/Dice distributions and contour overlays, and bootstraps by physical observation. Original V5 fitting and holdout manifests are mandatory; a newly generated split cannot validate an already trained model.
+[V6 audit status and blockers](reports/V6_AUDIT_2026-10-23.md) distinguishes source findings from unmeasured failure modes. `solar.v6_forensics` evaluates independent overlapping instance masks, retains every annotation variant, reports canonical and public-reference PQ separately, produces IoU/Dice distributions and contour overlays, and bootstraps by physical observation. Original V5 fitting and holdout manifests are mandatory; a newly generated split cannot validate an already trained model.
 
-The self-contained [V6 notebook](notebooks/v6/solar_filament_v6.ipynb) runs audit readiness by default without GPU training. The private Kaggle slug is prepared but deployment is not yet confirmed. A bounded, single-GPU detector pilot is explicitly opt-in, uses date-separated train/tuning/confirmation partitions, selects checkpoints by local PQ, and preserves all V5 files. It is not yet an improved model or a comparison with a different instance-segmentation method.
+The self-contained [V6 notebook](notebooks/v6/solar_filament_v6.ipynb) runs audit readiness by default without GPU training. The private Kaggle notebook was uploaded successfully with `--no-run` by Actions; training remains unrun. A bounded, single-GPU detector pilot is explicitly opt-in, uses date-separated train/tuning/confirmation partitions, selects checkpoints by public-reference micro PQ, and preserves all V5 files. It is not yet an improved model or a comparison with a different instance-segmentation method.
 
 ```bash
 python -m pip install -r requirements-v6.txt

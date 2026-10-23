@@ -26,7 +26,7 @@ It embeds repository modules rather than downloading moving GitHub main.
 Default execution performs synthetic readiness and artifact inventory, **no training**.
 No V5 checkpoint or submission is overwritten. Before training, inspect the current
 competition rules and official self-evaluation notebook, archive the latter and
-set its path below. Its local PQ implementation is explicitly a proxy.
+set its path below. It reports public-reference all-pairs PQ and one-to-one local PQ separately; neither is a leaderboard result.
 V5 forensics require its original fitting/validation manifests and exported
 per-strategy RLE predictions; a new random split is invalid for an old checkpoint.
 

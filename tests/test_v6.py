@@ -167,3 +167,44 @@ def test_checkpoint_config_normalizes_torch_version_to_safe_primitives(tmp_path)
     save_checkpoint(model,path,{'torch':torch.__version__,'min_size':64,'max_size':64,'seed':42})
     checkpoint=torch.load(path,weights_only=True)
     assert type(checkpoint['config']['torch']) is str
+
+
+def test_public_reference_pq_matches_downloaded_organizer_functions():
+    """Execute only cited metric helpers, never data loading or notebook cells."""
+    import ast
+    from pathlib import Path
+    from types import SimpleNamespace
+    import torch
+    text=(Path(__file__).resolve().parents[1]/'reports/OFFICIAL_EVALUATOR_EXCERPTS.md').read_text()
+    source=text.split('```python\n',1)[1].rsplit('```',1)[0]
+    tree=ast.parse(source)
+    names={'get_pq_score','fp_count_hit','fn_count_hit'}
+    selected=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in names]
+    namespace={'torch':torch}
+    exec('from __future__ import annotations\n'+ast.unparse(ast.Module(body=selected,type_ignores=[])),namespace)
+    class Table:
+        def __init__(self,gt,pred):
+            matrix=audit.pairwise(gt,pred)[3]
+            self.row=SimpleNamespace(iou_matrix=torch.tensor(matrix),n_gt=len(gt),n_pred=len(pred))
+        def itertuples(self,index=False):return iter([self.row])
+    a=masks()[:1]; empty=a[:0]
+    for gt,pred in [(a,a),(a,empty),(empty,a),(empty,empty),(a,np.concatenate([a,a]))]:
+        expected=namespace['get_pq_score'](Table(gt,pred))
+        assert audit.measure(gt,pred)['pq_reference'] == pytest.approx(expected)
+    result=audit.measure(a,np.concatenate([a,a]))
+    assert result['pq_reference'] == 1 and result['pq_local'] == pytest.approx(2/3)
+    assert audit.measure(empty,empty)['pq_reference']==0
+
+    # Aggregation must match the public helper across unequal annotation counts.
+    from solar.v6_forensics import run_audit
+    from pycocotools import mask as coco
+    import tempfile
+    encoded=[coco.encode(np.asfortranarray(mask.astype(np.uint8))) for mask in masks()]
+    encoded=[{'size':r['size'],'counts':r['counts'].decode()} for r in encoded]
+    truth={'x':[masks(),a], 'y':[masks()]}
+    predictions={'detector':{'x':encoded,'y':[]}}
+    tables=[Table(masks(),masks()).row,Table(a,masks()).row,Table(masks(),empty).row]
+    combined=SimpleNamespace(itertuples=lambda index=False: iter(tables))
+    with tempfile.TemporaryDirectory() as out:
+        report=run_audit(truth,predictions,out)
+    assert report['detector']['public_reference_micro']['pq_reference'] == pytest.approx(namespace['get_pq_score'](combined))

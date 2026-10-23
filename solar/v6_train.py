@@ -53,7 +53,11 @@ def evaluate(model,records,score_threshold=.5):
         pred=infer(model,read_gray(variants[0]['path']),score_threshold)[0]
         dataset=DetectionDataset(variants)
         groups[stem]=[measure(dataset[i][1]['masks'].numpy(),pred) for i in range(len(dataset))]
-    result=bootstrap(groups)
+    result=bootstrap(groups,metric="pq_reference")
+    rows=[row for variants in groups.values() for row in variants]
+    tp,fp,fn=(sum(row[k] for row in rows) for k in ('reference_tp','reference_fp','reference_fn'))
+    denominator=tp+.5*(fp+fn)
+    result['reference_micro_pq']=sum(row['reference_sum_iou'] for row in rows)/denominator if denominator else 0.
     result['evaluation_seconds_per_observation']=(time.perf_counter()-started)/len(groups)
     result['by_observation']=groups
     return result
@@ -79,7 +83,7 @@ def main():
     train,tune,confirm=partition(records,args.seed)
     config={'seed':args.seed,'min_size':args.resolution,'max_size':args.resolution,
             'epochs':args.epochs,'max_steps_per_epoch':args.max_steps,'learning_rate':.0001,
-            'metric_status':'LOCAL PQ proxy; not an official score',
+            'metric_status':'micro-aggregated public-reference PQ for selection, macro observation bootstrap CI; not an official score',
             'official_evaluation_sha256':hashlib.sha256(args.official_evaluation.read_bytes()).hexdigest(),
             'torch':str(torch.__version__),'gpu':torch.cuda.get_device_name(0),
             'device_count_visible':torch.cuda.device_count(),'devices_used':1}
@@ -102,10 +106,10 @@ def main():
             scaler.scale(loss).backward(); scaler.step(optimizer); scaler.update()
             losses.append(float(loss.detach()))
         validation=evaluate(model,tune)
-        row={'epoch':epoch+1,'loss':float(np.mean(losses)),'tuning_pq_local':validation['estimate']}
+        row={'epoch':epoch+1,'loss':float(np.mean(losses)),'tuning_pq_reference':validation['reference_micro_pq']}
         history.append(row); print(json.dumps(row),flush=True)
-        if validation['estimate']>best:
-            best=validation['estimate']; save_checkpoint(model,args.out/'best.pt',config)
+        if validation['reference_micro_pq']>best:
+            best=validation['reference_micro_pq']; save_checkpoint(model,args.out/'best.pt',config)
         (args.out/'history.json').write_text(json.dumps(history,indent=2))
     model,_=load_checkpoint(args.out/'best.pt','cuda')
     confirmation=evaluate(model,confirm)

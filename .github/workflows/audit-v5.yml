@@ -37,10 +37,12 @@ jobs:
           diagnostic.write_text('# V5 source retrieval diagnostics\n\nSanitized CLI responses only; no model outputs or credentials.\n\n')
           for name,slug,folder in [
               ('V5 Version 5','minahussain111/solar-filament-research-v5/5','/tmp/v5-source'),
+              ('V5 Version 5 output inventory','minahussain111/solar-filament-research-v5/5','/tmp/v5-output-inventory'),
               ('Latest V5 source (NOT Version 5 provenance)','minahussain111/solar-filament-research-v5','/tmp/v5-latest-source'),
               ('Official evaluation','azimahmadzadeh/self-evaluation-notebook','/tmp/official-source')]:
               pathlib.Path(folder).mkdir(parents=True,exist_ok=True)
-              result=subprocess.run(['kaggle','kernels','pull',slug,'-p',folder],capture_output=True,text=True)
+              command=['kaggle','kernels','files',slug,'--csv','--page-size','200'] if name=='V5 Version 5 output inventory' else ['kaggle','kernels','pull',slug,'-p',folder]
+              result=subprocess.run(command,capture_output=True,text=True)
               output=result.stdout+'\n'+result.stderr
               token=os.environ.get('KAGGLE_API_TOKEN','')
               if token: output=output.replace(token,'[REDACTED]')
@@ -51,7 +53,7 @@ jobs:
               with diagnostic.open('a') as handle: handle.write(message)
               if result.returncode: failures.append(name)
               if name=='Official evaluation' and result.returncode==0:
-                  import json, hashlib
+                  import json, hashlib, ast
                   from scripts.audit_v5_source import _source, _redact
                   paths=list(pathlib.Path(folder).glob('*.ipynb'))
                   if len(paths)==1:
@@ -61,7 +63,14 @@ jobs:
                           code=_source(cell)
                           if cell.get('cell_type')=='code' and any(term in code.lower() for term in ['def ','panoptic','iou','dice']):
                               excerpts.append(_redact(code))
-                      quoted='\n\n'.join(excerpts)
+                      tree=ast.parse('\n\n'.join(excerpts))
+                      names={'get_overlap_matrices','fp_count_hit','fn_count_hit','rles_to_layers','process_entry','get_overlap_df','get_pq_score'}
+                      nodes=[]
+                      for node in tree.body:
+                          if isinstance(node,ast.FunctionDef) and node.name in names:
+                              if isinstance(node.body[0],ast.Expr) and isinstance(node.body[0].value,ast.Constant) and isinstance(node.body[0].value.value,str): node.body=node.body[1:]
+                              nodes.append(node)
+                      quoted=ast.unparse(ast.Module(body=nodes,type_ignores=[]))
                       review=pathlib.Path('reports/OFFICIAL_EVALUATOR_EXCERPTS.md')
                       review.write_text('# Official evaluator: source-review excerpts\n\nPublic reference: https://www.kaggle.com/code/azimahmadzadeh/self-evaluation-notebook\n\nQuoted solely for scientific evaluation review, not executed or incorporated into model code.\n\nSHA256: `'+hashlib.sha256(raw).hexdigest()+'`\n\n```python\n'+quoted[:24000]+'\n```\n')
           if not failures:

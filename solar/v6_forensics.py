@@ -34,13 +34,19 @@ def run_audit(ground_truth,predictions,out):
         rows=[row for variants in observations.values() for row in variants]
         tp,fp,fn=(sum(r[k] for r in rows) for k in ('tp','fp','fn'))
         total=sum(r['sum_iou'] for r in rows); denominator=tp+.5*(fp+fn)
+        reference_tp,reference_fp,reference_fn=(sum(r[k] for r in rows) for k in ('reference_tp','reference_fp','reference_fn'))
+        reference_sum=sum(r['reference_sum_iou'] for r in rows)
+        reference_denom=reference_tp+.5*(reference_fp+reference_fn)
         report[strategy]={
+            'public_reference_micro':{'pq_reference':reference_sum/reference_denom if reference_denom else 0.,
+                                      'tp':reference_tp,'fp':reference_fp,'fn':reference_fn},
+            'public_reference_macro_ci':bootstrap(observations,metric='pq_reference'),
             'micro':{'pq_local':total/denominator if denominator else 1.,
                      'sq':total/tp if tp else (1. if not denominator else 0.),
                      'rq':tp/denominator if denominator else 1.,'tp':tp,'fp':fp,'fn':fn},
             'macro_observation_ci':bootstrap(observations),
             'observations':observations,
-            'metric_status':'local proxy; official evaluator equivalence unverified',
+            'metric_status':'pq_reference reproduces inspected public helper semantics; pq_local uses one-to-one matching; neither is a leaderboard result',
         }
     (out/'comparison.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     return report
