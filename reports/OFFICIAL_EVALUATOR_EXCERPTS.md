@@ -6,8 +6,6 @@ Quoted solely for scientific evaluation review, not executed or incorporated int
 
 SHA256: `ae7c9445b4eee2b77b216df5c9772fdf92fda15611e98abd7ef5f02a4e380801`
 
-Docstrings/plotting omitted; executable metric statements quoted unchanged.
-
 ```python
 def get_overlap_matrices(gt_layers: torch.Tensor, pred_layers: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     n_gt, height, width = gt_layers.shape
