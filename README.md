@@ -1,6 +1,17 @@
 # Solar Filament Segmentation — IEEE BigDataCup 2026
 
-**Status (2026-10-23): Kaggle-confirmed public score 0.23 for the trained two-head U-Net v2 (30 epochs, 180 test images); previous LightGBM baseline 0.08.** The new v3 threshold/TTA and v4 edge-attention experiments are implemented but **not yet run or scored**. See [the experiment plan](reports/EXPERIMENT_PLAN_2026.md).
+## V5: pretrained Mask R-CNN + U-Net refiner (new research candidate)
+
+**Verified public scores (2026-10-23):** V1 0.08, V2 0.23, V4 0.24. V5 has **not been trained or scored** yet.
+
+The existing semantic U-Net + watershed pipeline suffers from false-positive and instance-identity errors. V5 changes the *model family*: a COCO-pretrained Mask R-CNN ResNet50-FPN-v2 predicts **separate instances**, followed by an ImageNet-pretrained ResNet18 crop U-Net that refines their masks. A four-flip TTA ablation is selected using official **training-validation** labels, never test labels.
+
+V5 is generated reproducibly from [Nomannic's Apache-2.0 public Kaggle notebook](https://www.kaggle.com/code/nomannic19/cv-solar-filament-mask-r-cnn-u-net-refiner), with attribution and modified cells documented in [third_party/NOTICE.md](third_party/NOTICE.md). The GitHub Action pulls the pinned upstream notebook, checks its structure and Python syntax, and saves [V5 on Kaggle](https://www.kaggle.com/code/minahussain111/solar-filament-research-v5) with **--no-run**. Run the Kaggle notebook manually using Internet On, official competition input, GPU T4 x2, and Save Version → Save & Run All. It trains two GPUs and may take over an hour. It will produce a new `submission.csv` only after successful training. **No score improvement is promised.**
+
+Detailed forensic report: [V4 failure and V5 experiment](reports/V4_FAILURE_AND_V5_RESEARCH.md).
+
+
+**Status (2026-10-23): confirmed Kaggle public scores V1 0.08, V2 0.23, V4 0.24.** V5 is an unrun transfer-learning research candidate. See [the experiment plan](reports/EXPERIMENT_PLAN_2026.md) and [V4 forensic report](reports/V4_FAILURE_AND_V5_RESEARCH.md).
 
 A reproducible Python research implementation for [Solar Filament Segmentation Challenge 2026](https://www.kaggle.com/competitions/filament-segmentation-2026): identify **individual** solar-filament instances from 2048×2048 grayscale GONG H-alpha images, and export one pycocotools compressed RLE count per instance into `submission.csv`.
 
