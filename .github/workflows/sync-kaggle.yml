@@ -6,6 +6,7 @@ on:
     paths:
       - 'notebooks/optimize_v3_kaggle.ipynb'
       - 'notebooks/train_edge_v4_kaggle.ipynb'
+      - 'scripts/build_v5_from_apache_reference.py'
       - '.github/workflows/sync-kaggle.yml'
   workflow_dispatch:
     inputs:
@@ -18,6 +19,7 @@ on:
           - both
           - v3
           - v4
+          - v5
 
 permissions:
   contents: read
@@ -85,6 +87,49 @@ jobs:
               (folder / 'kernel-metadata.json').write_text(json.dumps(metadata, indent=2))
               print('Prepared', folder, 'with competition data and kernel sources:', kernel_sources)
           PY
+      - name: Build pretrained instance detector V5 from Apache-2.0 public notebook
+        if: ${{ env.CHOICE == 'both' || env.CHOICE == 'v5' }}
+        run: |
+          set -euo pipefail
+          mkdir -p upstream-v5 kaggle-deploy/v5
+          # Pin upstream version 1 for reproducibility; never download competition test labels.
+          kaggle kernels pull nomannic19/cv-solar-filament-mask-r-cnn-u-net-refiner/1 -p upstream-v5
+          python - <<'PY'
+          import ast, json, pathlib, subprocess, sys
+          notebooks = list(pathlib.Path('upstream-v5').glob('*.ipynb'))
+          assert len(notebooks) == 1, f'Expected one Apache notebook, got {notebooks}'
+          out = pathlib.Path('kaggle-deploy/v5/solar_filament_v5_detector_refiner.ipynb')
+          subprocess.run([sys.executable, 'scripts/build_v5_from_apache_reference.py',
+                          '--source', str(notebooks[0]), '--output', str(out)], check=True)
+          nb = json.loads(out.read_text())
+          for i, cell in enumerate(nb['cells']):
+              if cell['cell_type'] != 'code':
+                  continue
+              code = ''.join(cell['source'])
+              if code.startswith('%%writefile'):
+                  code = code.split('\n', 1)[1]
+              elif code.startswith('!'):
+                  continue
+              ast.parse(code, filename=f'v5-cell-{i}')
+          assert len(nb['cells']) == 18
+          print('V5 notebook AST/safety checks passed')
+          meta = {
+              'id': 'minahussain111/solar-filament-research-v5',
+              'title': 'solar-filament-research-v5',
+              'code_file': out.name,
+              'language': 'python',
+              'kernel_type': 'notebook',
+              'is_private': True,
+              'enable_gpu': True,
+              'enable_internet': True,
+              'machine_shape': 'NvidiaTeslaT4',
+              'dataset_sources': [],
+              'competition_sources': ['filament-segmentation-2026'],
+              'kernel_sources': [],
+              'model_sources': [],
+          }
+          (out.parent/'kernel-metadata.json').write_text(json.dumps(meta, indent=2))
+          PY
       - name: Push notebook code without starting a GPU run
         run: |
           set -euo pipefail
@@ -101,5 +146,8 @@ jobs:
           fi
           if [ "$CHOICE" = both ] || [ "$CHOICE" = v4 ]; then
             echo "- [V4](https://www.kaggle.com/code/minahussain111/solar-filament-research-v4)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$CHOICE" = both ] || [ "$CHOICE" = v5 ]; then
+            echo "- [V5: pretrained Mask R-CNN + U-Net](https://www.kaggle.com/code/minahussain111/solar-filament-research-v5)" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "Review the Kaggle notebook, enable Internet if needed, then use Save Version > Save & Run All." >> "$GITHUB_STEP_SUMMARY"
