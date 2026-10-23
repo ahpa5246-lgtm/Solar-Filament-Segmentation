@@ -93,9 +93,11 @@ def replay(annotation_path,manifest_path,detector_path,refined_path):
         truth[stem].append(rles)
     detector=load_predictions(detector_path);refined=load_predictions(refined_path)
     if set(detector)!=val or set(refined)!=val or set(truth)!=val:raise ValueError('Cached prediction/holdout inventory differs')
-    results={}
+    from solar.v6_diagnostics import instance_profile,aggregate_profiles
+    from solar.v6_cached_search import paired_ci
+    results={};strategy_groups={}
     for strategy,predictions in [('detector',detector),('detector_refiner_plain',refined)]:
-        groups={}
+        groups={};profiles=[]
         for stem,variants in truth.items():
             native=[]
             for rle in predictions[stem]:
@@ -104,7 +106,10 @@ def replay(annotation_path,manifest_path,detector_path,refined_path):
                     rle=coco.encode(np.asfortranarray(mask))
                 native.append(rle)
             groups[stem]=[measure_rles(gt,native) for gt in variants]
+            profiles.extend(instance_profile(gt,native) for gt in variants)
         results[strategy]=aggregate(groups)
+        results[strategy]['error_profile']=aggregate_profiles(profiles)
+        strategy_groups[strategy]=groups
     from solar.v6_cached_search import search_area
     area_experiment=search_area(truth,refined,train)
     return {'artifact_sha256':fingerprints,'annotation_sha256':hashlib.sha256(annotation_path.read_bytes()).hexdigest(),'area_ablation':area_experiment,'artifact_kernel_version':'minahussain111/solar-filament-research-v5/v3',
@@ -114,6 +119,7 @@ def replay(annotation_path,manifest_path,detector_path,refined_path):
                      'physical_observation_overlap':len(train&val),
                      'overlapping_acquisition_dates':len({s[:8] for s in train}&{s[:8] for s in val})},
             'all_annotation_results':results,
+            'plain_refiner_minus_detector_paired_macro_ci':paired_ci(strategy_groups['detector'],strategy_groups['detector_refiner_plain']),
             'limitations':['Same validation set was used for V5 tuning; not independent confirmation.',
                            'Cached refiner predictions are plain mode only; flip4 not reconstructed.',
                            'Masks have already undergone V5 overlap union; unmerged masks are unavailable.',

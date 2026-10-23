@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def build(out):
-    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py']}
+    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py']}
     modules['solar/v5_replay.py']=(ROOT/'solar/v5_replay.py').read_text()
     codes=["""import sys,json,subprocess
 from pathlib import Path

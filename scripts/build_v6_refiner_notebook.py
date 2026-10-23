@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def build(out):
-    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py','v5_replay.py','v6_refiner_audit.py']}
+    modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py','v5_replay.py','v6_refiner_audit.py']}
     baseline=(ROOT/'notebooks/baselines/v5_training_session_v3.ipynb').read_text()
     code="""import sys,json,subprocess
 from pathlib import Path

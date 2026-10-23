@@ -284,3 +284,20 @@ def test_archived_v5_refiner_helpers_load_without_training_or_downloads():
     assert len(postprocess(rles,[.9,.8],'union'))==1
     assert len(postprocess(rles,[.9,.8],'nms'))==2
     assert len(postprocess(rles,[.9,.8],'none'))==2
+
+
+def test_error_profile_distinguishes_missed_thin_objects_and_false_positives():
+    from solar.v6_diagnostics import instance_profile
+    from pycocotools import mask as coco
+    thin=np.zeros((32,32),np.uint8);thin[1,1:21]=1
+    compact=np.zeros_like(thin);compact[10:20,10:20]=1
+    noise=np.zeros_like(thin);noise[30,30]=1
+    enc=lambda m:coco.encode(np.asfortranarray(m))
+    profile=instance_profile([enc(thin),enc(compact)],[enc(compact),enc(noise)])
+    assert profile['truth']['elongation_ge_5']=={'total':1,'matched':0}
+    assert profile['truth']['all']=={'total':2,'matched':1}
+    assert profile['prediction']['all']=={'total':2,'matched':1}
+    assert profile['unmatched_truth_best_iou']==[0.]
+    empty=instance_profile([],[])
+    assert empty['truth']['all']=={'total':0,'matched':0}
+    assert empty['unmatched_truth_best_iou']==[]
