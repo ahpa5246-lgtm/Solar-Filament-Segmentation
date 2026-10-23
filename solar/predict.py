@@ -20,11 +20,13 @@ def main():
     ap.add_argument('--stride',type=int,default=384)
     ap.add_argument('--batch',type=int,default=4)
     ap.add_argument('--tta',action='store_true')
+    ap.add_argument('--tta-mode',choices=['none','flip','d4'],default=None)
     ap.add_argument('--max-images',type=int,default=0,help='DEBUG ONLY: competition requires all images')
     args=ap.parse_args()
     _,_,test_dir=discover(args.data)
     model,_=load_model(args.checkpoint,args.device)
     params=Params(**json.loads(Path(args.params).read_text())) if Path(args.params).exists() else Params()
-    predict_folder(model,test_dir,args.out,params,args.tile,args.stride,args.batch,args.device,args.tta,args.max_images)
+    tta = {'none':False,'flip':True,'d4':'d4'}[args.tta_mode] if args.tta_mode else args.tta
+    predict_folder(model,test_dir,args.out,params,args.tile,args.stride,args.batch,args.device,tta,args.max_images)
 
 if __name__=='__main__':main()
