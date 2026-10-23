@@ -115,7 +115,94 @@
         "seed": 42
       },
       "physical_observations": 142,
-      "annotation_variants": 229
+      "annotation_variants": 229,
+      "error_profile": {
+        "truth": {
+          "all": {
+            "total": 1566,
+            "matched": 895,
+            "matched_fraction": 0.5715197956577267
+          },
+          "area_bin_0": {
+            "total": 664,
+            "matched": 312,
+            "matched_fraction": 0.46987951807228917
+          },
+          "area_bin_1": {
+            "total": 698,
+            "matched": 456,
+            "matched_fraction": 0.6532951289398281
+          },
+          "area_bin_2": {
+            "total": 197,
+            "matched": 123,
+            "matched_fraction": 0.6243654822335025
+          },
+          "elongation_ge_5": {
+            "total": 26,
+            "matched": 13,
+            "matched_fraction": 0.5
+          },
+          "area_bin_3": {
+            "total": 7,
+            "matched": 4,
+            "matched_fraction": 0.5714285714285714
+          },
+          "elongation_ge_10": {
+            "total": 1,
+            "matched": 0,
+            "matched_fraction": 0.0
+          }
+        },
+        "prediction": {
+          "all": {
+            "total": 1576,
+            "matched": 895,
+            "matched_fraction": 0.5678934010152284
+          },
+          "area_bin_1": {
+            "total": 767,
+            "matched": 485,
+            "matched_fraction": 0.6323337679269883
+          },
+          "area_bin_0": {
+            "total": 646,
+            "matched": 292,
+            "matched_fraction": 0.4520123839009288
+          },
+          "area_bin_2": {
+            "total": 158,
+            "matched": 116,
+            "matched_fraction": 0.7341772151898734
+          },
+          "elongation_ge_5": {
+            "total": 38,
+            "matched": 19,
+            "matched_fraction": 0.5
+          },
+          "area_bin_3": {
+            "total": 5,
+            "matched": 2,
+            "matched_fraction": 0.4
+          }
+        },
+        "unmatched_truth_best_iou_quantiles": [
+          0.0,
+          0.0,
+          0.19744922059518186,
+          0.3989002582035908,
+          0.5
+        ],
+        "area_bin_edges_native_pixels": [
+          0,
+          1024,
+          4096,
+          16384,
+          65536,
+          "infinity"
+        ],
+        "interpretation": "Descriptive strict-IoU>0.5 presence; annotator variants counted separately; shape uses bounding boxes, not skeletons."
+      }
     },
     "detector_refiner_plain": {
       "reference_micro_pq": 0.4042780256460111,
@@ -151,8 +238,103 @@
         "seed": 42
       },
       "physical_observations": 142,
-      "annotation_variants": 229
+      "annotation_variants": 229,
+      "error_profile": {
+        "truth": {
+          "all": {
+            "total": 1566,
+            "matched": 946,
+            "matched_fraction": 0.6040868454661558
+          },
+          "area_bin_0": {
+            "total": 664,
+            "matched": 357,
+            "matched_fraction": 0.5376506024096386
+          },
+          "area_bin_1": {
+            "total": 698,
+            "matched": 468,
+            "matched_fraction": 0.670487106017192
+          },
+          "area_bin_2": {
+            "total": 197,
+            "matched": 117,
+            "matched_fraction": 0.5939086294416244
+          },
+          "elongation_ge_5": {
+            "total": 26,
+            "matched": 13,
+            "matched_fraction": 0.5
+          },
+          "area_bin_3": {
+            "total": 7,
+            "matched": 4,
+            "matched_fraction": 0.5714285714285714
+          },
+          "elongation_ge_10": {
+            "total": 1,
+            "matched": 0,
+            "matched_fraction": 0.0
+          }
+        },
+        "prediction": {
+          "all": {
+            "total": 1575,
+            "matched": 946,
+            "matched_fraction": 0.6006349206349206
+          },
+          "area_bin_1": {
+            "total": 641,
+            "matched": 436,
+            "matched_fraction": 0.6801872074882995
+          },
+          "area_bin_0": {
+            "total": 795,
+            "matched": 413,
+            "matched_fraction": 0.519496855345912
+          },
+          "area_bin_2": {
+            "total": 135,
+            "matched": 95,
+            "matched_fraction": 0.7037037037037037
+          },
+          "elongation_ge_5": {
+            "total": 29,
+            "matched": 16,
+            "matched_fraction": 0.5517241379310345
+          },
+          "area_bin_3": {
+            "total": 4,
+            "matched": 2,
+            "matched_fraction": 0.5
+          }
+        },
+        "unmatched_truth_best_iou_quantiles": [
+          0.0,
+          0.0,
+          0.13139583551323636,
+          0.37795901343363864,
+          0.5
+        ],
+        "area_bin_edges_native_pixels": [
+          0,
+          1024,
+          4096,
+          16384,
+          65536,
+          "infinity"
+        ],
+        "interpretation": "Descriptive strict-IoU>0.5 presence; annotator variants counted separately; shape uses bounding boxes, not skeletons."
+      }
     }
+  },
+  "plain_refiner_minus_detector_paired_macro_ci": {
+    "estimate": 0.03693287627821596,
+    "low": 0.027193671660113463,
+    "high": 0.04694644205992916,
+    "unit": "physical observation",
+    "replicates": 2000,
+    "seed": 42
   },
   "limitations": [
     "Same validation set was used for V5 tuning; not independent confirmation.",
@@ -176,6 +358,6 @@
   },
   "gpu_quota": {
     "total_hours": 30.0,
-    "used_hours": 4.278439723333333
+    "used_hours": 4.332278557777777
   }
 }
