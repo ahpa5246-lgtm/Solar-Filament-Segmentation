@@ -42,10 +42,13 @@ jobs:
           for name,slug,folder in [
               ('V5 Version 5','minahussain111/solar-filament-research-v5/v5','/tmp/v5-source'),
               ('V5 Version 5 output inventory','minahussain111/solar-filament-research-v5/v5','/tmp/v5-output-inventory'),
+              ('V5 Version 5 small output retrieval','minahussain111/solar-filament-research-v5/v5','/tmp/v5-small-output'),
               ('Latest V5 source (NOT Version 5 provenance)','minahussain111/solar-filament-research-v5','/tmp/v5-latest-source'),
               ('Official evaluation','azimahmadzadeh/self-evaluation-notebook','/tmp/official-source')]:
               pathlib.Path(folder).mkdir(parents=True,exist_ok=True)
               command=['kaggle','kernels','files',slug,'--csv','--page-size','200'] if name=='V5 Version 5 output inventory' else ['kaggle','kernels','pull',slug,'-p',folder]
+              if name=='V5 Version 5 small output retrieval':
+                  command=['kaggle','kernels','output',slug,'--file-pattern',r'.*\.(json|csv|log|txt)$','-p',folder]
               result=subprocess.run(command,capture_output=True,text=True)
               output=result.stdout+'\n'+result.stderr
               token=os.environ.get('KAGGLE_API_TOKEN','')
@@ -56,12 +59,25 @@ jobs:
               with summary.open('a') as handle: handle.write(message)
               with diagnostic.open('a') as handle: handle.write(message)
               if result.returncode: failures.append(name)
+              if name=='V5 Version 5 small output retrieval':
+                  files=[path for path in pathlib.Path(folder).rglob('*') if path.is_file()]
+                  import json
+                  inventory=[{'name':str(path.relative_to(folder)),'bytes':path.stat().st_size} for path in files]
+                  pathlib.Path('reports/V5_OUTPUT_INVENTORY.json').write_text(json.dumps({'version':'v5','filter':'json,csv,log,txt only; weights excluded','files':inventory},indent=2)+'\n')
               if name=='V5 Version 5' and result.returncode==0:
                   import json, hashlib
                   from scripts.audit_v5_source import _source, _redact
                   paths=list(pathlib.Path(folder).glob('*.ipynb'))
                   if len(paths)==1:
                       raw=paths[0].read_bytes(); notebook=json.loads(raw)
+                      expected='262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e'
+                      if hashlib.sha256(raw).hexdigest()!=expected: raise RuntimeError('Immutable V5 source hash changed; refusing snapshot')
+                      if re.search(rb'KGAT_[A-Za-z0-9_-]{8,}',raw): raise RuntimeError('Credential-shaped source found; refusing snapshot')
+                      if b'Apache' not in raw: raise RuntimeError('Missing baseline attribution; refusing snapshot')
+                      snapshot=pathlib.Path('notebooks/baselines/v5_version5.ipynb')
+                      snapshot.parent.mkdir(parents=True,exist_ok=True)
+                      if snapshot.exists() and snapshot.read_bytes()!=raw: raise RuntimeError('Baseline snapshot already differs; refusing overwrite')
+                      snapshot.write_bytes(raw)
                       terms=['all_dice','best_strategy','use_refiner','train_observations','validation_observations','train_test_split','random_state','score_threshold','mask_threshold','merge_overlapping_rles']
                       lines=[line for cell in notebook.get('cells',[]) if cell.get('cell_type')=='code' for line in _source(cell).splitlines() if any(term in line for term in terms)]
                       review=pathlib.Path('reports/V5_VERSION5_SOURCE_REVIEW.md')
@@ -100,6 +116,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add reports/V5_SOURCE_ACCESS.md
+          if [ -f notebooks/baselines/v5_version5.ipynb ]; then git add notebooks/baselines/v5_version5.ipynb; fi
+          if [ -f reports/V5_OUTPUT_INVENTORY.json ]; then git add reports/V5_OUTPUT_INVENTORY.json; fi
           if [ -f reports/V5_VERSION5_SOURCE_REVIEW.md ]; then git add reports/V5_VERSION5_SOURCE_REVIEW.md; fi
           if [ -f reports/V5_IDENTITY.json ]; then git add reports/V5_IDENTITY.json; fi
           if [ -f reports/OFFICIAL_EVALUATOR_EXCERPTS.md ]; then git add reports/OFFICIAL_EVALUATOR_EXCERPTS.md; fi
