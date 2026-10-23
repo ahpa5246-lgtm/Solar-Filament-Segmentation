@@ -16,6 +16,19 @@ from pycocotools import mask as coco
 from solar.v6_audit import measure_rles,bootstrap
 
 
+V3_ARTIFACT_SHA256={
+    'training_manifest.csv':'356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21',
+    'best_detector_predictions_1024.pkl':'69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef',
+    'refined_validation_predictions_2048.pkl':'139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c'}
+
+
+def verify_artifacts(paths,expected):
+    if set(paths)!=set(expected):raise ValueError('Artifact fingerprint inventory differs')
+    actual={name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in paths.items()}
+    if actual!=expected:raise ValueError('Artifact fingerprint differs from preserved V5 training session v3')
+    return actual
+
+
 class DataOnlyUnpickler(pickle.Unpickler):
     def find_class(self,module,name):
         raise pickle.UnpicklingError('Only primitive RLE containers are accepted')
@@ -56,6 +69,9 @@ def aggregate(groups):
 
 
 def replay(annotation_path,manifest_path,detector_path,refined_path):
+    fingerprints=verify_artifacts({'training_manifest.csv':manifest_path,
+                                   'best_detector_predictions_1024.pkl':detector_path,
+                                   'refined_validation_predictions_2048.pkl':refined_path},V3_ARTIFACT_SHA256)
     payload=json.loads(annotation_path.read_text())
     manifest=list(csv.DictReader(manifest_path.open()))
     train={r['observation_id'] for r in manifest if r['split']=='train'}
@@ -91,7 +107,7 @@ def replay(annotation_path,manifest_path,detector_path,refined_path):
         results[strategy]=aggregate(groups)
     from solar.v6_cached_search import search_area
     area_experiment=search_area(truth,refined,train)
-    return {'area_ablation':area_experiment,'artifact_kernel_version':'minahussain111/solar-filament-research-v5/v3',
+    return {'artifact_sha256':fingerprints,'annotation_sha256':hashlib.sha256(annotation_path.read_bytes()).hexdigest(),'area_ablation':area_experiment,'artifact_kernel_version':'minahussain111/solar-filament-research-v5/v3',
             'score_status':'cached LOCAL tuning-validation replay, not an official score; association to Public 0.32 not independently established',
             'matching':'both organizer-public all-pairs and canonical one-to-one',
             'split':{'train_observations':len(train),'validation_observations':len(val),
@@ -113,6 +129,16 @@ def main():
         api=KaggleApi();api.authenticate()
         with tempfile.TemporaryDirectory(prefix='v5-cached-') as tmp:
             root=Path(tmp)
+            api.kernels_pull('minahussain111/solar-filament-research-v5/v3',str(root/'source'))
+            sources=list((root/'source').glob('*.ipynb'))
+            if len(sources)!=1:raise ValueError('Missing training-session source')
+            raw=sources[0].read_bytes()
+            expected_source='2781c89d49a31a08e4f3b96d39b439e029bc7535fc596bee3d8e074baf9a2bea'
+            if hashlib.sha256(raw).hexdigest()!=expected_source:raise ValueError('Training-session source fingerprint changed')
+            snapshot=Path('notebooks/baselines/v5_training_session_v3.ipynb')
+            snapshot.parent.mkdir(parents=True,exist_ok=True)
+            if snapshot.exists() and snapshot.read_bytes()!=raw:raise ValueError('Refusing baseline source overwrite')
+            snapshot.write_bytes(raw)
             pattern=r'(training_manifest\.csv|best_detector_predictions_1024\.pkl|refined_validation_predictions_2048\.pkl|detector_thresholds\.json|final_configuration\.json|detector_calibration\.csv)$'
             next_page=None
             for page in range(10):
@@ -135,7 +161,6 @@ def main():
                 if len(found)!=1:raise ValueError(f'Expected one {name}, found {len(found)}')
                 return found[0]
             report=replay(one(desired),one('training_manifest.csv'),one('best_detector_predictions_1024.pkl'),one('refined_validation_predictions_2048.pkl'))
-            report['artifact_sha256']={name:hashlib.sha256(one(name).read_bytes()).hexdigest() for name in ['training_manifest.csv','best_detector_predictions_1024.pkl','refined_validation_predictions_2048.pkl']}
             report['selected_configuration']=json.loads(one('final_configuration.json').read_text())
             report['detector_thresholds']=json.loads(one('detector_thresholds.json').read_text())
             try:

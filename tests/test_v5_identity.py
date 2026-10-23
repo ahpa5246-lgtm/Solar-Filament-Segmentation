@@ -29,3 +29,14 @@ def test_cpu_audit_notebook_cannot_request_gpu(tmp_path):
     notebook=json.loads((tmp_path/'audit.ipynb').read_text())
     for cell in notebook['cells']:
         if cell['cell_type']=='code':ast.parse(''.join(cell['source']))
+
+
+def test_artifact_fingerprint_rejects_changed_cached_inputs(tmp_path):
+    import hashlib
+    import pytest
+    from scripts.replay_v5_cached import verify_artifacts
+    path=tmp_path/'cache.pkl';path.write_bytes(b'original')
+    expected={'cache.pkl':hashlib.sha256(b'original').hexdigest()}
+    assert verify_artifacts({'cache.pkl':path},expected)==expected
+    path.write_bytes(b'changed')
+    with pytest.raises(ValueError,match='fingerprint'):verify_artifacts({'cache.pkl':path},expected)

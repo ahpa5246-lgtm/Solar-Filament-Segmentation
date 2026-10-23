@@ -36,7 +36,7 @@ Path('/kaggle/working/v6_cpu_replay.json').write_text(json.dumps(result,indent=2
 print(json.dumps({name:row['reference_micro_pq'] for name,row in result['all_annotation_results'].items()},indent=2))
 print('These are cached LOCAL validation results, not official Kaggle scores.')
 """]
-    cells=[{'cell_type':'markdown','metadata':{},'source':['# V6 CPU audit of preserved V5 outputs\n','No GPU, training, submission, or hidden labels. V5 remains the confirmed Public baseline 0.32.\n','Uses original validation cache from the V5 training session and official TRAIN annotations.\n']}]
+    cells=[{'cell_type':'markdown','metadata':{},'source':['# V6 CPU audit of preserved V5 outputs\n','No GPU, training, submission, or hidden labels. V5 remains the confirmed Public baseline 0.32.\n','Verifies exact V5/v3 cache fingerprints before using official TRAIN annotations.\n']}]
     for code in codes:
         ast.parse(code)
         cells.append({'cell_type':'code','metadata':{},'execution_count':None,'outputs':[],'source':code.splitlines(keepends=True)})

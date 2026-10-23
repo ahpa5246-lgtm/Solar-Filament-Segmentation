@@ -7,13 +7,36 @@ import time
 from pathlib import Path
 
 
+def error_context(api,reference):
+    import re
+    from audit_v5_source import _redact
+    from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
+    owner,slug,*version=reference.split('/')
+    request=ApiListKernelSessionOutputRequest();request.user_name=owner;request.kernel_slug=slug
+    if version:request.version_label=version[0]
+    with api.build_kaggle_client() as client:
+        raw=client.kernels.kernels_api_client.list_kernel_session_output(request).log
+    events=json.loads(raw or '[]')
+    text='\n'.join(event.get('data','') for event in events)
+    return [line[:500] for line in _redact(text).splitlines() if re.search(r'(RuntimeError:|ModuleNotFoundError:|ImportError:|AssertionError:|FileNotFoundError:|KeyError:)',line)][-8:]
+
+
 def main():
     from kaggle.api.kaggle_api_extended import KaggleApi
     api=KaggleApi();api.authenticate()
     report={'requested_gpu':False,'requested_private':True,'timeout_seconds':600,
             'notebook':'https://www.kaggle.com/code/minahussain111/solar-filament-research-v6-audit'}
+    inspect_only='--inspect-only' in sys.argv
+    report['mode']='inspect_existing_only' if inspect_only else 'execute_one_cpu_notebook'
     reference=None
     try:
+        if inspect_only:
+            reference='minahussain111/solar-filament-research-v6-audit'
+            report['status']=str(api.kernels_status(reference).status)
+            report['execution_errors']=error_context(api,reference)
+            Path('reports/V6_KAGGLE_CPU_EXECUTION.json').write_text(json.dumps(report,indent=2)+'\n')
+            print('Inspected existing CPU run; no new notebook executed.')
+            return
         with tempfile.TemporaryDirectory(prefix='v6-cpu-') as tmp:
             folder=Path(tmp)
             subprocess.run([sys.executable,'scripts/build_v6_replay_notebook.py','--output',str(folder/'v6_cpu_audit.ipynb')],check=True)
@@ -43,12 +66,7 @@ def main():
         if type(error) in (ValueError,RuntimeError):report['diagnosis']=str(error)
         if reference:
             try:
-                import re
-                from audit_v5_source import _redact
-                raw=api.kernels_logs(reference)
-                events=json.loads(raw)
-                text='\n'.join(event.get('data','') for event in events)
-                report['execution_errors']=[line[:500] for line in _redact(text).splitlines() if re.search(r'(RuntimeError:|ModuleNotFoundError:|ImportError:|AssertionError:|FileNotFoundError:|KeyError:)',line)][-8:]
+                report['execution_errors']=error_context(api,reference)
             except Exception:
                 report['execution_error_detail']='Log diagnostics unavailable'
     Path('reports/V6_KAGGLE_CPU_EXECUTION.json').write_text(json.dumps(report,indent=2)+'\n')
