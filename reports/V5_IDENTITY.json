@@ -8,7 +8,7 @@
         "ref": "minahussain111/solar-filament-research-v5",
         "title": "solar-filament-research-v5",
         "slug": "solar-filament-research-v5",
-        "current_version_number": 6,
+        "current_version_number": 7,
         "is_private": true
       },
       "blob_metadata": {
@@ -119,12 +119,126 @@
     "latest": {
       "status": "COMPLETE"
     },
+    "v1": {
+      "status": "COMPLETE"
+    },
+    "v2": {
+      "status": "COMPLETE"
+    },
+    "v3": {
+      "status": "COMPLETE"
+    },
+    "v4": {
+      "status": "COMPLETE"
+    },
     "v5": {
       "status": "COMPLETE"
     },
     "5": {
       "error_type": "HTTPError",
       "http_status": 404
+    }
+  },
+  "session_output_probes": {
+    "v1": {
+      "files": [],
+      "log_bytes": 1373,
+      "training_marker_count": 1,
+      "has_more_pages": false
+    },
+    "v2": {
+      "files": [],
+      "log_bytes": 1366,
+      "training_marker_count": 1,
+      "has_more_pages": false
+    },
+    "v3": {
+      "files": [
+        {
+          "name": "solar_filaments_final/__pycache__/train_detector.cpython-313.pyc"
+        },
+        {
+          "name": "solar_filaments_final/best_detector.pt"
+        },
+        {
+          "name": "solar_filaments_final/best_detector_predictions_1024.pkl"
+        },
+        {
+          "name": "solar_filaments_final/best_refiner.pt"
+        },
+        {
+          "name": "solar_filaments_final/detector_calibration.csv"
+        },
+        {
+          "name": "solar_filaments_final/detector_thresholds.json"
+        },
+        {
+          "name": "solar_filaments_final/final_configuration.json"
+        },
+        {
+          "name": "solar_filaments_final/final_detector.pt"
+        },
+        {
+          "name": "solar_filaments_final/final_detector_history.csv"
+        },
+        {
+          "name": "solar_filaments_final/final_refiner.pt"
+        },
+        {
+          "name": "solar_filaments_final/final_refiner_history.csv"
+        },
+        {
+          "name": "solar_filaments_final/last_detector.pt"
+        },
+        {
+          "name": "solar_filaments_final/refined_validation_predictions_2048.pkl"
+        },
+        {
+          "name": "solar_filaments_final/refiner_history.csv"
+        },
+        {
+          "name": "solar_filaments_final/test_predictions_2048.pkl"
+        },
+        {
+          "name": "solar_filaments_final/train_crop_images.npy"
+        },
+        {
+          "name": "solar_filaments_final/train_crop_masks.npy"
+        },
+        {
+          "name": "solar_filaments_final/train_detector.py"
+        },
+        {
+          "name": "solar_filaments_final/training_manifest.csv"
+        },
+        {
+          "name": "solar_filaments_final/val_crop_images.npy"
+        },
+        {
+          "name": "solar_filaments_final/val_crop_masks.npy"
+        },
+        {
+          "name": "solar_filaments_final/validation_detector_history.csv"
+        },
+        {
+          "name": "submission.csv"
+        }
+      ],
+      "log_bytes": 763843,
+      "training_marker_count": 6443,
+      "has_more_pages": false
+    },
+    "v4": {
+      "files": [],
+      "log_bytes": 1366,
+      "training_marker_count": 1,
+      "has_more_pages": false
+    },
+    "v5": {
+      "files": [],
+      "log_bytes": 1366,
+      "training_marker_count": 1,
+      "has_more_pages": false
     }
   },
   "matching_notebooks": [
