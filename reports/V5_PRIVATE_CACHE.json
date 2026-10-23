@@ -9,8 +9,23 @@
     "minahussain111/solar-filament-v5-v3-cache-356bd788"
   ],
   "created": false,
-  "status": "blocked",
-  "error_type": "RuntimeError",
-  "http_status": null,
-  "diagnosis": "Private status could not be verified; refusing use"
+  "metadata_root_keys": [
+    "info"
+  ],
+  "metadata_info_keys": [
+    "datasetId",
+    "datasetSlug",
+    "description",
+    "expectedUpdateFrequency",
+    "isPrivate",
+    "keywords",
+    "licenses",
+    "ownerUser",
+    "subtitle",
+    "title",
+    "usabilityRating"
+  ],
+  "reported_private": true,
+  "private_verified": true,
+  "status": "ready"
 }
