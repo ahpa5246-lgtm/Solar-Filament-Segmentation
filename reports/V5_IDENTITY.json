@@ -1,0 +1,148 @@
+{
+  "target": "https://www.kaggle.com/code/minahussain111/solar-filament-research-v5",
+  "purpose": "read-only identity/history diagnosis; no model execution or artifact downloads",
+  "source_probes": {
+    "latest": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 5,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "v1": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 1,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "v2": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 2,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "v3": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 3,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "2781c89d49a31a08e4f3b96d39b439e029bc7535fc596bee3d8e074baf9a2bea",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "v4": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 4,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "v5": {
+      "metadata": {
+        "id": 140437068,
+        "ref": "minahussain111/solar-filament-research-v5",
+        "title": "solar-filament-research-v5",
+        "slug": "solar-filament-research-v5",
+        "current_version_number": 5,
+        "is_private": false
+      },
+      "blob_metadata": {
+        "slug": "solar-filament-research-v5"
+      },
+      "source_summary": {
+        "sha256": "262946128a7838a5899c2b7966217f796c3a8059f1cb55ee2b5df283e075e13e",
+        "executed_code_cells": 0,
+        "cells_with_outputs": 0
+      }
+    },
+    "5": {
+      "error_type": "HTTPError",
+      "http_status": 404
+    }
+  },
+  "status_probes": {
+    "latest": {
+      "status": "COMPLETE"
+    },
+    "v5": {
+      "status": "COMPLETE"
+    },
+    "5": {
+      "error_type": "HTTPError",
+      "http_status": 404
+    }
+  },
+  "matching_notebooks": [
+    {
+      "id": 0,
+      "ref": "minahussain111/solar-filament-research-v6",
+      "title": "solar-filament-research-v6",
+      "slug": "",
+      "current_version_number": 0,
+      "is_private": false
+    },
+    {
+      "id": 0,
+      "ref": "minahussain111/solar-filament-research-v5",
+      "title": "solar-filament-research-v5",
+      "slug": "",
+      "current_version_number": 0,
+      "is_private": false
+    }
+  ]
+}
