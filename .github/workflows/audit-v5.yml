@@ -27,14 +27,28 @@ jobs:
         run: |
           python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9' pytest==8.3.4
           python -m pytest tests/test_v5_source_audit.py -q
-      - name: Retrieve source only (never run GPU training)
+      - name: Retrieve and diagnose source access (never run GPU training)
         run: |
-          set -euo pipefail
-          test -n "$KAGGLE_API_TOKEN"
-          mkdir -p /tmp/v5-source /tmp/official-source
-          kaggle kernels pull minahussain111/solar-filament-research-v5/5 -p /tmp/v5-source
-          kaggle kernels pull azimahmadzadeh/self-evaluation-notebook -p /tmp/official-source
-      - name: Publish source-only audit summary
-        run: |
-          python scripts/audit_v5_source.py --v5 /tmp/v5-source --official /tmp/official-source --out /tmp/source-audit.md
-          cat /tmp/source-audit.md >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PYCODE'
+          import os, pathlib, re, subprocess
+          summary=pathlib.Path(os.environ['GITHUB_STEP_SUMMARY'])
+          failures=[]
+          for name,slug,folder in [
+              ('V5 Version 5','minahussain111/solar-filament-research-v5/5','/tmp/v5-source'),
+              ('Official evaluation','azimahmadzadeh/self-evaluation-notebook','/tmp/official-source')]:
+              pathlib.Path(folder).mkdir(parents=True,exist_ok=True)
+              result=subprocess.run(['kaggle','kernels','pull',slug,'-p',folder],capture_output=True,text=True)
+              output=result.stdout+'\n'+result.stderr
+              token=os.environ.get('KAGGLE_API_TOKEN','')
+              if token: output=output.replace(token,'[REDACTED]')
+              output=re.sub(r'KGAT_[A-Za-z0-9_-]+','[REDACTED]',output)
+              output='\n'.join(line for line in output.splitlines() if not re.search(r'authorization|api.token|password|secret',line,re.I))
+              with summary.open('a') as handle:
+                  handle.write(f'## {name}: exit {result.returncode}\n\n```text\n{output[-5000:]}\n```\n')
+              if result.returncode: failures.append(name)
+          if not failures:
+              subprocess.run(['python','scripts/audit_v5_source.py','--v5','/tmp/v5-source','--official','/tmp/official-source','--out','/tmp/source-audit.md'],check=True)
+              with summary.open('a') as handle: handle.write(pathlib.Path('/tmp/source-audit.md').read_text())
+          else:
+              raise SystemExit('Source retrieval blocked: '+', '.join(failures))
+          PYCODE
