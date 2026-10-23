@@ -4,6 +4,19 @@
   "source_session": "minahussain111/solar-filament-research-v5/v3",
   "gpu_execution": false,
   "weights_budget_bytes": 629145600,
+  "stage": "wait_for_cache",
+  "initial_status_http": 403,
+  "artifact_sha256": {
+    "best_detector.pt": "60a8f48340cc1076710027c1b159c747035217613a61e186b8705aa6fc310a36",
+    "best_detector_predictions_1024.pkl": "69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef",
+    "best_refiner.pt": "0bf638645601d436f048ef238c9cd1336b4ff73184ed4553f20b11b44db09e57",
+    "detector_thresholds.json": "a539c3f9fe946ad1ef14e927d830fbdc049b236e1c86508aaee3177ffc9fc0f5",
+    "final_configuration.json": "d967690b72e0f7015e21335408c1721620bcacf6763bb63a722bd2dced9a2188",
+    "refined_validation_predictions_2048.pkl": "139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c",
+    "training_manifest.csv": "356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21"
+  },
+  "bytes": 241458446,
+  "created": true,
   "status": "blocked",
   "error_type": "HTTPError",
   "http_status": 403
