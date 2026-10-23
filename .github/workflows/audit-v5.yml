@@ -37,6 +37,7 @@ jobs:
           diagnostic.write_text('# V5 source retrieval diagnostics\n\nSanitized CLI responses only; no model outputs or credentials.\n\n')
           for name,slug,folder in [
               ('V5 Version 5','minahussain111/solar-filament-research-v5/5','/tmp/v5-source'),
+              ('Latest V5 source (NOT Version 5 provenance)','minahussain111/solar-filament-research-v5','/tmp/v5-latest-source'),
               ('Official evaluation','azimahmadzadeh/self-evaluation-notebook','/tmp/official-source')]:
               pathlib.Path(folder).mkdir(parents=True,exist_ok=True)
               result=subprocess.run(['kaggle','kernels','pull',slug,'-p',folder],capture_output=True,text=True)
@@ -49,6 +50,20 @@ jobs:
               with summary.open('a') as handle: handle.write(message)
               with diagnostic.open('a') as handle: handle.write(message)
               if result.returncode: failures.append(name)
+              if name=='Official evaluation' and result.returncode==0:
+                  import json, hashlib
+                  from scripts.audit_v5_source import _source, _redact
+                  paths=list(pathlib.Path(folder).glob('*.ipynb'))
+                  if len(paths)==1:
+                      raw=paths[0].read_bytes(); notebook=json.loads(raw)
+                      excerpts=[]
+                      for cell in notebook.get('cells',[]):
+                          code=_source(cell)
+                          if cell.get('cell_type')=='code' and any(term in code.lower() for term in ['def ','panoptic','iou','dice']):
+                              excerpts.append(_redact(code))
+                      quoted='\n\n'.join(excerpts)
+                      review=pathlib.Path('reports/OFFICIAL_EVALUATOR_EXCERPTS.md')
+                      review.write_text('# Official evaluator: source-review excerpts\n\nPublic reference: https://www.kaggle.com/code/azimahmadzadeh/self-evaluation-notebook\n\nQuoted solely for scientific evaluation review, not executed or incorporated into model code.\n\nSHA256: `'+hashlib.sha256(raw).hexdigest()+'`\n\n```python\n'+quoted[:24000]+'\n```\n')
           if not failures:
               subprocess.run(['python','scripts/audit_v5_source.py','--v5','/tmp/v5-source','--official','/tmp/official-source','--out','/tmp/source-audit.md'],check=True)
               with summary.open('a') as handle: handle.write(pathlib.Path('/tmp/source-audit.md').read_text())
@@ -62,6 +77,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add reports/V5_SOURCE_ACCESS.md
+          if [ -f reports/OFFICIAL_EVALUATOR_EXCERPTS.md ]; then git add reports/OFFICIAL_EVALUATOR_EXCERPTS.md; fi
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Record sanitized V5 source access diagnostics [skip ci]"
           git push origin HEAD:main
