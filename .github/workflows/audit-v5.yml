@@ -64,6 +64,14 @@ jobs:
                   import json
                   inventory=[{'name':str(path.relative_to(folder)),'bytes':path.stat().st_size} for path in files]
                   pathlib.Path('reports/V5_OUTPUT_INVENTORY.json').write_text(json.dumps({'version':'v5','filter':'json,csv,log,txt only; weights excluded','files':inventory},indent=2)+'\n')
+                  from scripts.audit_v5_source import _redact
+                  logs=[]
+                  for path in files:
+                      if path.suffix=='.log':
+                          text=path.read_text(errors='replace')
+                          if token: text=text.replace(token,'[REDACTED]')
+                          logs.append('## '+path.name+'\n\n```text\n'+_redact(text)[:5000]+'\n```\n')
+                  pathlib.Path('reports/V5_LOG_REVIEW.md').write_text('# V5 v5 execution-log review\n\nSanitized log excerpts; no score is inferred from session status or startup output.\n\n'+'\n'.join(logs))
               if name=='V5 Version 5' and result.returncode==0:
                   import json, hashlib
                   from scripts.audit_v5_source import _source, _redact
@@ -116,6 +124,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add reports/V5_SOURCE_ACCESS.md
+          if [ -f reports/V5_LOG_REVIEW.md ]; then git add reports/V5_LOG_REVIEW.md; fi
           if [ -f notebooks/baselines/v5_version5.ipynb ]; then git add notebooks/baselines/v5_version5.ipynb; fi
           if [ -f reports/V5_OUTPUT_INVENTORY.json ]; then git add reports/V5_OUTPUT_INVENTORY.json; fi
           if [ -f reports/V5_VERSION5_SOURCE_REVIEW.md ]; then git add reports/V5_VERSION5_SOURCE_REVIEW.md; fi

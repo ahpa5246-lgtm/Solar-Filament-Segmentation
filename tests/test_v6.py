@@ -208,3 +208,24 @@ def test_public_reference_pq_matches_downloaded_organizer_functions():
     with tempfile.TemporaryDirectory() as out:
         report=run_audit(truth,predictions,out)
     assert report['detector']['public_reference_micro']['pq_reference'] == pytest.approx(namespace['get_pq_score'](combined))
+
+
+def test_v5_any_overlap_merges_distinct_instances_but_v6_nms_keeps_them():
+    """Synthetic regression, not evidence of measured solar accuracy gains."""
+    import ast,json
+    from pathlib import Path
+    from pycocotools import mask as coco
+    from solar.v6_instances import mask_nms
+    source=json.loads((Path(__file__).resolve().parents[1]/'notebooks/baselines/v5_version5.ipynb').read_text())
+    code=next(''.join(c['source']) for c in source['cells'] if 'def merge_overlaps(' in ''.join(c['source']))
+    if code.startswith('%%writefile'):code=code.split('\n',1)[1]
+    nodes=[node for node in ast.parse(code).body if isinstance(node,ast.FunctionDef) and node.name in {'encode_mask','merge_overlaps'}]
+    namespace={'np':np,'mask_utils':coco}
+    exec(ast.unparse(ast.Module(body=nodes,type_ignores=[])),namespace)
+    gt=masks()
+    merged=np.stack(namespace['merge_overlaps'](gt))
+    assert len(merged)==1
+    kept=gt[mask_nms(gt,[.9,.8],iou_threshold=.5)]
+    assert len(kept)==2
+    assert audit.measure(gt,kept)['pq_reference']==1
+    assert audit.measure(gt,merged)['pq_reference']<1
