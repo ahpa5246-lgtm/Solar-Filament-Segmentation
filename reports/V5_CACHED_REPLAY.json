@@ -1,4 +1,70 @@
 {
+  "area_ablation": {
+    "status": "completed",
+    "experiment": "minimum native-mask area; cached plain refiner only",
+    "seed": 42,
+    "excluded_observations_sharing_training_dates": 10,
+    "tuning_observations": 65,
+    "confirmation_observations": 67,
+    "tuning_dates": 65,
+    "confirmation_dates": 66,
+    "tuning_date_overlap_confirmation": 0,
+    "tuning_grid": [
+      {
+        "min_area": 0,
+        "tuning_reference_micro_pq": 0.40538873846716994
+      },
+      {
+        "min_area": 32,
+        "tuning_reference_micro_pq": 0.40538873846716994
+      },
+      {
+        "min_area": 64,
+        "tuning_reference_micro_pq": 0.40538873846716994
+      },
+      {
+        "min_area": 128,
+        "tuning_reference_micro_pq": 0.40538873846716994
+      },
+      {
+        "min_area": 256,
+        "tuning_reference_micro_pq": 0.4024403540811591
+      },
+      {
+        "min_area": 512,
+        "tuning_reference_micro_pq": 0.37457799734938246
+      },
+      {
+        "min_area": 1024,
+        "tuning_reference_micro_pq": 0.3055724885879285
+      },
+      {
+        "min_area": 2048,
+        "tuning_reference_micro_pq": 0.2008620205816801
+      }
+    ],
+    "selected_min_area": 0,
+    "confirmation": {
+      "baseline_pq": 0.40618501877009816,
+      "candidate_pq": 0.40618501877009816,
+      "micro_delta": 0.0,
+      "paired_macro_delta_ci": {
+        "estimate": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "unit": "physical observation",
+        "replicates": 2000,
+        "seed": 42
+      }
+    },
+    "confirmation_gain_supported": false,
+    "eligible_for_official_submission": false,
+    "limitations": [
+      "Final saved test predictions used flip4, whereas this cache is plain-refiner mode.",
+      "A matched flip4 validation replay is required before applying to the saved test predictions.",
+      "Original V5 model/strategy selection used all original validation observations."
+    ]
+  },
   "artifact_kernel_version": "minahussain111/solar-filament-research-v5/v3",
   "score_status": "cached LOCAL tuning-validation replay, not an official score; association to Public 0.32 not independently established",
   "matching": "both organizer-public all-pairs and canonical one-to-one",
@@ -106,5 +172,9 @@
   "detector_thresholds": {
     "score_threshold": 0.6,
     "mask_threshold": 0.4
+  },
+  "gpu_quota": {
+    "total_hours": 30.0,
+    "used_hours": 4.272395830833333
   }
 }
