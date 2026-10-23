@@ -229,3 +229,25 @@ def test_v5_any_overlap_merges_distinct_instances_but_v6_nms_keeps_them():
     assert len(kept)==2
     assert audit.measure(gt,kept)['pq_reference']==1
     assert audit.measure(gt,merged)['pq_reference']<1
+
+
+def test_rle_metrics_match_independent_binary_masks():
+    from pycocotools import mask as coco
+    gt=masks(); pred=gt[:1]
+    encoded=lambda stack:[coco.encode(np.asfortranarray(mask.astype(np.uint8))) for mask in stack]
+    expected=audit.measure(gt,pred)
+    actual=audit.measure_rles(encoded(gt),encoded(pred),shape=(16,16))
+    for key in ['pq_reference','pq_local','reference_tp','reference_fp','reference_fn','likely_splits','likely_merges']:
+        assert actual[key]==pytest.approx(expected[key])
+    assert audit.measure_rles([],[],shape=(16,16))['pq_reference']==0
+
+
+def test_cached_prediction_pickle_rejects_objects(tmp_path):
+    import pickle
+    from pathlib import Path
+    from scripts.replay_v5_cached import load_predictions
+    good=tmp_path/'good.pkl'
+    good.write_bytes(pickle.dumps({'obs':[{'size':[2048,2048],'counts':b'PPPP4'}]}))
+    assert 'obs' in load_predictions(good)
+    bad=tmp_path/'bad.pkl';bad.write_bytes(pickle.dumps(Path('/tmp/example')))
+    with pytest.raises(pickle.UnpicklingError):load_predictions(bad)

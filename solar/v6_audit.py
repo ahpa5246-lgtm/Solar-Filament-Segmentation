@@ -38,7 +38,10 @@ def pairwise(gt, pred):
 
 
 def measure(gt, pred):
-    intersection,ga,pa,iou = pairwise(gt,pred)
+    return measure_overlaps(*pairwise(gt,pred))
+
+
+def measure_overlaps(intersection,ga,pa,iou):
     # Prioritize valid matches before IoU sum for overlapping annotation masks.
     valid = iou > .5
     rows,cols = linear_sum_assignment(-(valid*(min(iou.shape,default=0)+1)+iou))
@@ -69,6 +72,18 @@ def measure(gt, pred):
         'unmatched_gt':[i for i in range(len(ga)) if i not in {r for r,_ in matches}],
         'unmatched_pred':[i for i in range(len(pa)) if i not in {c for _,c in matches}],
     }
+
+
+def measure_rles(gt,pred,shape=(2048,2048)):
+    """Memory-efficient equivalent for cached COCO RLE predictions."""
+    for rle in list(gt)+list(pred):
+        if tuple(rle['size']) != tuple(shape): raise ValueError('RLE dimensions differ')
+        if int(coco.area(rle))<=0: raise ValueError('Empty RLE instance')
+    ga=np.array([float(coco.area(r)) for r in gt])
+    pa=np.array([float(coco.area(r)) for r in pred])
+    iou=coco.iou(gt,pred,[0]*len(pred)) if gt and pred else np.zeros((len(gt),len(pred)))
+    intersection=(ga[:,None]+pa[None,:])*iou/(1+iou)
+    return measure_overlaps(intersection,ga,pa,iou)
 
 
 def partition(records, seed=42):
