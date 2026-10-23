@@ -71,7 +71,7 @@ def main():
             for feature,target in vloader:
                 feature,target=feature.to(args.device),target.to(args.device)
                 with torch.autocast(device_type='cuda',enabled=args.device=='cuda'):
-                    val_loss+=loss_fn(model(feature),target).item()
+                    val_loss+=loss_fn(model(feature),target,cldice_weight=args.cldice_weight).item()
         val_loss/=len(vloader)
         train_loss=running/len(loader)
         history.append({'epoch':epoch,'train_loss':train_loss,'val_loss':val_loss})
