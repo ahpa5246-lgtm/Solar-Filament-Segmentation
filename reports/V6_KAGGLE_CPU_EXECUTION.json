@@ -1,0 +1,11 @@
+{
+  "requested_gpu": false,
+  "requested_private": true,
+  "timeout_seconds": 600,
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-filament-research-v6-audit",
+  "mode": "inspect_existing_only",
+  "status": "KernelWorkerStatus.ERROR",
+  "execution_errors": [
+    "RuntimeError: Need one original V5 input training_manifest.csv, found 0"
+  ]
+}
