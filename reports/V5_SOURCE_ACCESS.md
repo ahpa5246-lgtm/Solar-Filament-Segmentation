@@ -14,6 +14,12 @@ Source code downloaded to /tmp/v5-source/solar-filament-research-v5.ipynb
 name,size,creationDate
 
 ```
+## V5 Version 5 small output retrieval: exit 0
+
+```text
+Kernel log downloaded to /tmp/v5-small-output/solar-filament-research-v5.log 
+
+```
 ## Latest V5 source (NOT Version 5 provenance): exit 0
 
 ```text

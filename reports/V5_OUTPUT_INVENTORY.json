@@ -1,0 +1,10 @@
+{
+  "version": "v5",
+  "filter": "json,csv,log,txt only; weights excluded",
+  "files": [
+    {
+      "name": "solar-filament-research-v5.log",
+      "bytes": 1366
+    }
+  ]
+}
