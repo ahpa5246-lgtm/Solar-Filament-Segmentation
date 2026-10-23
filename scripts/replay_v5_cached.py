@@ -89,7 +89,9 @@ def replay(annotation_path,manifest_path,detector_path,refined_path):
                 native.append(rle)
             groups[stem]=[measure_rles(gt,native) for gt in variants]
         results[strategy]=aggregate(groups)
-    return {'artifact_kernel_version':'minahussain111/solar-filament-research-v5/v3',
+    from solar.v6_cached_search import search_area
+    area_experiment=search_area(truth,refined,train)
+    return {'area_ablation':area_experiment,'artifact_kernel_version':'minahussain111/solar-filament-research-v5/v3',
             'score_status':'cached LOCAL tuning-validation replay, not an official score; association to Public 0.32 not independently established',
             'matching':'both organizer-public all-pairs and canonical one-to-one',
             'split':{'train_observations':len(train),'validation_observations':len(val),
@@ -136,6 +138,12 @@ def main():
             report['artifact_sha256']={name:hashlib.sha256(one(name).read_bytes()).hexdigest() for name in ['training_manifest.csv','best_detector_predictions_1024.pkl','refined_validation_predictions_2048.pkl']}
             report['selected_configuration']=json.loads(one('final_configuration.json').read_text())
             report['detector_thresholds']=json.loads(one('detector_thresholds.json').read_text())
+            try:
+                quota=api.quota_view().gpu_quota
+                report['gpu_quota']={'total_hours':quota.total_time_allowed.total_seconds()/3600,
+                                     'used_hours':quota.time_used.total_seconds()/3600}
+            except Exception as error:
+                report['gpu_quota']={'status':'unavailable','error_type':type(error).__name__}
     except Exception as error:
         report={'status':'blocked','error_type':type(error).__name__,
                 'http_status':getattr(getattr(error,'response',None),'status_code',None)}

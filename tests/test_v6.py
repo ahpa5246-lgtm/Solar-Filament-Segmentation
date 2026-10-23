@@ -251,3 +251,20 @@ def test_cached_prediction_pickle_rejects_objects(tmp_path):
     assert 'obs' in load_predictions(good)
     bad=tmp_path/'bad.pkl';bad.write_bytes(pickle.dumps(Path('/tmp/example')))
     with pytest.raises(pickle.UnpicklingError):load_predictions(bad)
+
+
+def test_area_search_excludes_training_dates_and_confirms_on_separate_dates():
+    from solar.v6_cached_search import search_area
+    from pycocotools import mask as coco
+    encode=lambda mask:coco.encode(np.asfortranarray(mask.astype(np.uint8)))
+    gt=masks()[:1];noise=np.zeros_like(gt[0]);noise[0,0]=1
+    truth={f'202601{day:02d}130000Bh':[[encode(gt[0])]] for day in range(1,9)}
+    predictions={stem:[encode(gt[0]),encode(noise)] for stem in truth}
+    report=search_area(truth,predictions,{'20260101120000Bh'},thresholds=[0,2,1000],shape=(16,16))
+    assert report['excluded_observations_sharing_training_dates']==1
+    assert report['selected_min_area']==2
+    assert report['tuning_date_overlap_confirmation']==0
+    assert report['confirmation']['candidate_pq']==1
+    assert report['confirmation']['baseline_pq']==pytest.approx(2/3)
+    assert report['confirmation']['paired_macro_delta_ci']['low']>0
+    assert report['eligible_for_official_submission'] is False
