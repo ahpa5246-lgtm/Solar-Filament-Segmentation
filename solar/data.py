@@ -123,11 +123,13 @@ class TileDataset:
 
     No pre-cropping of images is needed; avoids a huge intermediary dataset.
     """
-    def __init__(self, records, tile=512, samples_per_epoch=1200, seed=13):
+    def __init__(self, records, tile=512, samples_per_epoch=1200, seed=13, training=True):
         self.records = records
         self.tile = tile
         self.samples = samples_per_epoch
         self.seed = seed
+        self.training = training
+        self.epoch = 0
         self.annotators = defaultdict(list)
         for r in records:
             self.annotators[r['stem']].append(r)
@@ -136,10 +138,13 @@ class TileDataset:
     def __len__(self):
         return self.samples
 
+    def set_epoch(self, epoch: int):
+        self.epoch = int(epoch) if self.training else 0
+
     def __getitem__(self, index):
         import torch
         # Independent RNG even with multiple data-loader workers.
-        rng = np.random.default_rng((self.seed + index * 1299827 + np.random.randint(0, 2**20)) % (2**32))
+        rng = np.random.default_rng(np.random.SeedSequence([self.seed, index, self.epoch]))
         stem = self.unique[int(rng.integers(len(self.unique)))]
         variants = self.annotators[stem]
         rec = variants[int(rng.integers(len(variants)))]
@@ -167,7 +172,13 @@ class TileDataset:
             feat, inst = feat[::-1], inst[::-1]
         feat = np.ascontiguousarray(feat)
         # Mild photometric augmentation only on the intensity channel.
-        feat[..., 0] = np.clip(feat[..., 0] * float(rng.uniform(.90, 1.10)) + float(rng.uniform(-.025, .025)), 0, 1)
+        if self.training:
+            scale = float(rng.uniform(.90, 1.10))
+            shift = float(rng.uniform(-.025, .025))
+            feat[..., 0] = np.clip(feat[..., 0] * scale + shift, 0, 1)
+            # A global affine intensity transform also scales the background
+            # subtraction channel around its neutral value of 0.5.
+            feat[..., 1] = np.clip(.5 + (feat[..., 1] - .5) * scale, 0, 1)
         fg, boundary = derive_targets(inst)
         return (torch.from_numpy(feat.transpose(2, 0, 1).copy()),
                 torch.from_numpy(np.stack([fg, boundary], axis=0)))
