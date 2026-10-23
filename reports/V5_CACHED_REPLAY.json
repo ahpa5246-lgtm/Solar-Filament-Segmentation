@@ -1,4 +1,10 @@
 {
+  "artifact_sha256": {
+    "training_manifest.csv": "356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21",
+    "best_detector_predictions_1024.pkl": "69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef",
+    "refined_validation_predictions_2048.pkl": "139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c"
+  },
+  "annotation_sha256": "5da9e92b5a1a1947fd5d57adb6688269625c48ec1ef884daf2a01618c9ed54a1",
   "area_ablation": {
     "status": "completed",
     "experiment": "minimum native-mask area; cached plain refiner only",
@@ -154,11 +160,6 @@
     "Masks have already undergone V5 overlap union; unmerged masks are unavailable.",
     "No new training, GPU inference, official submission, or score improvement."
   ],
-  "artifact_sha256": {
-    "training_manifest.csv": "356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21",
-    "best_detector_predictions_1024.pkl": "69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef",
-    "refined_validation_predictions_2048.pkl": "139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c"
-  },
   "selected_configuration": {
     "detector_epochs": 6,
     "score_threshold": 0.6,
