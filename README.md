@@ -1,21 +1,33 @@
 # Solar Filament Segmentation — IEEE BigDataCup 2026
 
-## V5: pretrained Mask R-CNN + U-Net refiner (new research candidate)
+## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 
-**Verified public scores (2026-10-23):** V1 0.08, V2 0.23, V4 0.24. V5 has **not been trained or scored** yet.
+**Verified public scores (2026-10-23):** V1 0.08, V2 0.23, V4 0.24, **V5 Version 5: 0.32** (confirmed by the owner; not independently re-fetched in this session). V3 has no verified score.
 
 The existing semantic U-Net + watershed pipeline suffers from false-positive and instance-identity errors. V5 changes the *model family*: a COCO-pretrained Mask R-CNN ResNet50-FPN-v2 predicts **separate instances**, followed by an ImageNet-pretrained ResNet18 crop U-Net that refines their masks. A four-flip TTA ablation is selected using official **training-validation** labels, never test labels.
 
-V5 is generated reproducibly from [Nomannic's Apache-2.0 public Kaggle notebook](https://www.kaggle.com/code/nomannic19/cv-solar-filament-mask-r-cnn-u-net-refiner), with attribution and modified cells documented in [third_party/NOTICE.md](third_party/NOTICE.md). The GitHub Action pulls the pinned upstream notebook, checks its structure and Python syntax, and saves [V5 on Kaggle](https://www.kaggle.com/code/minahussain111/solar-filament-research-v5) with **--no-run**. Run the Kaggle notebook manually using Internet On, official competition input, GPU T4 x2, and Save Version → Save & Run All. It trains two GPUs and may take over an hour. It will produce a new `submission.csv` only after successful training. **No score improvement is promised.**
+V5 is generated reproducibly from [Nomannic's Apache-2.0 public Kaggle notebook](https://www.kaggle.com/code/nomannic19/cv-solar-filament-mask-r-cnn-u-net-refiner), with attribution and modified cells documented in [third_party/NOTICE.md](third_party/NOTICE.md). The GitHub Action pulls the pinned upstream notebook, checks its structure and Python syntax, and saves [V5 on Kaggle](https://www.kaggle.com/code/minahussain111/solar-filament-research-v5) with **--no-run**. Run the Kaggle notebook manually using Internet On, official competition input, GPU T4 x2, and Save Version → Save & Run All. The successful Version 5 trained on two T4 GPUs. New runs may take over an hour and must not overwrite the successful artifacts. **No score improvement is promised.**
 
 Detailed forensic report: [V4 failure and V5 experiment](reports/V4_FAILURE_AND_V5_RESEARCH.md).
 
 
-**Status (2026-10-23): confirmed Kaggle public scores V1 0.08, V2 0.23, V4 0.24.** V5 is an unrun transfer-learning research candidate. See [the experiment plan](reports/EXPERIMENT_PLAN_2026.md) and [V4 forensic report](reports/V4_FAILURE_AND_V5_RESEARCH.md).
+**Status (2026-10-23): confirmed Kaggle public scores V1 0.08, V2 0.23, V4 0.24, V5 0.32.** Preserve V5 Version 5 and its checkpoints/submission. See [the experiment plan](reports/EXPERIMENT_PLAN_2026.md) and [V4 forensic report](reports/V4_FAILURE_AND_V5_RESEARCH.md).
 
 A reproducible Python research implementation for [Solar Filament Segmentation Challenge 2026](https://www.kaggle.com/competitions/filament-segmentation-2026): identify **individual** solar-filament instances from 2048×2048 grayscale GONG H-alpha images, and export one pycocotools compressed RLE count per instance into `submission.csv`.
 
 The organizers changed the primary metric to **Panoptic Quality (PQ)**, where instance grouping and spurious/missed detections are critical. The competition's research-quality assessment also evaluates morphology, code readability, and reproducibility; leaderboard position is not a sufficient win condition.
+
+## V6 audit and experiment tools
+
+[V6 audit status and blockers](reports/V6_AUDIT_2026-10-23.md) distinguishes source findings from unmeasured failure modes. `solar.v6_forensics` evaluates independent overlapping instance masks, retains every annotation variant, produces IoU/Dice distributions and contour overlays, and bootstraps by physical observation. Original V5 fitting and holdout manifests are mandatory; a newly generated split cannot validate an already trained model.
+
+The self-contained [V6 notebook](notebooks/v6/solar_filament_v6.ipynb) runs audit readiness by default without GPU training. The private Kaggle slug is prepared but deployment is not yet confirmed. A bounded, single-GPU detector pilot is explicitly opt-in, uses date-separated train/tuning/confirmation partitions, selects checkpoints by local PQ, and preserves all V5 files. It is not yet an improved model or a comparison with a different instance-segmentation method.
+
+```bash
+python -m pip install -r requirements-v6.txt
+python -m solar.v6_forensics --help
+python -m solar.v6_train --help
+```
 
 ## Scientific/methodological choices
 
@@ -32,7 +44,7 @@ The v2 pipeline was trained and scored on Kaggle (public 0.23); these design cho
 
 ## Requirements
 
-- Python 3.10–3.11, `requirements.txt` pinned versions, recommended CUDA GPU with 12+ GiB VRAM (reduce batch if OOM).
+- Python 3.10+ (CPU environment verified with 3.12.14), `requirements.txt` pinned versions, recommended CUDA GPU with 12+ GiB VRAM (reduce batch if OOM).
 - The **original competition dataset** (~751 MB), acquired by an authorized Kaggle account **after accepting the rules**. It is CC BY-NC 4.0 and is **not included or redistributed** here.
 - For an easy reproducible GPU run: upload `notebooks/run_on_kaggle.ipynb` to Kaggle, enable GPU + Internet, attach the competition data, then **Run All**. **Kaggle does not execute this automatically just because the repository exists.** The resulting `submission.csv` must still be uploaded via *Submit Prediction*. See the notebook for commands.
 
@@ -73,12 +85,12 @@ tests/                 Synthetic tests (no Kaggle data or GPU required)
 
 ## What still requires experimental verification?
 
-**The v2 submission passed the full-data CUDA training and Kaggle public scoring stages** (0.23); its 16-observation held-out PQ was 0.3051, not a leaderboard metric. The v3/v4 research candidates remain untrained/unscored as applicable. New CPU synthetic tests validate software behavior, not scientific accuracy. Kaggle GPU execution requires the user's authenticated Kaggle notebook.
+**The v2 submission passed the full-data CUDA training and Kaggle public scoring stages** (0.23); its 16-observation held-out PQ was 0.3051, not a leaderboard metric. V4 scored 0.24 and V5 scored 0.32; V3 has no verified score. New CPU synthetic tests validate software behavior, not scientific accuracy. Kaggle GPU execution requires the user's authenticated Kaggle notebook.
 
-Before final evaluation, produce a **four-page technical PDF using the organizers' Overleaf template**, publish the exact final runnable model and dependencies, and submit the required form by **15 November 2026, 11:59 PM CDT**. The prizes additionally depend on eligibility and U.S. bank-transfer compatibility. The competition permits AI development assistance, but entrants must understand and defend the code and method.
+Before final evaluation, produce a **four-page technical PDF using the organizers' Overleaf template**, publish the exact final runnable model and dependencies, and submit the required form by the previously recorded **15 November 2026** deadline (precise timezone and current instructions must be reverified on the official page). The prizes additionally depend on eligibility and U.S. bank-transfer compatibility. The competition permits AI development assistance, but entrants must understand and defend the code and method.
 
 ## Ethics and licensing
 
 Code in this repository is original and distributed under MIT (OSI approved). Uses PyTorch (BSD), scikit-image (BSD), SciPy (BSD), OpenCV (Apache), NumPy (BSD), and pycocotools (BSD-like permissive); check each pinned upstream license for distribution. Training data © its respective owners: **MAGFiLO / GONG H-alpha dataset CC BY-NC 4.0**, not included in code license. Models trained on the data must obey competition restrictions. No competition-data-derived labels from the test set or additional ground-truth metadata are used.
 
-The project is an independently developed implementation with no code copied from other Kaggle competitors' solutions. Edge-guided attention and soft-clDice experiments are research-inspired and separately identified, not claimed reproductions of the original papers. Never train on ground-truth labels corresponding to the competition test images, even if public copies are available. Useful references: [official self-evaluation notebook](https://www.kaggle.com/code/azimahmadzadeh/self-evaluation-notebook), [MAGFiLO publication](https://doi.org/10.1038/s41597-024-03876-y), [Panoptic Quality](https://doi.org/10.1109/CVPR.2019.00963).
+The original semantic pipeline is independently developed; V5 is an attributed modification of the Apache-2.0 reference described above. Edge-guided attention and soft-clDice experiments are research-inspired and separately identified, not claimed reproductions of the original papers. Never train on ground-truth labels corresponding to the competition test images, even if public copies are available. Useful references: [official self-evaluation notebook](https://www.kaggle.com/code/azimahmadzadeh/self-evaluation-notebook), [MAGFiLO publication](https://doi.org/10.1038/s41597-024-03876-y), [Panoptic Quality](https://doi.org/10.1109/CVPR.2019.00963).

@@ -1,3 +1,5 @@
+> Status update 2026-10-23: V5 Version 5 completed on T4 ×2 and achieved owner-confirmed official Public PQ **0.32**; V4 is **0.24**. V3 has no verified score. Historical proposed version labels below are superseded by [the V6 audit](V6_AUDIT_2026-10-23.md). Preserve successful V5 artifacts.
+
 # V4 forensic audit and V5 transfer-learning experiment (2026-10-23)
 
 ## Confirmed Kaggle outcomes (user-provided screenshot and run log)
@@ -7,6 +9,7 @@
 | V1 | LightGBM | 0.08 | — |
 | V2 | Two-head U-Net, trained 30 epochs | 0.23 | +0.15 |
 | V4 | Edge-guided attention U-Net, trained 30 epochs | **0.24** | +0.01 vs V2 |
+| V5 Version 5 | COCO Mask R-CNN + ResNet18 crop refiner | **0.32** | +33.3% vs V4 |
 
 PQ lies in [0,1], so **0.5** (not 5) is the meaningful aspirational target. None of the new candidates has yet demonstrated it.
 

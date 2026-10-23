@@ -1,3 +1,5 @@
+> Status 2026-10-23: V5 Version 5 is the owner-confirmed best official Public PQ **0.32**. V6 implementation and unresolved measurements: [audit](V6_AUDIT_2026-10-23.md). This is not the final four-page organizer-template report; template/deadline timezone must be verified. No final submission authorized or performed.
+
 # Technical report (working draft — NOT READY FOR SUBMISSION)
 
 **Use the organizers' mandatory Overleaf template and four-page limit before submitting. Replace every `[MEASURE]` from actual model outputs. Never invent results.**

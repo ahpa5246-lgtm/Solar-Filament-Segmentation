@@ -1,0 +1,4 @@
+# CPU onboarding installs CPU torch/torchvision wheels first; Kaggle retains its
+# compatible CUDA pair and records pip freeze rather than replacing it silently.
+-r requirements.txt
+torchvision==0.21.0

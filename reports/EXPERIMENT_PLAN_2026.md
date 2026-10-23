@@ -1,3 +1,5 @@
+> Status update 2026-10-23: V5 Version 5 completed on T4 ×2 and achieved owner-confirmed official Public PQ **0.32**; V4 is **0.24**. V3 has no verified score. Historical proposed version labels below are superseded by [the V6 audit](V6_AUDIT_2026-10-23.md). Preserve successful V5 artifacts.
+
 # Research plan after Kaggle public score 0.23 (2026-10-23)
 
 ## Measured baseline

@@ -1,0 +1,18 @@
+{
+  "id": "minahussain111/solar-filament-research-v6",
+  "title": "solar-filament-research-v6",
+  "code_file": "solar_filament_v6.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [
+    "filament-segmentation-2026"
+  ],
+  "kernel_sources": [
+    "minahussain111/solar-filament-research-v5"
+  ],
+  "model_sources": []
+}

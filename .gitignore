@@ -12,3 +12,4 @@ __pycache__/
 .pytest_cache/
 .venv/
 .ipynb_checkpoints/
+*.egg-info/
