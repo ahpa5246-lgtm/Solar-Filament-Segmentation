@@ -1,0 +1,40 @@
+name: Audit immutable V5 and official evaluator (no GPU)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/audit-v5.yml'
+      - 'scripts/audit_v5_source.py'
+      - 'tests/test_v5_source_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned official CLI and check source audit
+        run: |
+          python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9' pytest==8.3.4
+          python -m pytest tests/test_v5_source_audit.py -q
+      - name: Retrieve source only (never run GPU training)
+        run: |
+          set -euo pipefail
+          test -n "$KAGGLE_API_TOKEN"
+          mkdir -p /tmp/v5-source /tmp/official-source
+          kaggle kernels pull minahussain111/solar-filament-research-v5/5 -p /tmp/v5-source
+          kaggle kernels pull azimahmadzadeh/self-evaluation-notebook -p /tmp/official-source
+      - name: Publish source-only audit summary
+        run: |
+          python scripts/audit_v5_source.py --v5 /tmp/v5-source --official /tmp/official-source --out /tmp/source-audit.md
+          cat /tmp/source-audit.md >> "$GITHUB_STEP_SUMMARY"
