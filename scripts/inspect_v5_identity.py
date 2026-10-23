@@ -37,12 +37,12 @@ def error_status(error):
 def main():
     # Authentication stays inside the official SDK and its existing Actions binding.
     from kaggle.api.kaggle_api_extended import KaggleApi
-    from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest,ApiGetKernelSessionStatusRequest
+    from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest,ApiGetKernelSessionStatusRequest,ApiListKernelSessionOutputRequest
     api=KaggleApi();api.authenticate()
     owner='minahussain111';slug='solar-filament-research-v5'
     report={'target':f'https://www.kaggle.com/code/{owner}/{slug}',
             'purpose':'read-only identity/history diagnosis; no model execution or artifact downloads',
-            'source_probes':{},'status_probes':{}}
+            'source_probes':{},'status_probes':{},'session_output_probes':{}}
     try:
         report['matching_notebooks']=[public_metadata(item) for item in (api.kernels_list(mine=True,search=slug,page_size=20) or [])]
     except Exception as error:report['matching_notebooks_error']=error_status(error)
@@ -57,7 +57,22 @@ def main():
                                               'blob_metadata':public_metadata(response.blob),
                                               'source_summary':source_summary(response.blob.source)}
             except Exception as error:report['source_probes'][key]=error_status(error)
-        for label in [None,'v5','5']:
+        # Earlier saved versions can own the training session's artifacts even
+        # when a later code-only save exposes only a rendering log. List names
+        # only; signed download URLs and private log content are never persisted.
+        for label in ['v1','v2','v3','v4','v5']:
+            request=ApiListKernelSessionOutputRequest();request.user_name=owner;request.kernel_slug=slug
+            request.version_label=label
+            try:
+                response=client.kernels.kernels_api_client.list_kernel_session_output(request)
+                log=response.log or ''
+                report['session_output_probes'][label]={
+                    'files':[{'name':item.file_name} for item in (response.files or [])],
+                    'log_bytes':len(log.encode()),
+                    'training_marker_count':sum(log.lower().count(term) for term in ['epoch','validation','preflight passed']),
+                    'has_more_pages':bool(getattr(response,'next_page_token',None))}
+            except Exception as error:report['session_output_probes'][label]=error_status(error)
+        for label in [None,'v1','v2','v3','v4','v5','5']:
             request=ApiGetKernelSessionStatusRequest();request.user_name=owner;request.kernel_slug=slug
             if label is not None:request.version_label=label
             try:
