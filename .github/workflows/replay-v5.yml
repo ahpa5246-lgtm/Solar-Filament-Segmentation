@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/replay-v5.yml'
       - 'scripts/replay_v5_cached.py'
+      - 'solar/v5_replay.py'
   workflow_dispatch:
 permissions:
   contents: write

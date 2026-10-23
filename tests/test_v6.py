@@ -268,3 +268,19 @@ def test_area_search_excludes_training_dates_and_confirms_on_separate_dates():
     assert report['confirmation']['baseline_pq']==pytest.approx(2/3)
     assert report['confirmation']['paired_macro_delta_ci']['low']>0
     assert report['eligible_for_official_submission'] is False
+
+
+def test_archived_v5_refiner_helpers_load_without_training_or_downloads():
+    import torch
+    from pathlib import Path
+    from solar.v6_refiner_audit import load_components,postprocess
+    from pycocotools import mask as coco
+    source=Path(__file__).resolve().parents[1]/'notebooks/baselines/v5_training_session_v3.ipynb'
+    helpers=load_components(source)
+    model=helpers['CropUNet'](pretrained=False).eval()
+    with torch.inference_mode():output=model(torch.zeros(1,3,64,64))
+    assert output.shape==(1,1,64,64) and torch.isfinite(output).all()
+    rles=[coco.encode(np.asfortranarray(m.astype(np.uint8))) for m in masks()]
+    assert len(postprocess(rles,[.9,.8],'union'))==1
+    assert len(postprocess(rles,[.9,.8],'nms'))==2
+    assert len(postprocess(rles,[.9,.8],'none'))==2

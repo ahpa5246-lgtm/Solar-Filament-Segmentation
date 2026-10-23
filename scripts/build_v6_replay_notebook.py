@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def build(out):
     modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in ['__init__.py','v6_audit.py','v6_cached_search.py']}
-    modules['solar/v6_replay.py']=(ROOT/'scripts/replay_v5_cached.py').read_text()
+    modules['solar/v5_replay.py']=(ROOT/'solar/v5_replay.py').read_text()
     codes=["""import sys,json,subprocess
 from pathlib import Path
 WORK=Path('/kaggle/working/v6-cpu-audit')
@@ -23,7 +23,7 @@ PACKAGE=WORK/'package'
 for name,source in sources.items():
     path=PACKAGE/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(source)
 sys.path.insert(0,str(PACKAGE))
-""","""from solar.v6_replay import replay
+""","""from solar.v5_replay import replay
 INPUT=Path('/kaggle/input')
 def one(name):
     files=list(INPUT.rglob(name))

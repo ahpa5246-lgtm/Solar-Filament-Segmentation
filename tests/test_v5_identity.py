@@ -48,3 +48,15 @@ def test_private_cache_excludes_test_predictions_and_raw_labels():
     assert metadata()['isPrivate'] is True
     assert 'test_predictions_2048.pkl' not in FILES
     assert not any('Annotations' in name or 'crop_masks' in name for name in FILES)
+
+
+def test_refiner_notebook_is_private_and_has_explicit_inference_budget(tmp_path):
+    import ast,json
+    from scripts.build_v6_refiner_notebook import build
+    build(tmp_path/'refiner.ipynb')
+    meta=json.loads((tmp_path/'kernel-metadata.json').read_text())
+    assert meta['is_private'] is True and meta['enable_gpu'] is True
+    nb=json.loads((tmp_path/'refiner.ipynb').read_text())
+    source='\n'.join(''.join(c['source']) for c in nb['cells'] if c['cell_type']=='code')
+    ast.parse(source)
+    assert 'seconds=1000' in source

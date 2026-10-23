@@ -40,3 +40,9 @@ Cutoffs through 128 tied the baseline; 256 reduced tuning PQ, and larger cutoffs
 Current quota query reports 30 GPU hours total and 4.2724 used at observation time. It is not a reservation or guarantee. Any inference execution must be bounded and recorded separately from training and official evaluation.
 
 Machine-readable measurements: [V5_CACHED_REPLAY.json](V5_CACHED_REPLAY.json). Original source snapshot: [v5_version5.ipynb](../notebooks/baselines/v5_version5.ipynb). No higher official score is claimed.
+
+## Fresh-session reproduction and bounded refiner experiment
+
+The private immutable dataset cache has verified Kaggle `isPrivate=true` metadata. CPU notebook `solar-filament-research-v6-audit`, version 2, completed with all three source-artifact fingerprints enforced and reproduced the table above. See `V5_PRIVATE_CACHE.json` and `V6_KAGGLE_CPU_EXECUTION.json`.
+
+The next experiment is inference-only: exact archived best-refiner checkpoint, original detector crops, plain versus four-flip logit averaging, thresholds 0.65/0.75/0.85/0.90, and any-overlap union versus mask-IoU NMS versus retaining masks. Selection uses only the fixed date-isolated tuning observations. Only the selected candidate and the original flip4/0.85/union baseline are compared on confirmation observations. Plain replay must reproduce cached micro PQ within 0.005 before selection. Original V5 holdout reuse remains a limitation. No test inference or official submission is performed. Kaggle execution is limited to 1,200 seconds with a minimum remaining quota guard; the application inference budget is 1,000 seconds. Although T4×2 is allocated, only device 0 is used. A separate read-only review verified original crop/TTA parity and identified a runner status check that was corrected before launch.
