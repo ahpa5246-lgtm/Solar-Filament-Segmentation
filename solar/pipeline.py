@@ -15,7 +15,7 @@ def load_model(path: str | Path, device: str | torch.device = 'cpu'):
     ckpt = torch.load(path, map_location=device, weights_only=False)
     if not isinstance(ckpt, dict) or 'state_dict' not in ckpt:
         raise ValueError('Invalid model checkpoint, expected {state_dict, base, ...}')
-    model = Net(base=ckpt.get('base',24)).to(device)
+    model = Net(base=ckpt.get('base',24),architecture=ckpt.get('architecture','unet')).to(device)
     model.load_state_dict(ckpt['state_dict'], strict=True)
     return model.eval(), ckpt
 
@@ -50,8 +50,17 @@ def predict_probabilities(model, grayscale: np.ndarray, tile=512, stride=384, ba
             logits = model(batch)
             probabilities = logits.float().sigmoid()
             if tta:
+                # 'flip' reproduces the original two-view baseline exactly.
                 flip = model(torch.flip(batch,(-1,))).float().sigmoid()
-                probabilities = .5*(probabilities+torch.flip(flip,(-1,)))
+                probabilities = probabilities + torch.flip(flip,(-1,))
+                views = 2
+                if tta == 'd4':
+                    vertical = model(torch.flip(batch,(-2,))).float().sigmoid()
+                    rotated = model(torch.rot90(batch,2,(-2,-1))).float().sigmoid()
+                    probabilities = (probabilities + torch.flip(vertical,(-2,))
+                                     + torch.rot90(rotated,2,(-2,-1)))
+                    views = 4
+                probabilities = probabilities / views
         probs = probabilities.cpu().numpy()
         for (y,x),prob in zip(group,probs):
             pred[:,y:y+tile,x:x+tile] += prob*window
