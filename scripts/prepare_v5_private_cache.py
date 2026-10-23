@@ -29,10 +29,17 @@ def main():
         with tempfile.TemporaryDirectory(prefix='v5-private-cache-') as tmp:
             root=Path(tmp)
             exists=False
+            report['stage']='check_target'
             try:api.dataset_status(CACHE_ID);exists=True
             except Exception as error:
-                if getattr(getattr(error,'response',None),'status_code',None)!=404:raise
+                status=getattr(getattr(error,'response',None),'status_code',None)
+                report['initial_status_http']=status
+                # Kaggle can return 403 for a nonexistent/private dataset. This
+                # does not prove creation is denied. The official create API
+                # checks existence itself and cannot overwrite a dataset.
+                if status not in (403,404):raise
             if not exists:
+                report['stage']='download_whitelisted_artifacts'
                 pattern=r'(^|/)('+ '|'.join(re.escape(name) for name in sorted(FILES))+r')$'
                 api.kernels_output('minahussain111/solar-filament-research-v5/v3',str(root/'download'),file_pattern=pattern,page_size=100)
                 stage=root/'stage';stage.mkdir()
@@ -47,10 +54,12 @@ def main():
                 report['artifact_sha256']=fingerprints;report['bytes']=total
                 (stage/'provenance.json').write_text(json.dumps({'source_session':report['source_session'],'sha256':fingerprints},indent=2))
                 (stage/'dataset-metadata.json').write_text(json.dumps(metadata(),indent=2))
+                report['stage']='create_private_dataset'
                 response=api.dataset_create_new(str(stage),public=False,quiet=True,convert_to_csv=False)
                 if response.error:raise RuntimeError('Private dataset creation was rejected')
                 report['created']=True
             else:report['created']=False
+            report['stage']='wait_for_cache'
             deadline=time.monotonic()+300
             state='unknown'
             while time.monotonic()<deadline:
@@ -59,6 +68,7 @@ def main():
                 if str(state).lower() in {'error','failed'}:raise RuntimeError('Private cache processing failed')
                 time.sleep(10)
             if str(state).lower()!='ready':raise RuntimeError('Private cache did not become ready within budget')
+            report['stage']='verify_privacy_and_provenance'
             meta_path=api.dataset_metadata(CACHE_ID,str(root/'remote-metadata'))
             remote=json.loads(Path(meta_path).read_text())
             private=remote.get('isPrivate',remote.get('is_private'))
@@ -70,6 +80,15 @@ def main():
         report['status']='blocked';report['error_type']=type(error).__name__
         report['http_status']=getattr(getattr(error,'response',None),'status_code',None)
         if type(error) in (ValueError,RuntimeError):report['diagnosis']=str(error)
+        try:
+            import os
+            message=getattr(error,'response',None).json().get('message','')
+            token=os.environ.get('KAGGLE_API_TOKEN','')
+            if token:message=message.replace(token,'[REDACTED]')
+            message=re.sub(r'KGAT_[A-Za-z0-9_-]+','[REDACTED]',message)
+            message=re.sub(r'https?://\S+','[URL omitted]',message)
+            if message:report['api_message']=message[:500]
+        except Exception:pass
     Path('reports/V5_PRIVATE_CACHE.json').write_text(json.dumps(report,indent=2)+'\n')
     if report['status']!='ready':raise SystemExit(1)
     print('Private V5 cache is ready; privacy and source fingerprints verified.')
