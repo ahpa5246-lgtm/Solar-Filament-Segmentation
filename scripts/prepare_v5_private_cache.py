@@ -29,6 +29,12 @@ def main():
         with tempfile.TemporaryDirectory(prefix='v5-private-cache-') as tmp:
             root=Path(tmp)
             exists=False
+            report['stage']='discover_owned_cache'
+            matches=api.dataset_list(mine=True,search=metadata()['title']) or []
+            refs=[getattr(item,'ref','') for item in matches if getattr(item,'title','')==metadata()['title']]
+            report['matching_owned_refs']=refs
+            if refs and CACHE_ID not in refs:raise RuntimeError('Owned cache has a different reference; inspect returned refs before reuse')
+            exists=CACHE_ID in refs
             report['stage']='check_target'
             try:api.dataset_status(CACHE_ID);exists=True
             except Exception as error:
@@ -56,14 +62,25 @@ def main():
                 (stage/'dataset-metadata.json').write_text(json.dumps(metadata(),indent=2))
                 report['stage']='create_private_dataset'
                 response=api.dataset_create_new(str(stage),public=False,quiet=True,convert_to_csv=False)
-                if response.error:raise RuntimeError('Private dataset creation was rejected')
+                report['creation_status']=str(response.status)
+                from urllib.parse import urlsplit
+                url=urlsplit(str(response.url or ''))
+                if url.hostname in {'www.kaggle.com','kaggle.com'}:report['creation_url']=url.scheme+'://'+url.hostname+url.path
+                if response.error or str(response.status).lower()!='ok':raise RuntimeError('Private dataset creation was rejected')
                 report['created']=True
             else:report['created']=False
             report['stage']='wait_for_cache'
             deadline=time.monotonic()+300
             state='unknown'
             while time.monotonic()<deadline:
-                state=api.dataset_status(CACHE_ID)
+                try:
+                    state=api.dataset_status(CACHE_ID)
+                except Exception as error:
+                    status=getattr(getattr(error,'response',None),'status_code',None)
+                    if status not in (403,404):raise
+                    report['last_processing_status_http']=status
+                    time.sleep(10)
+                    continue
                 if str(state).lower()=='ready':break
                 if str(state).lower() in {'error','failed'}:raise RuntimeError('Private cache processing failed')
                 time.sleep(10)
