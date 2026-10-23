@@ -1,0 +1,19 @@
+{
+  "id": "minahussain111/solar-filament-research-v6-resolution",
+  "title": "solar-filament-research-v6-resolution",
+  "code_file": "solar_filament_resolution_pilot.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "enable_internet": true,
+  "dataset_sources": [
+    "minahussain111/solar-filament-v5-v3-cache-356bd788"
+  ],
+  "competition_sources": [
+    "filament-segmentation-2026"
+  ],
+  "kernel_sources": [],
+  "model_sources": []
+}
