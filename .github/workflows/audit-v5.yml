@@ -7,6 +7,8 @@ on:
       - '.github/workflows/audit-v5.yml'
       - 'scripts/audit_v5_source.py'
       - 'tests/test_v5_source_audit.py'
+      - 'scripts/inspect_v5_identity.py'
+      - 'tests/test_v5_identity.py'
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,9 @@ jobs:
       - name: Install pinned official CLI and check source audit
         run: |
           python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9' pytest==8.3.4
-          python -m pytest tests/test_v5_source_audit.py -q
+          python -m pytest tests/test_v5_source_audit.py tests/test_v5_identity.py -q
+      - name: Inspect notebook identity and bounded version references
+        run: python scripts/inspect_v5_identity.py
       - name: Retrieve and diagnose source access (never run GPU training)
         run: |
           python - <<'PYCODE'
@@ -86,6 +90,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add reports/V5_SOURCE_ACCESS.md
+          if [ -f reports/V5_IDENTITY.json ]; then git add reports/V5_IDENTITY.json; fi
           if [ -f reports/OFFICIAL_EVALUATOR_EXCERPTS.md ]; then git add reports/OFFICIAL_EVALUATOR_EXCERPTS.md; fi
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Record sanitized V5 source access diagnostics [skip ci]"
