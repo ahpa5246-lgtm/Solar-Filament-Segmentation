@@ -19,7 +19,7 @@ from solar.auto14_plan import (
     MAX_GPU_SECONDS, MIN_REMAINING_GPU_HOURS, best_result,
     choose_experiment, day_index, notebook_slug,
 )
-from build_auto14_notebook import build
+from scripts.build_auto14_notebook import build
 
 STATE=ROOT/"reports/AUTO14_STATE.json"
 STOP={"COMPLETE","ERROR","FAILED","CANCELED","CANCELLED"}
