@@ -88,9 +88,20 @@ def execute(api,day,history,report):
     if available<MIN_REMAINING_GPU_HOURS:
         report.update(status="SKIPPED_QUOTA",reason="Less than 2.25 GPU hours remaining")
         return
-    status=recover_existing(api,slug)
-    reference=slug
-    if status is None:
+    prior_version=report.get("known_version")
+    if prior_version is not None:
+        # A launched Kaggle version is an immutable recovery target. If it
+        # disappeared, fail closed rather than silently training twice.
+        if type(prior_version) is not int or prior_version < 1:
+            raise RuntimeError("Invalid recovery version")
+        reference=slug+"/v"+str(prior_version)
+        status=recover_existing(api,reference)
+        report["version"]=prior_version
+        report["launch"]="resume_existing"
+    else:
+        status=recover_existing(api,slug)
+        reference=slug
+    if status is None and prior_version is None:
         with tempfile.TemporaryDirectory(prefix="solar-auto14-") as temp:
             path=Path(temp)/"auto14.ipynb"
             metadata=build(day,path,history)
@@ -161,8 +172,12 @@ def main(argv=None):
         print("Day already recorded; no duplicate launch:",day)
         return
     if prior.get("status")=="FAILED":
-        safe_retry=(args.retry_failed and prior.get("attempts",1)==1 and
-                    not prior.get("version") and not prior.get("launch"))
+        safe_retry=(args.retry_failed and prior.get("attempts",1)<=2 and (
+            (not prior.get("version") and not prior.get("launch") and
+             prior.get("attempts",1)==1) or
+            (type(prior.get("version")) is int and prior["version"]>=1 and
+             prior.get("launch")=="new")
+        ))
         if not safe_retry:
             print("Previous failure is not safe to retry without investigation:",day)
             return
@@ -171,6 +186,8 @@ def main(argv=None):
     report={"day":day,"utc_day":dt.datetime.now(dt.timezone.utc).date().isoformat(),
             "status":"STARTED","training":True,"test_inference":False,"official_submission":False,
             "attempts":prior.get("attempts",0)+1}
+    if type(prior.get("version")) is int and prior.get("launch")=="new":
+        report["known_version"]=prior["version"]
     try:
         from kaggle.api.kaggle_api_extended import KaggleApi
         api=KaggleApi()
