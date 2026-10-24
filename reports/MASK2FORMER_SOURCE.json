@@ -3,8 +3,13 @@
   "library": "transformers==4.49.0",
   "library_license": "Apache-2.0",
   "training": false,
+  "observed_license": "other",
+  "card_license_fields": {
+    "license": "other"
+  },
+  "card_header": "\nlicense: other\ntags:\n- vision\n- image-segmentation\ndatasets:\n- coco\nwidget:\n- src: http://images.cocodataset.org/val2017/000000039769.jpg\n  example_title: Cats\n- src: http://images.cocodataset.org/val2017/000000039770.jpg\n  example_title: Castle\n",
   "status": "blocked",
   "error_type": "RuntimeError",
   "http_status": null,
-  "diagnosis": "Model license not verified as compatible"
+  "diagnosis": "Model license not verified as compatible; observed fields recorded"
 }
