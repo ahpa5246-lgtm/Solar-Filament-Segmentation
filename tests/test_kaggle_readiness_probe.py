@@ -51,3 +51,19 @@ def test_inventory_never_submits_and_failure_is_explicit():
     assert a["assessment"]=="NO_NEW_SCORED_CHALLENGER"
     assert a["v5_csv"]["status"]=="MISSING_OR_NONUNIQUE"
     assert a["submission_attempted"] is False
+
+
+def test_failed_kaggle_research_emits_only_exception_names_not_private_logs():
+    from scripts.kaggle_readiness_probe import _research
+    class Fake:
+        def kernels_list(self,*args,**kwargs):
+            return [SimpleNamespace(ref="minahussain111/solar-autoresearch-d01")]
+        def kernels_status(self,*args,**kwargs):
+            return SimpleNamespace(status="ERROR")
+        def kernels_logs(self,*args,**kwargs):
+            return '[{"data":"Traceback: ModuleNotFoundError: private user value 123"}]'
+    result=_research(Fake())
+    day=result["1"]
+    assert day["exception_types"]==["ModuleNotFoundError"]
+    assert "private user" not in str(day)
+    assert day["log_bytes"]>20 and len(day["log_sha256"])==64
