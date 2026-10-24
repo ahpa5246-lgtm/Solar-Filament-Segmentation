@@ -26,7 +26,7 @@ Fourteen predeclared configurations explore U-Net width, 1024/1536 working resol
 6. Recover a small auto14_result.json and commit only summary metrics, execution state, source revision, training configuration and checkpoint hash to reports/AUTO14_STATE.json. Never commit images, annotation polygons, model weights, test predictions, or secrets.
 7. A network-uncertain upload is not blindly attempted again. Preexisting Kaggle jobs are read instead. Failed days are recorded.
 
-**No daily competition submission, no test-set inference, and no test labels.** Each local training score is exploratory. A final separately reviewed checkpoint must produce a validated 180-image test CSV for official Kaggle scoring. That step is not automatically implemented by this program. These limits protect the competition and avoid accidental leaderboard optimization.
+**No daily competition submission, no test-set inference, and no test labels.** Each local training score is exploratory. A separate one-shot final workflow is scheduled on 2026-11-07 UTC. It chooses the strongest verified candidate by LOCAL tuning only, evaluates that frozen candidate once against unused month-grouped confirmation labels, and if local confirmation PQ >=0.36 creates a full 180-image test CSV and attempts exactly one idempotency-checked official Kaggle submission. An official score exists only if Kaggle actually returns it. If confirmation fails, no CSV or official submission is attempted; V5 remains preserved.
 
 ## Monitor independently
 
@@ -47,3 +47,9 @@ This autonomous track does not yet reproduce 0.70. Some model families are poor 
 ## Operational limitations
 
 Kaggle notebooks require account access, available free GPU quota and working Internet for the exact pinned GitHub source; the process can fail. GitHub Actions is a scheduled execution service, not an independent AI researcher. It cannot autonomously invent architecture changes or guarantee numerical improvements. Repeated tuning on fixed validation is not independent statistical confirmation. Protect final blind evaluation from repeated optimization, and distinguish model ownership of new weights from authorship of borrowed architecture.
+
+## Automatic final evaluation and score retrieval
+
+The separate workflow in .github/workflows/auto14-final.yml runs at 05:31 UTC on November 7, 2026 (the date is hard-guarded in Python). It checks the research ledger, selects the best verified checkpoint without looking at leaderboard scores, mounts only that candidate's private Kaggle output plus the official competition inputs, validates months across train/tune/confirmation, measures local one-to-one PQ on the sealed confirmation set, then conditionally generates a checked compressed-COCO-RLE CSV from the 180 official test images. If all checks pass, GitHub Actions makes ONE Kaggle upload and records the real evaluation response (if received) in reports/AUTO14_FINAL.json. The generated CSV stays inside the private Kaggle notebook solar-autoresearch-final-2026 and the public repository stores only hash, counts and aggregate scores. The finalizing Kaggle notebook performs inference only, not additional model training.
+
+Successful automations do not absolve ownership of the final four-page technical report and submission form. Kaggle quotas, API access, GPU availability, GitHub scheduler timing, training quality, and independent confirmation can prevent scoring. A provisional local PQ of 0.36 is a **decision threshold**, not a claim about the score the hidden Kaggle metric will return. No path promises a score of 0.70.
