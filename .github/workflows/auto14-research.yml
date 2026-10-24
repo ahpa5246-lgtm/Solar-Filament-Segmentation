@@ -12,6 +12,9 @@ on:
       - 'scripts/build_auto14_notebook.py'
       - 'solar/auto14_plan.py'
       - 'solar/auto14_upgrade.py'
+      - 'solar/auto14_geometry.py'
+      - 'scripts/auto14_geometry_tune.py'
+      - 'tests/test_auto14_geometry.py'
       - 'tests/test_auto14.py'
       - 'tests/test_auto14_upgrade.py'
 

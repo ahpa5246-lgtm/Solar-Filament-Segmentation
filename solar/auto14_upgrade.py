@@ -16,7 +16,36 @@ def _replace_exactly_once(source: str, needle: str, replacement: str, label: str
     return source.replace(needle, replacement)
 
 
-def patch_auto14_sources(train: str, losses: str, tune: str) -> dict[str, str]:
+def patch_auto14_postprocess_source(source: str) -> str:
+    """Optionally reconnect aligned components; zero gap = upstream identity.
+
+    Modifies only the postprocess layer. Both daily notebook and final notebook
+    must apply this identical patch before importing solarseg.postprocess.
+    """
+    source = _replace_exactly_once(
+        source, "import numpy as np\n",
+        "import numpy as np\n\nfrom .auto14_geometry import link_aligned_fragments\n",
+        "postprocess geometry import",
+    )
+    source = _replace_exactly_once(
+        source, "    merge_dist: int = 0\n",
+        "    merge_dist: int = 0\n    link_gap: int = 0\n",
+        "postprocess configuration",
+    )
+    source = _replace_exactly_once(
+        source, "    return filter_components(raw, cfg.min_area, cfg.max_instances)\n",
+        """    result = filter_components(raw, cfg.min_area, cfg.max_instances)
+    if cfg.link_gap:
+        return link_aligned_fragments(result, max_gap=cfg.link_gap)
+    return result
+""",
+        "postprocess instance recovery",
+    )
+    ast.parse(source, filename="solarseg/postprocess.py")
+    return source
+
+
+def patch_auto14_sources(train: str, losses: str, tune: str, postprocess: str | None = None) -> dict[str, str]:
     """Introduce boundary-aware BCE and month-balanced local hyperparameter tuning.
 
     Boundary emphasis is optional and equals the original upstream loss
@@ -101,6 +130,8 @@ def patch_auto14_sources(train: str, losses: str, tune: str) -> dict[str, str]:
         "tune balanced month sampler",
     )
     revised = {"scripts/train.py": train, "solarseg/losses.py": losses, "scripts/tune.py": tune}
+    if postprocess is not None:
+        revised["solarseg/postprocess.py"] = patch_auto14_postprocess_source(postprocess)
     for path, text in revised.items():
         ast.parse(text, filename=path)
     return revised
