@@ -19,6 +19,20 @@ jobs:
         run: OMP_NUM_THREADS=2 python -m pytest -ra --junitxml=artifacts/unit-tests.xml
       - name: Verify installed wheel and execute default notebook outside checkout
         run: OMP_NUM_THREADS=2 python scripts/verify_repository.py --out artifacts/cpu-delivery-verification.json
+      - name: Reproduce Kaggle COCO binary preflight on CPU
+        run: |
+          python -m pip install 'pycocotools==2.0.11'
+          python - <<'PY'
+          import numpy as np
+          from pycocotools import mask as coco
+          a=np.zeros((64,64),dtype=np.uint8)
+          a[12:17,30:35]=1
+          rle=coco.encode(np.asfortranarray(a))
+          assert int(coco.area(rle))==25
+          assert np.array_equal(coco.decode(rle),a)
+          assert np.array_equal(coco.decode(coco.merge([rle])),a)
+          print("COCO binary NumPy encode/decode/merge/area smoke PASS")
+          PY
       - name: Preserve verification evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
