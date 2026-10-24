@@ -2,15 +2,21 @@
 import ast
 import json
 from pathlib import Path
+import sys
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 
 def build(out):
-    names=['__init__.py','v6_audit.py','v6_cached_search.py','v5_replay.py','v6_diagnostics.py','v6_refiner_audit.py','v6_resolution_audit.py','v6_submission.py']
+    names=['__init__.py','v6_audit.py','v6_cached_search.py','v5_replay.py','v6_diagnostics.py','v6_refiner_audit.py','v6_resolution_audit.py','v6_promotion.py','v6_submission.py']
     modules={f'solar/{name}':(ROOT/'solar'/name).read_text() for name in names}
     cache=json.loads((ROOT/'reports/V5_FINAL_CACHE.json').read_text())
     if cache.get('status')!='ready' or cache.get('private_verified') is not True or not cache.get('artifact_sha256'):raise RuntimeError('Fingerprint-verified private final cache is not ready')
     gate=json.loads((ROOT/'reports/V6_KAGGLE_CONFIRMATION_EXECUTION.json').read_text())
+    from solar.v6_promotion import promotion_decision
+    decision=promotion_decision(gate)
+    if not decision['promote']:
+        raise RuntimeError('Full confirmation does not support promotion: '+', '.join(decision['reasons']))
     baseline=(ROOT/'notebooks/baselines/v5_training_session_v3.ipynb').read_text()
     code="""import sys,json,subprocess
 from pathlib import Path
@@ -28,6 +34,8 @@ for name,source in SOURCES.items():
 source_path=PACKAGE/'archived_v5_training_v3.ipynb';source_path.write_text(BASELINE)
 sys.path.insert(0,str(PACKAGE))
 from solar.v6_submission import run
+from solar.v6_promotion import promotion_decision
+assert promotion_decision(GATE)['promote'], 'Promotion evidence changed or is insufficient'
 INPUT=Path('/kaggle/input')
 def one(name):
     files=list(INPUT.rglob(name))

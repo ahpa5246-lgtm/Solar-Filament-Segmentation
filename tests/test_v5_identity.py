@@ -102,12 +102,17 @@ def test_status_inspection_preserves_completed_cpu_execution_evidence(tmp_path,m
 
 
 def test_submission_gate_requires_unused_date_confirmation_and_positive_uncertainty():
-    import importlib.util,copy
+    import importlib.util,copy,json
     from pathlib import Path
-    path=Path(__file__).resolve().parents[1]/'scripts/run_v6_submission.py'
+    root=Path(__file__).resolve().parents[1]
+    path=root/'scripts/run_v6_submission.py'
     spec=importlib.util.spec_from_file_location('final_submit_gate',path)
     runner=importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
-    valid={'status':'COMPLETE','result':{'fixed_nms_confirmation':True,'confirmation_observations':50,'selected':'1024|nms','confirmation_gain_supported':True,'paired_macro_delta_ci':{'low':.001},'confirmation_candidate':{'reference_micro_pq':.42},'confirmation_baseline':{'reference_micro_pq':.40}}}
+    # A complete real report, with ONLY its confidence interval and verdict
+    # made synthetic for the positive software-control test. Not a PQ claim.
+    valid=json.loads((root/'reports/V6_KAGGLE_CONFIRMATION_EXECUTION.json').read_text())
+    valid['result']['paired_macro_delta_ci']={'estimate':.006,'low':.001,'high':.012,'replicates':2000}
+    valid['result']['confirmation_gain_supported']=True
     assert runner.gate(valid)
     for key,value in [('confirmation_observations',16),('fixed_nms_confirmation',False),('confirmation_gain_supported',False),('selected','2048|nms')]:
         bad=copy.deepcopy(valid);bad['result'][key]=value;assert not runner.gate(bad)

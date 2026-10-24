@@ -12,12 +12,14 @@ COMPETITION='filament-segmentation-2026'
 REPORT=Path('reports/V6_OFFICIAL_SUBMISSION.json')
 
 
+# Executable from an uninstalled checkout in GitHub Actions.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from solar.v6_promotion import promotion_decision
+
+
 def gate(result):
-    r=result.get('result',{})
-    return (result.get('status')=='COMPLETE' and r.get('fixed_nms_confirmation') is True
-            and r.get('confirmation_observations',0)>=40 and r.get('selected')=='1024|nms'
-            and r.get('confirmation_gain_supported') is True and r['paired_macro_delta_ci']['low']>0
-            and r['confirmation_candidate']['reference_micro_pq']>r['confirmation_baseline']['reference_micro_pq'])
+    """Retained for callers; real promotion checks live in one fail-closed module."""
+    return promotion_decision(result)['promote']
 
 
 def existing_submission(api,message,previous,csv_sha):
@@ -59,7 +61,10 @@ def main():
     reference=None
     try:
         confirmation=json.loads(Path('reports/V6_KAGGLE_CONFIRMATION_EXECUTION.json').read_text())
-        if not gate(confirmation):raise RuntimeError('Unused-date confirmation did not support promotion; no test execution or submission')
+        decision=promotion_decision(confirmation)
+        report['promotion_decision']=decision
+        if not decision['promote']:
+            raise RuntimeError('Confirmation failed; no test execution or submission: '+', '.join(decision['reasons']))
         final=json.loads(Path('reports/V5_FINAL_CACHE.json').read_text())
         if final.get('private_verified') is not True or final.get('status')!='ready':raise RuntimeError('Private final cache not ready')
         quota=api.quota_view().gpu_quota
