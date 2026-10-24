@@ -1,4 +1,5 @@
 name: Kaggle official score and real CSV readiness (read-only)
+# Recheck the accelerated Kaggle day-two run after ABI-preflight deployment.
 
 on:
   workflow_dispatch:
