@@ -160,6 +160,16 @@ def _research(api):
                         log,
                     )
                     result[str(day)]["missing_attributes"] = sorted(set(attributes))[:12]
+                    # Only whitelisted Python frame basenames, never private
+                    # absolute paths or source text, enter the public ledger.
+                    frames = re.findall(
+                        r"File [\"'](?:[^\"'\n\r]*/)?([A-Za-z0-9_]+\.py)[\"'], line (\d{1,6})",
+                        log,
+                    )
+                    result[str(day)]["error_frames"] = [
+                        {"file": filename, "line": int(lineno)}
+                        for filename, lineno in frames[-15:]
+                    ]
                     result[str(day)]["failed_script_mentions"] = {
                         key: (key in log) for key in
                         ("scripts/train.py", "scripts/tune.py", "scripts/predict.py")
