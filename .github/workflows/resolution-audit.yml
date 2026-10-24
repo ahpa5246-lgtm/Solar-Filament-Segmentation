@@ -1,4 +1,4 @@
-name: Bounded V6 resolution inference audit
+name: Bounded V6 native-resolution inference audit
 on:
   push:
     branches: [main]

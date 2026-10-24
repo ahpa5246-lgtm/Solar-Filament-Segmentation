@@ -76,3 +76,26 @@ def test_resolution_notebook_mounts_both_exact_checkpoints(tmp_path):
     workflow=(root/'.github/workflows/resolution-audit.yml').read_text()
     assert 'V6_KAGGLE_RESOLUTION_EXECUTION.json' in workflow
     assert 'V6_KAGGLE_REFINER_EXECUTION.json' not in workflow
+
+
+def test_status_inspection_preserves_completed_cpu_execution_evidence(tmp_path,monkeypatch):
+    import importlib.util,json,sys,types
+    from pathlib import Path
+    root=Path(__file__).resolve().parents[1]
+    spec=importlib.util.spec_from_file_location('cpu_runner_under_test',root/'scripts/run_v6_cpu_audit.py')
+    runner=importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
+    class API:
+        def authenticate(self):pass
+        def kernels_status(self,reference):return types.SimpleNamespace(status='KernelWorkerStatus.COMPLETE')
+    fake=types.ModuleType('kaggle.api.kaggle_api_extended');fake.KaggleApi=API
+    for name in ['kaggle','kaggle.api']:monkeypatch.setitem(sys.modules,name,types.ModuleType(name))
+    monkeypatch.setitem(sys.modules,'kaggle.api.kaggle_api_extended',fake)
+    monkeypatch.setattr(runner,'error_context',lambda api,reference:[])
+    monkeypatch.setattr(sys,'argv',['run_v6_cpu_audit.py','--inspect-only'])
+    monkeypatch.chdir(tmp_path);(tmp_path/'reports').mkdir()
+    result=tmp_path/'reports/V6_KAGGLE_CPU_EXECUTION.json'
+    original=json.dumps({'version':2,'status':'COMPLETE','result':{'artifact_sha256':{'manifest':'fingerprint'}}})
+    result.write_text(original)
+    runner.main()
+    assert result.read_text()==original
+    assert json.loads((tmp_path/'reports/V6_KAGGLE_CPU_STATUS.json').read_text())['mode']=='inspect_existing_only'

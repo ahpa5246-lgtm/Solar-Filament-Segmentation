@@ -27,6 +27,7 @@ def main():
     report={'requested_gpu':False,'requested_private':True,'timeout_seconds':600,
             'notebook':'https://www.kaggle.com/code/minahussain111/solar-filament-research-v6-audit'}
     inspect_only='--inspect-only' in sys.argv
+    report_path=Path('reports/V6_KAGGLE_CPU_STATUS.json' if inspect_only else 'reports/V6_KAGGLE_CPU_EXECUTION.json')
     report['mode']='inspect_existing_only' if inspect_only else 'execute_one_cpu_notebook'
     reference=None
     try:
@@ -34,7 +35,7 @@ def main():
             reference='minahussain111/solar-filament-research-v6-audit'
             report['status']=str(api.kernels_status(reference).status)
             report['execution_errors']=error_context(api,reference)
-            Path('reports/V6_KAGGLE_CPU_EXECUTION.json').write_text(json.dumps(report,indent=2)+'\n')
+            report_path.write_text(json.dumps(report,indent=2)+'\n')
             print('Inspected existing CPU run; no new notebook executed.')
             return
         with tempfile.TemporaryDirectory(prefix='v6-cpu-') as tmp:
@@ -69,7 +70,7 @@ def main():
                 report['execution_errors']=error_context(api,reference)
             except Exception:
                 report['execution_error_detail']='Log diagnostics unavailable'
-    Path('reports/V6_KAGGLE_CPU_EXECUTION.json').write_text(json.dumps(report,indent=2)+'\n')
+    report_path.write_text(json.dumps(report,indent=2)+'\n')
     if 'result' not in report:raise SystemExit(1)
     print('Kaggle CPU replay completed; no GPU quota consumed by this job.')
 

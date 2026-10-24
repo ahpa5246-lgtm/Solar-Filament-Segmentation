@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "scope": "CPU delivery and integration; not scientific accuracy or GPU validation",
+  "python": "3.12.14",
+  "packages": {
+    "torch": "2.6.0+cpu",
+    "torchvision": "0.21.0+cpu",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1",
+    "opencv-python-headless": "4.10.0.84",
+    "pycocotools": "2.0.8",
+    "setuptools": "78.1.0",
+    "wheel": null
+  },
+  "source_sha256": {
+    "pyproject.toml": "7e0052174b179566e092c38409439410be4559240af0273a04dcba751089812f",
+    "solar/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "solar/audit.py": "7c4cdffb820cf10cf3c75657f86df85c8e8cf3f69285416625aad749a1e2ca4a",
+    "solar/data.py": "a24a8c82162fee2d8f47ab9ad5b805fa03cf4ef49d78a85aef7477bfcaee094b",
+    "solar/metrics.py": "98e827c44af399f4c7dd7db6dd7e30bd26b7a2b4c08d2aeff13fa7f0fac3b320",
+    "solar/model.py": "7bf7b96c8ad391d3bd46e0e6589278afff42bf744ed0d4c4796bfc6e864dcc35",
+    "solar/pipeline.py": "0d3b4275779f35fb4164a761813c3aeb7fce4bd730c088e985e4c6e5d8c992d8",
+    "solar/postprocess.py": "a4d38eb463a54d288737bf9fb600b622f07a70061d9f2ddeef6db961e1b269e2",
+    "solar/predict.py": "7dd7f99f5a72d559740e69bef44da58551d0ee2430b15f9d99ce6bdb5eb83b02",
+    "solar/research_metrics.py": "e6e2489a6a8128629b4d6ba28bf382ad907d8d4592e3a648be4bd10e329ac6c5",
+    "solar/train.py": "268dedd6f9e036ade38d0c1f1353da74ff10b28967d23ebd8ba8d322e2120fd6",
+    "solar/tune.py": "0e4da44e924b2e17350f47310ff2b74bad6e726a65af173f3b32836a25b9bdb8",
+    "solar/v5_replay.py": "db01eabd20694459f840891e34f5bdc77a175219eb776e0bd91b415859741ed3",
+    "solar/v6_audit.py": "cc36628f175abfebfc1ebd218d4c6de14d2cef6f187d94d8587cafbe62609688",
+    "solar/v6_cached_search.py": "4eae7c4a80f6200068d4af1a21c1382a926e8f9bc7f078990151dbb0b79061d3",
+    "solar/v6_detector.py": "d412f84ce12a08204dc2f5862ea33b7ab030d676a37200100a4b97d9e576c85c",
+    "solar/v6_diagnostics.py": "e240ea4ad6fb0dc22635a34a29a33f39e458a372dc079cfa52483596eecd6ce0",
+    "solar/v6_forensics.py": "9db648053f47d9cb1eea997b5ae4b99b7984cb3b3679c5dfeaf00dee65fc39aa",
+    "solar/v6_instances.py": "fa05e0a4f10a6bee20ea61481e308af255badd1d42ce8c653a59a4c4997620f9",
+    "solar/v6_refiner_audit.py": "a3a72a9f5a1cc038292b03dbb70fcae464e4c3f74fbd1950b1ebbdb1a67876a8",
+    "solar/v6_resolution_audit.py": "993db1be9c44b41990cb68ef1abe0a74f9495747e390cb89ba571833075400c1",
+    "solar/v6_train.py": "2d1b669ffe2cc7dd02408a78dc3228b1baad511431ecdcb33e536b63c559f29e",
+    "scripts/verify_repository.py": "b03a42a90eb6158f6a5d1905611be02dba49bb1ff918eb153b546b91bde01638",
+    "scripts/build_v6_notebook.py": "2361ec719f57c69e4d516035c7c8e164beafe34148c62de9f76b76d85e4328e9"
+  },
+  "wheel_sha256": "5500bd3390e350a2ba9ec8dd2ce026a6abebfdefb1f7630254eae3dcc46cbc19",
+  "distribution": {
+    "status": "passed",
+    "imported_built_wheel": true,
+    "checkpoint_predictions_bitwise_equal": true,
+    "native_rle_csv_roundtrip": true,
+    "missing_inventory_rejected": true,
+    "rows": 2,
+    "model_weights": "random; software test only"
+  },
+  "notebook": {
+    "status": "passed",
+    "executed_code_cells": 5,
+    "embedded_package_used": true,
+    "training": false
+  }
+}

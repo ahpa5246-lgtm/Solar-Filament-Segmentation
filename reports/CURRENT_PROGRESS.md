@@ -1,5 +1,7 @@
 # Current implementation and experiment status
 
+**Update October 24, 2026:** GitHub fetch/push access recovered and commits `9da615a`/`c2d44c5` were deployed. Fresh local verification: 51 tests passed, one CUDA-only test skipped. Built-wheel checkpoint/inference/CSV verification and all five default notebook code cells executed successfully outside the checkout. See `CPU_DELIVERY_VERIFICATION.json` and `docs/VERIFICATION.md`. The first resolution launch safely stopped before GPU use because a status-only job had overwritten CPU replay evidence. That reporting bug was reproduced, fixed, independently reviewed, and the original completed v2 evidence restored unchanged. The deployment notes below describe the earlier block; resolution execution is being retried after that fix.
+
 The project remains in progress. V5 is preserved as the owner-confirmed best official Public PQ **0.32**. No new official submission or training was performed in this work.
 
 ## Completed and published
@@ -35,7 +37,7 @@ Runnable package: `notebooks/v6-resolution/solar_filament_resolution_pilot.ipynb
 
 Final local verification after notebook generation: **50 passed, 1 CUDA test skipped**; `pip check` reports no broken requirements; `git diff --check` passed. CPU tests do not establish native-resolution GPU viability or segmentation accuracy.
 
-## Exact deployment blocker
+## Earlier deployment blocker (access now restored)
 
 GitHub smart-HTTP access changed from working to HTTP 401 during the next push. A credential supplied by the runtime was also rejected; no credential values were printed, stored in Git, or requested from the owner. The available runtime has no Kaggle API binding, so a GitHub-authentication failure also blocks launching new authenticated Kaggle operations through Actions. Read-only public GitHub HTML remains accessible.
 
