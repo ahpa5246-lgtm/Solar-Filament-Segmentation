@@ -12,6 +12,9 @@ from collections import defaultdict
 import json
 from pathlib import Path
 from random import Random
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
 
@@ -23,7 +26,7 @@ from solarseg.auto14_geometry import link_aligned_fragments
 from solarseg.rle import counts_to_rle, labels_to_counts
 
 
-def balanced_sample(stems, maximum=12):
+def balanced_sample(stems, maximum=24):
     buckets=defaultdict(list)
     for stem in stems:
         buckets[stem[:6]].append(stem)
@@ -51,7 +54,7 @@ def evaluate_one(labels, truth):
     return stats
 
 
-def run(run_dir: Path, max_images=12, gaps=(0,16,32,48)):
+def run(run_dir: Path, max_images=24, gaps=(0,16,32,48)):
     config=PostConfig.load(run_dir/"postprocess.json")
     if config.link_gap!=0:
         raise ValueError("Geometry tuner expects an untouched baseline postprocess config")
@@ -127,6 +130,6 @@ def run(run_dir: Path, max_images=12, gaps=(0,16,32,48)):
 if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--run",required=True,type=Path)
-    parser.add_argument("--max-images",type=int,default=12)
+    parser.add_argument("--max-images",type=int,default=24)
     args=parser.parse_args()
     print(json.dumps(run(args.run,args.max_images),sort_keys=True,indent=2))
