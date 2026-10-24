@@ -33,7 +33,7 @@ def test_early_challenger_requires_a_real_previous_failed_kernel(tmp_path,monkey
 
 
 def test_early_script_exits_without_gpu_outside_time_window(monkeypatch):
-    monkeypatch.setattr(r,"date_allowed",lambda _:False)
+    monkeypatch.setattr(r,"date_allowed",lambda *args:False)
     def fail(*a,**k):raise AssertionError("Should not contact Kaggle")
     monkeypatch.setattr(r,"load_state",fail)
     r.main()
