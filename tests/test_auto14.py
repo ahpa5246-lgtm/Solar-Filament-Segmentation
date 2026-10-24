@@ -174,3 +174,34 @@ def test_invalid_version_reference_is_rejected_before_network():
             raise AssertionError("Unexpected listing call")
     with pytest.raises(ValueError):
         runner.recover_existing(Api(),"minahussain111/solar-autoresearch-d01/invalid")
+
+
+def test_known_immutable_version_reuses_same_run_and_never_pushes():
+    """Old runner timeout cannot cause a duplicate Kaggle GPU training upload."""
+    config=choose_experiment(1)
+    class Api:
+        def quota_view(self):
+            return SimpleNamespace(gpu_quota=SimpleNamespace(
+                total_time_allowed=dt.timedelta(hours=29),
+                time_used=dt.timedelta(hours=6)))
+        def kernels_list(self,**kwargs):
+            raise AssertionError("Known version should never list or re-create kernel")
+        def kernels_status(self,slug):
+            assert slug=="minahussain111/solar-autoresearch-d01/v1"
+            return SimpleNamespace(status="COMPLETE")
+        def kernels_push(self,*args,**kwargs):
+            raise AssertionError("Do not reupload a known immutable version")
+        def kernels_output(self,slug,path,file_pattern=None):
+            assert slug.endswith("/v1")
+            (Path(path)/"auto14_result.json").write_text(json.dumps({
+                "day":1,"status":"COMPLETE","split_months_disjoint":True,
+                "official_submission":False,"test_inference":False,
+                "config":config,"source_sha":UPSTREAM_SHA,
+                "local_tuning_pq":0.35,"best_checkpoint_sha256":"c"*64,
+                "split_counts":{"train":500,"val":100,"confirmation":90},
+                "tuning_pq_status":"exploratory","elapsed_seconds":4300
+            }))
+    record={"known_version":1}
+    runner.execute(Api(),1,{},record)
+    assert record["launch"]=="resume_existing" and record["version"]==1
+    assert record["status"]=="COMPLETE" and record["checkpoint_sha256"]=="c"*64
