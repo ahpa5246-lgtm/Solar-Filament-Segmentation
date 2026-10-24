@@ -15,8 +15,11 @@ def main():
     try:
         metadata=json.loads(get('https://huggingface.co/api/models/'+MODEL))
         revision=metadata['sha'];license=metadata.get('cardData',{}).get('license')
-        if license not in ['mit','apache-2.0']:raise RuntimeError('Model license not verified as compatible')
+        report['observed_license']=license
+        report['card_license_fields']={k:v for k,v in metadata.get('cardData',{}).items() if 'license' in k.lower()}
         card=get(f'https://huggingface.co/{MODEL}/raw/{revision}/README.md')
+        report['card_header']=card.decode('utf-8').split('---',2)[1][:3000] if card.startswith(b'---') else ''
+        if license not in ['mit','apache-2.0']:raise RuntimeError('Model license not verified as compatible; observed fields recorded')
         config=json.loads(get(f'https://huggingface.co/{MODEL}/resolve/{revision}/config.json'))
         files=[f['rfilename'] for f in metadata.get('siblings',[])]
         if 'model.safetensors' not in files:raise RuntimeError('No safetensors weights at reviewed revision')
