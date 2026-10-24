@@ -47,12 +47,19 @@ def _status(value):
 
 
 def recover_existing(api,slug):
-    """Discover owned notebook first: Kaggle may return 403 for an absent slug.
+    """Check exact launched versions directly, discover only unversioned slugs.
 
-    Do not interpret a 403 from a status request as absence. An authenticated
-    owned-list query must succeed, or we do not authorize a new upload.
+    After a successful push, Kaggle returns a version reference owner/slug/vN.
+    Searching the owned list for slug/vN cannot match a kernel ref (which is
+    just owner/slug), so treating it as absent stalls polling until timeout.
     """
-    kernel_slug=slug.split("/",1)[1]
+    parts=slug.split("/")
+    if len(parts)==3 and parts[2].startswith("v") and parts[2][1:].isdigit():
+        response=api.kernels_status(slug)
+        return _status(response.status)
+    if len(parts)!=2:
+        raise ValueError("Expected owner/notebook or owner/notebook/vN")
+    kernel_slug=parts[1]
     owned=api.kernels_list(mine=True,search=kernel_slug,page_size=100)
     if owned is None:
         raise RuntimeError("Owned kernel inventory unavailable; refusing an ambiguous launch")
