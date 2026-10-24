@@ -142,6 +142,18 @@ def execute(api,day,history,report):
     expected=report["config"]
     if record.get("config")!=expected:
         raise RuntimeError("Kaggle experiment configuration drifted")
+    # Historical day one has an immutable, already-launched version whose
+    # original config has no boundary arm. Do not mistake its evidence for a
+    # newer training variant; all upgraded arm outputs must prove the patch.
+    if "boundary_weight" in expected:
+        if record.get("boundary_weight") != expected["boundary_weight"]:
+            raise RuntimeError("Kaggle boundary research configuration mismatch")
+        digest = record.get("source_patches_sha256")
+        if (not isinstance(digest,str) or len(digest)!=64 or
+                any(c not in "0123456789abcdef" for c in digest)):
+            raise RuntimeError("No verified source patch fingerprint from Kaggle")
+        report["boundary_weight"] = record["boundary_weight"]
+        report["source_patches_sha256"] = digest
     report.update(status="COMPLETE",local_tuning_pq=record["local_tuning_pq"],
                   checkpoint_sha256=record["best_checkpoint_sha256"],
                   split_counts=record["split_counts"],

@@ -92,7 +92,7 @@ def choose_experiment(day, history=None):
                 steps = min(185, max(100, int(best["steps"])))
             except (TypeError, ValueError, OverflowError):
                 pass
-    return {
+    plan = {
         "day": day, "scale": scale, "base": base, "epochs": epochs,
         "steps": steps, "batch": batch, "pos_weight": weight,
         "pos_frac": pos_frac, "seed": 42 + 19 * day,
@@ -101,6 +101,20 @@ def choose_experiment(day, history=None):
         "model": "Farnoosh-Memari MIT U-Net, modified fixed month-split research challenger",
         "comparison": "tuning-local PQ; NO official score; no hidden test labels",
     }
+    # Preserve the exact immutable day-1 experiment JSON on Kaggle: the first
+    # version may already be running when this upgrade is merged. Days 1-3
+    # provide the unweighted control, while later days test boundary weighting.
+    if day >= 4:
+        weight_by_day = {4:1.5, 5:3.0, 6:6.0, 7:1.5, 8:3.0, 9:6.0,
+                         10:3.0, 11:1.5, 12:6.0, 13:3.0, 14:1.5}
+        boundary = weight_by_day[day]
+        if day in (10, 12, 14) and rank:
+            selected = history[str(rank[0][2])]["config"].get("boundary_weight")
+            if type(selected) in (float, int) and math.isfinite(selected) and 0 <= selected <= 8:
+                boundary = float(selected)
+        plan["boundary_weight"] = boundary
+        plan["model"] += "; optional edge-weighted BCE research arm"
+    return plan
 
 
 def notebook_slug(day):

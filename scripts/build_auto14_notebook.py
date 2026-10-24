@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 from solar.auto14_plan import UPSTREAM, UPSTREAM_SHA, notebook_slug, choose_experiment
 
 RUN_CODE = r'''
-import hashlib, json, subprocess, sys, time
+import hashlib, json, os, subprocess, sys, time
 from pathlib import Path
 import torch
 PLAN = __PLAN__
@@ -34,18 +34,18 @@ try:
     assert actual == REVISION, "Pinned MIT source revision mismatch"
     licence = (src/"LICENSE").read_text()
     assert "MIT License" in licence and "Farnoosh Memari" in licence, "Third-party attribution missing"
-    original = (src/"scripts/train.py").read_text()
-    anchor = "train_stems, val_stems = split_stems(stems, args.val_frac, args.seed)"
-    patch = ("development_stems, confirmation_stems = split_stems(stems, 0.15, 2026)\n"
-             "        train_stems, val_stems = split_stems(development_stems, 0.18, 2027)")
-    split_original = 'json.dumps({"train": train_stems, "val": val_stems}, indent=1)'
-    split_patch = 'json.dumps({"train": train_stems, "val": val_stems, "confirmation": confirmation_stems}, indent=1)'
-    assert original.count(anchor) == 1 and original.count(split_original) == 1, "Upstream training source drift detected"
-    revised = original.replace(anchor, patch).replace(split_original, split_patch)
-    import ast
-    ast.parse(revised)
-    (src/"scripts/train.py").write_text(revised)
-    (TARGET/"source_patch_sha256.txt").write_text(hashlib.sha256(revised.encode()).hexdigest()+"\n")
+    original_paths = ("scripts/train.py", "solarseg/losses.py", "scripts/tune.py")
+    originals = [(src/path).read_text() for path in original_paths]
+    upgrades = patch_auto14_sources(*originals)
+    provenance = {}
+    for name in original_paths:
+        revised = upgrades[name]
+        (src/name).write_text(revised)
+        provenance[name] = hashlib.sha256(revised.encode()).hexdigest()
+    (TARGET/"source_patches.json").write_text(json.dumps(provenance, sort_keys=True, indent=2)+"\n")
+    result["source_patches_sha256"] = hashlib.sha256(
+        json.dumps(provenance, sort_keys=True).encode()).hexdigest()
+    result["boundary_weight"] = float(PLAN.get("boundary_weight", 0.0))
     subprocess.run([sys.executable,"-m","pip","install","-q",
                     "numpy==1.26.4","scipy==1.13.1",
                     "opencv-python-headless==4.10.0.84","pycocotools==2.0.8"],check=True)
@@ -57,7 +57,8 @@ try:
            "--pos-weight",str(PLAN["pos_weight"]),
            "--pos-frac",str(PLAN["pos_frac"]), "--seed",str(PLAN["seed"]),
            "--val-every","5"]
-    subprocess.run(cmd,cwd=src,check=True)
+    subprocess.run(cmd,cwd=src,check=True,
+                   env={**os.environ,"SOLAR_BOUNDARY_WEIGHT":str(PLAN.get("boundary_weight",0.0))})
     split = json.loads((train_dir/"split.json").read_text())
     months = [{s[:6] for s in split[k]} for k in ("train","val","confirmation")]
     assert all(months) and not months[0]&months[1] and not months[0]&months[2] and not months[1]&months[2], "Month leakage or empty partitions"
@@ -96,7 +97,9 @@ finally:
 
 def build(day, out, history=None):
     plan=choose_experiment(day,history)
-    code=RUN_CODE.replace("__PLAN__",repr(plan)).replace("__REPO__",repr(UPSTREAM)).replace("__REVISION__",repr(UPSTREAM_SHA))
+    patch_source=(ROOT/"solar/auto14_upgrade.py").read_text()
+    code=(patch_source+"\n"+RUN_CODE.replace("__PLAN__",repr(plan))
+          .replace("__REPO__",repr(UPSTREAM)).replace("__REVISION__",repr(UPSTREAM_SHA)))
     ast.parse(code)
     out=Path(out)
     out.parent.mkdir(parents=True,exist_ok=True)
@@ -107,7 +110,8 @@ def build(day, out, history=None):
                       "# Solar AutoResearch — day %02d\n" % day,
                       "MIT upstream credit: Farnoosh Memari, pinned immutable revision.\n",
                       "TRAIN / tuning / untouched-confirmation months are separated.\n",
-                      "GPU training; NO competition test inference or official submission.\n"]},
+                      "GPU training with optional boundary-aware BCE and balanced tuning-month sampling.\n",
+                      "NO competition test inference or official submission.\n"]},
                   {"cell_type":"code","metadata":{},"execution_count":None,"outputs":[],"source":code.splitlines(keepends=True)}
               ]}
     out.write_text(json.dumps(notebook,indent=1)+"\n")
