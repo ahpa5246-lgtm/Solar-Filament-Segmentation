@@ -35,8 +35,7 @@ def validated_day_two(state):
     prior_day = results.get("1", {})
     if prior_day.get("status") != "FAILED" or prior_day.get("execution_status") != "ERROR":
         raise RuntimeError("No confirmed Kaggle day-one failure; an early rescue is not permitted")
-    prior = results.get(str(DAY), {})
-    if prior:
+    if str(DAY) in results:
         # Never retrain a known day-two version regardless of its state.
         raise RuntimeError("Day two already has a ledger entry; refusing an early duplicate")
     if not (STATE.parent / "V5_FINAL_CACHE.json").is_file():
