@@ -55,7 +55,8 @@ try:
            "--epochs",str(PLAN["epochs"]), "--steps-per-epoch",str(PLAN["steps"]),
            "--batch-size",str(PLAN["batch"]), "--workers","2",
            "--pos-weight",str(PLAN["pos_weight"]),
-           "--pos-frac",str(PLAN["pos_frac"]), "--seed",str(PLAN["seed"])]
+           "--pos-frac",str(PLAN["pos_frac"]), "--seed",str(PLAN["seed"]),
+           "--val-every","5"]
     subprocess.run(cmd,cwd=src,check=True)
     split = json.loads((train_dir/"split.json").read_text())
     months = [{s[:6] for s in split[k]} for k in ("train","val","confirmation")]
@@ -63,6 +64,7 @@ try:
     result["split_counts"] = {k:len(split[k]) for k in ("train","val","confirmation")}
     result["split_months_disjoint"] = True
     tune = [sys.executable,"scripts/tune.py","--run",str(train_dir),
+            "--max-images","24",
             "--thresholds","0.35,0.45,0.55,0.65",
             "--min-areas","100,250,400,650", "--merge-dists","0,5,10"]
     subprocess.run(tune,cwd=src,check=True)
