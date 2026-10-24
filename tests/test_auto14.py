@@ -40,6 +40,7 @@ def test_plans_and_private_notebooks_have_bounded_distinct_identity(tmp_path):
         compile(code,"Kaggle auto14","exec")
         assert UPSTREAM_SHA in code
         assert "confirmation_stems" in code and '2026' in code
+        assert '"--max-images","24"' in code and '"--val-every","5"' in code
         assert "competitions_submit" not in code and "competition_submit" not in code
         assert "__PLAN__" not in code
 
