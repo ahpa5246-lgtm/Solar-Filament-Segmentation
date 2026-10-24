@@ -9,6 +9,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/auto14-final.yml'
+      - 'scripts/build_auto14_final_notebook.py'
+      - 'solar/auto14_upgrade.py'
+      - 'solar/auto14_geometry.py'
 
 permissions:
   contents: write
