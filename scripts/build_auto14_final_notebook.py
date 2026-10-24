@@ -73,7 +73,22 @@ try:
     post_path.write_text(patch_auto14_postprocess_source(post_path.read_text()))
     subprocess.run([sys.executable,"-m","pip","install","-q",
                     "numpy==1.26.4","scipy==1.13.1",
-                    "opencv-python-headless==4.10.0.84","pycocotools==2.0.8"],check=True)
+                    "opencv-python-headless==4.10.0.84","pycocotools==2.0.11"],check=True)
+    # Verify the actual compiled COCO extension in a NEW process, not merely
+    # that import/installation succeeded. The Kaggle day-1 traceback ended in
+    # pycocotools.mask.decode with missing NumPy macro NPY_OWNDATA.
+    # The modern 2.0.11 wheel supports the current Python/NumPy C ABI.
+    smoke = r"""
+import numpy as np
+from pycocotools import mask as coco
+a=np.zeros((64,64),dtype=np.uint8)
+a[12:17,30:35]=1
+rle=coco.encode(np.asfortranarray(a))
+assert int(coco.area(rle)) == 25
+assert np.array_equal(coco.decode(rle),a)
+assert np.array_equal(coco.decode(coco.merge([rle])),a)
+"""
+    subprocess.run([sys.executable,"-c",smoke],check=True)
     sys.path.insert(0,str(source))
     from solarseg.data import resolve_paths,load_records,group_by_stem,record_instance_rles
     from solarseg.infer import get_device,load_checkpoint,predict_image
