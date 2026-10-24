@@ -22,8 +22,9 @@ def test_final_selection_uses_local_only_and_requires_three_successes():
     with pytest.raises(RuntimeError,match="three completed"):
         candidate({"results":{"1":record(1,.45),"2":record(2,.46)}})
     results["2"]["source_sha"]="unreviewed"
-    with pytest.raises(RuntimeError,match="source"):
-        candidate({"results":results})
+    # An unverified source is discarded from selection, rather than throwing
+    # away other legitimate completed models. Day 3 is the next-best.
+    assert candidate({"results":results})==(3,format(3,"064x"))
 
 
 def test_kaggle_notebook_is_private_and_frozen_before_test(tmp_path):
