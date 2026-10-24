@@ -317,3 +317,15 @@ def test_archived_detector_uses_original_small_anchors_and_mask_pool():
     assert len(tune)==len(confirm)==4
     assert not {s[:8] for s in tune}&{s[:8] for s in confirm}
     assert not {s[:8] for s in tune+confirm}&{s[:8] for s in training}
+
+
+def test_fixed_nms_confirmation_excludes_all_pilot_confirmation_observations():
+    from solar.v6_resolution_audit import select_pilot_dates,confirmation_dates
+    training={'20260101120000Bh'}
+    validation={f'2026{month:02d}{day:02d}{hour:02d}0000Bh':{} for month in range(1,7) for day in range(1,21) for hour in [12,13]}
+    _,pilot_confirm=select_pilot_dates(training,validation)
+    tune,confirm=confirmation_dates(training,validation)
+    assert len(tune)>16 and len(confirm)>16
+    assert not {s[:8] for s in confirm}&{s[:8] for s in pilot_confirm}
+    assert not {s[:8] for s in tune}&{s[:8] for s in confirm}
+    assert not {s[:8] for s in confirm}&{s[:8] for s in training}

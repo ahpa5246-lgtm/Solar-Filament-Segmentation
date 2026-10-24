@@ -49,9 +49,19 @@ def select_pilot_dates(training,validation,per_subset=16):
     rng=np.random.default_rng(43);subsets=[]
     for allowed in [tune_dates,confirm_dates]:
         stems=sorted(s for s in eligible if s[:8] in allowed)
+        if per_subset is None:subsets.append(stems);continue
         if len(stems)<per_subset:raise ValueError('Insufficient date-isolated pilot observations')
         subsets.append(sorted(rng.choice(stems,per_subset,replace=False).tolist()))
     return subsets
+
+
+def confirmation_dates(training,validation):
+    tuning,confirmation=select_pilot_dates(training,validation,None)
+    _,pilot_confirmation=select_pilot_dates(training,validation,16)
+    pilot_dates={stem[:8] for stem in pilot_confirmation}
+    confirmation=sorted(stem for stem in confirmation if stem[:8] not in pilot_dates)
+    if not confirmation:raise ValueError('No unused confirmation observations remain')
+    return tuning,confirmation
 
 
 @torch.inference_mode()
@@ -92,10 +102,10 @@ def refine(model,helpers,image,rles):
 
 
 @torch.inference_mode()
-def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000):
+def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000,full_confirmation=False):
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     report={'status':'running','training':False,'test_inference':False,'official_submission':False,
-            'pilot_observations_per_subset':16,'refiner':'flip4 threshold 0.85, final overlap union',
+            'pilot_observations_per_subset':None if full_confirmation else 16,'refiner':'flip4 threshold 0.85, final overlap union',
             'score_threshold':.6,'mask_threshold':.4,'source_sha256':SOURCE_SHA}
     try:
         verify_artifacts({'training_manifest.csv':manifest,'best_detector_predictions_1024.pkl':detector_predictions,
@@ -112,18 +122,20 @@ def run(annotation,manifest,detector_predictions,plain_predictions,detector_chec
         refiner=refiner.cuda().eval()
         rows=list(csv.DictReader(Path(manifest).open()));training={r['observation_id'] for r in rows if r['split']=='train'}
         validation={r['observation_id']:r for r in rows if r['split']=='val'}
-        tuning,confirmation=select_pilot_dates(training,validation)
+        tuning,confirmation=confirmation_dates(training,validation) if full_confirmation else select_pilot_dates(training,validation)
         stems=sorted(tuning+confirmation);truth=references(annotation,set(stems))
         cached=load_predictions(Path(detector_predictions));images=Path(annotation).parent/'train_images'
-        strategies={f'{resolution}|{policy}':{} for resolution in [1024,2048] for policy in ['union','nms']}
+        resolutions=[1024] if full_confirmation else [1024,2048]
+        strategies={f'{resolution}|{policy}':{} for resolution in resolutions for policy in ['union','nms']}
         parity=[];started=time.perf_counter();torch.cuda.reset_peak_memory_stats()
         report.update(gpu=torch.cuda.get_device_name(0),visible_gpus=torch.cuda.device_count(),used_gpus=1,
                       torch=str(torch.__version__),detector_epoch=int(saved['epoch']))
+        report.update(fixed_nms_confirmation=full_confirmation,tuning_observations=len(tuning),confirmation_observations=len(confirmation),pilot_confirmation_excluded=len(select_pilot_dates(training,validation,None)[1])-len(confirmation) if full_confirmation else 0)
         for number,stem in enumerate(stems):
             if time.perf_counter()-started>seconds:raise RuntimeError('Pilot budget exhausted; refusing partial-result selection')
             image=cv2.imread(str(images/validation[stem]['file_name']),cv2.IMREAD_GRAYSCALE)
             if image is None or image.shape!=(2048,2048):raise ValueError('Native training observation missing')
-            for resolution in [1024,2048]:
+            for resolution in resolutions:
                 masks,scores=detect(detector,image,resolution)
                 for policy in ['union','nms']:
                     proposals=postprocess(masks,scores,policy)
@@ -136,14 +148,14 @@ def run(annotation,manifest,detector_predictions,plain_predictions,detector_chec
         torch.cuda.synchronize();report['inference_and_reconstruction_seconds']=time.perf_counter()-started
         report['peak_cuda_bytes']=torch.cuda.max_memory_allocated();report['detector_cache_parity_min']=min(parity)
         trials=[{'strategy':name,'tuning_micro_pq':micro(evaluate(truth,pred,tuning))} for name,pred in strategies.items()]
-        baseline='1024|union';selected=max(trials,key=lambda row:(row['tuning_micro_pq'],row['strategy']==baseline))['strategy']
+        baseline='1024|union';selected='1024|nms' if full_confirmation else max(trials,key=lambda row:(row['tuning_micro_pq'],row['strategy']==baseline))['strategy']
         base=evaluate(truth,strategies[baseline],confirmation);candidate=evaluate(truth,strategies[selected],confirmation)
         delta=paired_ci(base,candidate)
         report.update(status='completed',tuning_grid=trials,baseline=baseline,selected=selected,
                       confirmation_baseline=aggregate(base),confirmation_candidate=aggregate(candidate),
                       paired_macro_delta_ci=delta,confirmation_gain_supported=(micro(candidate)>micro(base) and delta['low']>0),
                       score_status='LOCAL small exploratory pilot, not official PQ',
-                      limitations=['16 observations per subset give limited statistical power.',
+                      limitations=['Fixed NMS and pilot-excluded confirmation; historical validation reuse remains.' if full_confirmation else '16 observations per subset give limited statistical power.',
                                    'Original model selection reused the old validation set.',
                                    'No training, alternate architecture, test inference or official submission.'])
         # Keep observation IDs, masks and qualitative panels only in private Kaggle output.
