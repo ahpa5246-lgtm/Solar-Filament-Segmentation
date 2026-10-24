@@ -32,6 +32,7 @@ assert Path(solar.__file__).resolve().parent==Path(sys.argv[1]).resolve()/'solar
 from solar.v6_detector import build_detector,save_checkpoint,load_checkpoint,infer
 from solar.v6_instances import mask_nms
 from solar.v6_audit import export_submission
+from solar.v6_train import DetectionDataset
 torch.manual_seed(42)
 image=np.full((64,64),180,np.uint8);image[28:32,10:54]=60
 model=build_detector(False,min_size=64,max_size=64)
@@ -63,7 +64,21 @@ for row,expected in zip(rows,native):
 try:export_submission({'observation_a':native},['observation_a','missing'],'bad.csv')
 except ValueError:pass
 else:raise AssertionError('Missing observation was accepted')
-Path('distribution-result.json').write_text(json.dumps({'status':'passed','imported_built_wheel':True,'checkpoint_predictions_bitwise_equal':True,'native_rle_csv_roundtrip':True,'missing_inventory_rejected':True,'rows':len(rows),'model_weights':'random; software test only'}))
+del restored
+cv2.imwrite('synthetic_train.png',image)
+dataset=DetectionDataset([{'path':'synthetic_train.png','stem':'20260101120000Bh','image_id':'software-test',
+                          'ann':[{'segmentation':[[10,28,54,28,54,32,10,32]]}]}])
+training_image,target=dataset[0]
+model.train();optimizer=torch.optim.SGD(model.parameters(),lr=.001)
+before=model.roi_heads.box_predictor.cls_score.weight.detach().clone()
+losses=model([training_image],[target]);loss=sum(losses.values())
+assert len(losses)==5 and torch.isfinite(loss)
+optimizer.zero_grad();loss.backward()
+gradient=model.roi_heads.box_predictor.cls_score.weight.grad
+assert gradient is not None and torch.isfinite(gradient).all() and gradient.abs().sum()>0
+optimizer.step()
+assert not torch.equal(before,model.roi_heads.box_predictor.cls_score.weight.detach())
+Path('distribution-result.json').write_text(json.dumps({'status':'passed','imported_built_wheel':True,'checkpoint_predictions_bitwise_equal':True,'native_rle_csv_roundtrip':True,'missing_inventory_rejected':True,'cpu_training_step_updated_head':True,'finite_training_losses':{name:float(value.detach()) for name,value in losses.items()},'rows':len(rows),'model_weights':'random; software test only'}))
 '''
 
 NOTEBOOK_CHECK=r'''

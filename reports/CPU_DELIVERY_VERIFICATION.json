@@ -35,16 +35,24 @@
     "solar/v6_refiner_audit.py": "a3a72a9f5a1cc038292b03dbb70fcae464e4c3f74fbd1950b1ebbdb1a67876a8",
     "solar/v6_resolution_audit.py": "993db1be9c44b41990cb68ef1abe0a74f9495747e390cb89ba571833075400c1",
     "solar/v6_train.py": "2d1b669ffe2cc7dd02408a78dc3228b1baad511431ecdcb33e536b63c559f29e",
-    "scripts/verify_repository.py": "b03a42a90eb6158f6a5d1905611be02dba49bb1ff918eb153b546b91bde01638",
+    "scripts/verify_repository.py": "8414b28752eb5c7cd1d7c2523417f5c984fa9e6c25937eeb161836dbcb82de60",
     "scripts/build_v6_notebook.py": "2361ec719f57c69e4d516035c7c8e164beafe34148c62de9f76b76d85e4328e9"
   },
-  "wheel_sha256": "5500bd3390e350a2ba9ec8dd2ce026a6abebfdefb1f7630254eae3dcc46cbc19",
+  "wheel_sha256": "b07951357b71b43a1cb2fa92f657ba65f020de54da73b0a0076595fb090cc456",
   "distribution": {
     "status": "passed",
     "imported_built_wheel": true,
     "checkpoint_predictions_bitwise_equal": true,
     "native_rle_csv_roundtrip": true,
     "missing_inventory_rejected": true,
+    "cpu_training_step_updated_head": true,
+    "finite_training_losses": {
+      "loss_classifier": 0.6481553912162781,
+      "loss_box_reg": 0.06362951546907425,
+      "loss_mask": 0.9680798649787903,
+      "loss_objectness": 0.6946637034416199,
+      "loss_rpn_box_reg": 0.027975551784038544
+    },
     "rows": 2,
     "model_weights": "random; software test only"
   },

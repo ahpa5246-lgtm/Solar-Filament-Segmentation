@@ -2,7 +2,7 @@
 
 **Update October 24, 2026:** GitHub fetch/push access recovered and commits `9da615a`/`c2d44c5` were deployed. Fresh local verification: 51 tests passed, one CUDA-only test skipped. Built-wheel checkpoint/inference/CSV verification and all five default notebook code cells executed successfully outside the checkout. See `CPU_DELIVERY_VERIFICATION.json` and `docs/VERIFICATION.md`. The first resolution launch safely stopped before GPU use because a status-only job had overwritten CPU replay evidence. That reporting bug was reproduced, fixed, independently reviewed, and the original completed v2 evidence restored unchanged. The deployment notes below describe the earlier block; resolution execution is being retried after that fix.
 
-The project remains in progress. V5 is preserved as the owner-confirmed best official Public PQ **0.32**. No new official submission or training was performed in this work.
+The project remains in progress. V5 is preserved as the owner-confirmed best official Public PQ **0.32**. No new official submission or competition-model training run was performed in this work; a synthetic CPU optimizer step verifies software behavior only.
 
 ## Completed and published
 

@@ -21,7 +21,7 @@ OMP_NUM_THREADS=2 /workspace/solar-venv/bin/python -m pytest -ra --junitxml=/tmp
 OMP_NUM_THREADS=2 /workspace/solar-venv/bin/python scripts/verify_repository.py --out /tmp/solar-delivery.json
 ```
 
-The last command stages the Python package outside the checkout, builds a wheel, installs it into a temporary target, and runs a separate isolated Python process. It verifies imports actually come from the delivered wheel, checks bitwise identical predictions before/after checkpoint loading, reconstructs native 2048×2048 instance masks, exports compressed COCO CSV, decodes every row, and rejects missing image inventory. The model in this software check has random weights; its outputs are not a quality benchmark.
+The last command stages the Python package outside the checkout, builds a wheel, installs it into a temporary target, and runs a separate isolated Python process. It verifies imports actually come from the delivered wheel, checks bitwise identical predictions before/after checkpoint loading, reconstructs native 2048×2048 instance masks, exports compressed COCO CSV, decodes every row, and rejects missing image inventory. It also performs one CPU forward/backward/optimizer step on a synthetic filament, requires all five detector losses to be finite, and verifies the classifier weights actually change. The model in this software check has random weights; its outputs and losses are not a quality benchmark or a competition training run.
 
 It also builds the default V6 notebook and executes every code cell in a fresh directory and process, confirming imports use the embedded package. Default execution requests no training or GPU. This does not exercise the optional training branch.
 
