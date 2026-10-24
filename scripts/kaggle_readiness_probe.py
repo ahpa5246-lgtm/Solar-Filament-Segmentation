@@ -152,6 +152,18 @@ def _research(api):
                         r"CalledProcessError|CUDAOutOfMemoryError)\b", log
                     )
                     result[str(day)]["exception_types"] = sorted(set(matches))[:10]
+                    # The *identifier* of an unavailable Python method/property
+                    # is non-sensitive and often precisely diagnoses a bad ABI
+                    # or a mismatch with the frozen MIT upstream revision.
+                    attributes = re.findall(
+                        r"has no attribute ['\"]([A-Za-z_][A-Za-z_0-9]{0,95})['\"]",
+                        log,
+                    )
+                    result[str(day)]["missing_attributes"] = sorted(set(attributes))[:12]
+                    result[str(day)]["failed_script_mentions"] = {
+                        key: (key in log) for key in
+                        ("scripts/train.py", "scripts/tune.py", "scripts/predict.py")
+                    }
                     result[str(day)]["log_bytes"] = len(log.encode("utf-8"))
                     result[str(day)]["log_sha256"] = hashlib.sha256(log.encode()).hexdigest()
                 except Exception as err:
