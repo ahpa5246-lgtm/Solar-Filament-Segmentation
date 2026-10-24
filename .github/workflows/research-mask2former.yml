@@ -1,0 +1,29 @@
+name: Verify public alternative model provenance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/research-mask2former.yml','scripts/research_mask2former.py']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify public model license and immutable revision without downloading weights
+        run: python scripts/research_mask2former.py
+      - name: Preserve public provenance only
+        if: ${{ always() }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/MASK2FORMER_SOURCE.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record alternative model license and revision [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main

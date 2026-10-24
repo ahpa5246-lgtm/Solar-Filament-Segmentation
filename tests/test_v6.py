@@ -329,3 +329,18 @@ def test_fixed_nms_confirmation_excludes_all_pilot_confirmation_observations():
     assert not {s[:8] for s in confirm}&{s[:8] for s in pilot_confirm}
     assert not {s[:8] for s in tune}&{s[:8] for s in confirm}
     assert not {s[:8] for s in confirm}&{s[:8] for s in training}
+
+
+def test_final_csv_streams_rles_and_rejects_duplicates_and_missing_images(tmp_path):
+    from solar.v6_submission import write_rle_submission
+    from pycocotools import mask as coco
+    mask=np.zeros((2048,2048),np.uint8);mask[20:30,40:60]=1
+    rle=coco.encode(np.asfortranarray(mask))
+    result=write_rle_submission({'a':[rle],'b':[]},['a','b'],tmp_path/'submission.csv')
+    assert result['images']==2 and result['instances']==1 and result['empty_images']==1
+    rows=list(csv.DictReader((tmp_path/'submission.csv').open()))
+    np.testing.assert_array_equal(coco.decode({'size':[2048,2048],'counts':rows[0]['segmentation_rle'].encode()}),mask)
+    with pytest.raises(ValueError):write_rle_submission({'a':[rle,rle]},['a'],tmp_path/'duplicates.csv')
+    with pytest.raises(ValueError):write_rle_submission({'a':[rle]},['a','b'],tmp_path/'missing.csv')
+    wrong={**rle,'size':[1024,1024]}
+    with pytest.raises(ValueError):write_rle_submission({'a':[wrong]},['a'],tmp_path/'wrong.csv')

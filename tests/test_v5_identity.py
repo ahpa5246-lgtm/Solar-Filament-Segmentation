@@ -99,3 +99,34 @@ def test_status_inspection_preserves_completed_cpu_execution_evidence(tmp_path,m
     runner.main()
     assert result.read_text()==original
     assert json.loads((tmp_path/'reports/V6_KAGGLE_CPU_STATUS.json').read_text())['mode']=='inspect_existing_only'
+
+
+def test_submission_gate_requires_unused_date_confirmation_and_positive_uncertainty():
+    import importlib.util,copy
+    from pathlib import Path
+    path=Path(__file__).resolve().parents[1]/'scripts/run_v6_submission.py'
+    spec=importlib.util.spec_from_file_location('final_submit_gate',path)
+    runner=importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
+    valid={'status':'COMPLETE','result':{'fixed_nms_confirmation':True,'confirmation_observations':50,'selected':'1024|nms','confirmation_gain_supported':True,'paired_macro_delta_ci':{'low':.001},'confirmation_candidate':{'reference_micro_pq':.42},'confirmation_baseline':{'reference_micro_pq':.40}}}
+    assert runner.gate(valid)
+    for key,value in [('confirmation_observations',16),('fixed_nms_confirmation',False),('confirmation_gain_supported',False),('selected','2048|nms')]:
+        bad=copy.deepcopy(valid);bad['result'][key]=value;assert not runner.gate(bad)
+    bad=copy.deepcopy(valid);bad['result']['paired_macro_delta_ci']['low']=-.01;assert not runner.gate(bad)
+
+
+def test_submission_deduplication_checks_history_and_blocks_uncertain_retries():
+    import importlib.util,types,pytest
+    from pathlib import Path
+    path=Path(__file__).resolve().parents[1]/'scripts/run_v6_submission.py'
+    spec=importlib.util.spec_from_file_location('submit_dedup',path)
+    runner=importlib.util.module_from_spec(spec);spec.loader.exec_module(runner)
+    class API:
+        def competition_submissions(self,*args,**kwargs):
+            page=kwargs['page_number']
+            return [types.SimpleNamespace(description='unrelated',ref=i) for i in range(100)] if page==1 else [types.SimpleNamespace(description='target',ref=222)]
+    assert runner.existing_submission(API(),'target',{},'hash')==222
+    assert runner.existing_submission(None,'target',{'csv_sha256':'hash','submission_ref':333},'hash')==333
+    class Empty:
+        def competition_submissions(self,*args,**kwargs):return []
+    with pytest.raises(RuntimeError,match='uncertain'):
+        runner.existing_submission(Empty(),'target',{'csv_sha256':'hash','submission_attempted':True},'hash')
