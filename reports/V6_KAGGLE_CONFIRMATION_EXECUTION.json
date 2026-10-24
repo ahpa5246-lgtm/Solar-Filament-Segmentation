@@ -5,8 +5,130 @@
   "requested_accelerator": "NvidiaTeslaT4",
   "server_timeout_seconds": 1200,
   "notebook": "https://www.kaggle.com/code/minahussain111/solar-filament-research-v6-confirmation",
-  "gpu_hours_remaining_before": 29.341455756111113,
-  "error_type": "RuntimeError",
-  "http_status": null,
-  "diagnosis": "Kaggle rejected required inference inputs or launch"
+  "gpu_hours_remaining_before": 29.238772046111112,
+  "version": 1,
+  "status": "COMPLETE",
+  "result": {
+    "status": "completed",
+    "training": false,
+    "test_inference": false,
+    "official_submission": false,
+    "pilot_observations_per_subset": null,
+    "refiner": "flip4 threshold 0.85, final overlap union",
+    "score_threshold": 0.6,
+    "mask_threshold": 0.4,
+    "source_sha256": "2781c89d49a31a08e4f3b96d39b439e029bc7535fc596bee3d8e074baf9a2bea",
+    "gpu": "Tesla T4",
+    "visible_gpus": 2,
+    "used_gpus": 1,
+    "torch": "2.11.0+cu128",
+    "detector_epoch": 5,
+    "fixed_nms_confirmation": true,
+    "tuning_observations": 65,
+    "confirmation_observations": 51,
+    "pilot_confirmation_excluded": 16,
+    "processed_observations": 116,
+    "inference_and_reconstruction_seconds": 153.728387304,
+    "peak_cuda_bytes": 1212774400,
+    "detector_cache_parity_min": 1.0,
+    "tuning_grid": [
+      {
+        "strategy": "1024|union",
+        "tuning_micro_pq": 0.40503051142227725
+      },
+      {
+        "strategy": "1024|nms",
+        "tuning_micro_pq": 0.4124532692623104
+      }
+    ],
+    "baseline": "1024|union",
+    "selected": "1024|nms",
+    "confirmation_baseline": {
+      "reference_micro_pq": 0.4070349528109862,
+      "reference_tp": 360,
+      "reference_fp": 237,
+      "reference_fn": 228,
+      "canonical_micro_pq": 0.4070349528109862,
+      "canonical_tp": 360,
+      "canonical_fp": 237,
+      "canonical_fn": 228,
+      "canonical_sq": 0.6699116931680814,
+      "canonical_rq": 0.6075949367088608,
+      "canonical_precision": 0.6030150753768844,
+      "canonical_recall": 0.6122448979591837,
+      "likely_splits": 10,
+      "likely_merges": 13,
+      "matched_iou_quantiles": [
+        0.5004198152812762,
+        0.5949375030449704,
+        0.6743614321931702,
+        0.74062186395567,
+        0.8545727136431784
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.3823952818809904,
+        "low": 0.33198778349964575,
+        "high": 0.4305435297908689,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 51,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 51,
+      "annotation_variants": 80
+    },
+    "confirmation_candidate": {
+      "reference_micro_pq": 0.41009586539016,
+      "reference_tp": 366,
+      "reference_fp": 246,
+      "reference_fn": 222,
+      "canonical_micro_pq": 0.41009586539016,
+      "canonical_tp": 366,
+      "canonical_fp": 246,
+      "canonical_fn": 222,
+      "canonical_sq": 0.6722883039182951,
+      "canonical_rq": 0.61,
+      "canonical_precision": 0.5980392156862745,
+      "canonical_recall": 0.6224489795918368,
+      "likely_splits": 14,
+      "likely_merges": 10,
+      "matched_iou_quantiles": [
+        0.5004198152812762,
+        0.5991284082278124,
+        0.6745444298998085,
+        0.744429882044561,
+        0.8668639053254438
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.38413180366799027,
+        "low": 0.3350018412871937,
+        "high": 0.43202552375566194,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 51,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 51,
+      "annotation_variants": 80
+    },
+    "paired_macro_delta_ci": {
+      "estimate": 0.0017365217869999092,
+      "low": -0.010078749687225231,
+      "high": 0.014070558483968213,
+      "unit": "physical observation",
+      "replicates": 2000,
+      "seed": 42
+    },
+    "confirmation_gain_supported": false,
+    "score_status": "LOCAL small exploratory pilot, not official PQ",
+    "limitations": [
+      "Fixed NMS and pilot-excluded confirmation; historical validation reuse remains.",
+      "Original model selection reused the old validation set.",
+      "No training, alternate architecture, test inference or official submission."
+    ]
+  }
 }
