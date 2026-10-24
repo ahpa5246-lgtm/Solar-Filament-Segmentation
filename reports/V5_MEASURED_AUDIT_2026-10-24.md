@@ -71,3 +71,18 @@ Tuning selected flip4/refiner-threshold 0.65/original union. Confirmation micro 
 ## Native-resolution pilot protocol
 
 A second bounded, checkpoint-only experiment compares the exact archived detector at 1024 and 2048 full-frame resolution, crossed with detector overlap union and mask-IoU NMS at 0.5. Detector thresholds remain 0.6/0.4; all branches use the original flip4/0.85 refiner and final overlap union. Seed 43 samples 16 tuning and 16 confirmation observations from the existing seed-42 date-isolated pools, before inspecting individual errors. Each 1024/union reconstruction must match cached detector masks at canonical PQ ≥0.99 before interpreting resolution effects. All source/checkpoint fingerprints are enforced. One GPU is used, application inference budget is 1,000 seconds, server timeout is 1,200 seconds, minimum quota is 0.75 GPU-hours. No training, test inference or official submission is included. The small pilot and reused historical holdout limit conclusions; no alternative architecture comparison is claimed.
+
+## Completed native-resolution and detector-overlap pilot
+
+Private notebook `minahussain111/solar-filament-research-v6-resolution/v1` completed on all 32 preselected observations. Original detector reconstruction matched cached masks exactly (minimum per-observation canonical parity 1.0). The run used one T4 of two visible GPUs, 120.764 inference/reconstruction seconds and peak CUDA allocation 4,073,027,584 bytes. No training or test inference occurred.
+
+| Detector input / overlap policy | Local tuning micro PQ (16 observations) |
+|---|---:|
+| 1024 / original union | 0.421627 |
+| 1024 / mask NMS | **0.436670** |
+| 2048 / original union | 0.266869 |
+| 2048 / mask NMS | 0.258865 |
+
+Selection retained 1024 resolution and changed detector postprocessing to mask NMS. Only baseline and this selected candidate were compared on the 16 confirmation observations: micro PQ **0.408629 → 0.424046**, TP/FP/FN **98/58/61 → 101/55/58**, and paired macro gain 0.028983, 95% CI **[0.004045, 0.060616]**. This passes the small pilot's gate and justifies broader testing; it does not justify a new official-score claim. Native 2048 inference with these trained weights performed substantially worse in tuning and is not adopted. Historical model/validation reuse and small confirmation size remain material limitations. Final refiner overlap union was kept fixed, so this measures detector proposal postprocessing, unlike the earlier refiner-only NMS ablation.
+
+One first launch safely failed before GPU use because an inspect-only workflow had overwritten completed CPU replay evidence. A regression reproduced the problem, reporting paths were separated, and the original completed report was restored unchanged before the successful retry. Software delivery checks and independent CI evidence are documented in `docs/VERIFICATION.md` and `CURRENT_PROGRESS.md`.
