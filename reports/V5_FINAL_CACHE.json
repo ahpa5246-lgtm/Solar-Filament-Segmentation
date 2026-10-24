@@ -1,0 +1,44 @@
+{
+  "dataset": "minahussain111/solar-filament-v5-final-v3-356bd788",
+  "requested_private": true,
+  "source_session": "minahussain111/solar-filament-research-v5/v3",
+  "gpu_execution": false,
+  "weights_budget_bytes": 629145600,
+  "stage": "verify_privacy_and_provenance",
+  "matching_owned_refs": [],
+  "initial_status_http": 403,
+  "artifact_sha256": {
+    "best_detector_predictions_1024.pkl": "69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef",
+    "detector_thresholds.json": "a539c3f9fe946ad1ef14e927d830fbdc049b236e1c86508aaee3177ffc9fc0f5",
+    "final_configuration.json": "d967690b72e0f7015e21335408c1721620bcacf6763bb63a722bd2dced9a2188",
+    "final_detector.pt": "f5e1b6acd0bdaf17f048f9ec3af7999b73ef966b28f469c6cb56bf8977493229",
+    "final_refiner.pt": "a08df74538b5752c0df1047fea81b1b1aea4d81d3f749b340c993b4d5c8da924",
+    "refined_validation_predictions_2048.pkl": "139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c",
+    "submission.csv": "94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6",
+    "test_predictions_2048.pkl": "87c5e262d32584e9c2eb4320b3f2f30850cf1bb0c52276b49f0d44d81e140ac7",
+    "training_manifest.csv": "356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21"
+  },
+  "bytes": 242207683,
+  "creation_status": "Ok",
+  "creation_url": "https://www.kaggle.com/datasets/minahussain111/solar-filament-v5-final-v3-356bd788",
+  "created": true,
+  "last_processing_status_http": 403,
+  "metadata_root_keys": [
+    "info"
+  ],
+  "metadata_info_keys": [
+    "datasetId",
+    "datasetSlug",
+    "description",
+    "expectedUpdateFrequency",
+    "isPrivate",
+    "licenses",
+    "ownerUser",
+    "subtitle",
+    "title",
+    "usabilityRating"
+  ],
+  "reported_private": true,
+  "private_verified": true,
+  "status": "ready"
+}
