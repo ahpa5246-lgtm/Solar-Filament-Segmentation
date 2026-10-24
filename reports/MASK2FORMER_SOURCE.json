@@ -1,0 +1,10 @@
+{
+  "model": "facebook/mask2former-swin-tiny-coco-instance",
+  "library": "transformers==4.49.0",
+  "library_license": "Apache-2.0",
+  "training": false,
+  "status": "blocked",
+  "error_type": "RuntimeError",
+  "http_status": null,
+  "diagnosis": "Model license not verified as compatible"
+}
