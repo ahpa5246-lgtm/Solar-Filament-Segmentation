@@ -7,8 +7,16 @@
         "AttributeError",
         "CalledProcessError"
       ],
+      "failed_script_mentions": {
+        "scripts/predict.py": false,
+        "scripts/train.py": true,
+        "scripts/tune.py": false
+      },
       "log_bytes": 19178,
       "log_sha256": "a7c91bc371e6896883c42e31df53874c8dce636ea637b74461f95bf27f54aa20",
+      "missing_attributes": [
+        "NPY_OWNDATA"
+      ],
       "status": "ERROR"
     },
     "2": {
@@ -24,7 +32,7 @@
   "competition": "filament-segmentation-2026",
   "new_model_official_score_verified": false,
   "previous_v5_notebook": "minahussain111/solar-filament-research-v5/v3",
-  "snapshot_utc": "2026-10-24T21:45:34.686064+00:00",
+  "snapshot_utc": "2026-10-24T21:48:09.702992+00:00",
   "submission_attempted": false,
   "submissions": {
     "items": [
