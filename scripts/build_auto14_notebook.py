@@ -16,6 +16,8 @@ import torch
 PLAN = __PLAN__
 REPO = __REPO__
 REVISION = __REVISION__
+GEOMETRY_SOURCE = __GEOMETRY_SOURCE__
+GEOMETRY_TUNER_SOURCE = __GEOMETRY_TUNER_SOURCE__
 DAY = PLAN["day"]
 ROOT = Path("/kaggle/working/solar_auto14")
 TARGET = ROOT / ("day_%02d" % DAY)
@@ -34,7 +36,7 @@ try:
     assert actual == REVISION, "Pinned MIT source revision mismatch"
     licence = (src/"LICENSE").read_text()
     assert "MIT License" in licence and "Farnoosh Memari" in licence, "Third-party attribution missing"
-    original_paths = ("scripts/train.py", "solarseg/losses.py", "scripts/tune.py")
+    original_paths = ("scripts/train.py", "solarseg/losses.py", "scripts/tune.py", "solarseg/postprocess.py")
     originals = [(src/path).read_text() for path in original_paths]
     upgrades = patch_auto14_sources(*originals)
     provenance = {}
@@ -42,6 +44,14 @@ try:
         revised = upgrades[name]
         (src/name).write_text(revised)
         provenance[name] = hashlib.sha256(revised.encode()).hexdigest()
+    # Private third-party-compatible runtime extension; no original repository
+    # source is copied into our repository. Geometric links NEVER paint pixels.
+    geometry_path = src/"solarseg/auto14_geometry.py"
+    geometry_path.write_text(GEOMETRY_SOURCE)
+    tuner_path = src/"scripts/tune_geometry.py"
+    tuner_path.write_text(GEOMETRY_TUNER_SOURCE)
+    provenance["solarseg/auto14_geometry.py"] = hashlib.sha256(GEOMETRY_SOURCE.encode()).hexdigest()
+    provenance["scripts/tune_geometry.py"] = hashlib.sha256(GEOMETRY_TUNER_SOURCE.encode()).hexdigest()
     (TARGET/"source_patches.json").write_text(json.dumps(provenance, sort_keys=True, indent=2)+"\n")
     result["source_patches_sha256"] = hashlib.sha256(
         json.dumps(provenance, sort_keys=True).encode()).hexdigest()
@@ -69,6 +79,16 @@ try:
             "--thresholds","0.35,0.45,0.55,0.65",
             "--min-areas","100,250,400,650", "--merge-dists","0,5,10"]
     subprocess.run(tune,cwd=src,check=True)
+    # Evaluate the experimental orientation-constrained linker on the SAME
+    # development-only validation months. If it fails, mark the entire run
+    # incomplete rather than using a falsely high local model-selection PQ.
+    if DAY in (5,7,9,11,13) and time.perf_counter()-started < 5400:
+        geo = [sys.executable,"scripts/tune_geometry.py",
+               "--run",str(train_dir),"--max-images","24"]
+        subprocess.run(geo,cwd=src,check=True)
+        result["geometry_tuning_attempted"] = True
+    else:
+        result["geometry_tuning_attempted"] = False
     post = json.loads((train_dir/"postprocess.json").read_text())
     local = post["validation"]
     pq = float(local["pq"])
@@ -98,8 +118,12 @@ finally:
 def build(day, out, history=None):
     plan=choose_experiment(day,history)
     patch_source=(ROOT/"solar/auto14_upgrade.py").read_text()
+    geometry_source=(ROOT/"solar/auto14_geometry.py").read_text()
+    geometry_tuner_source=(ROOT/"scripts/auto14_geometry_tune.py").read_text()
     code=(patch_source+"\n"+RUN_CODE.replace("__PLAN__",repr(plan))
-          .replace("__REPO__",repr(UPSTREAM)).replace("__REVISION__",repr(UPSTREAM_SHA)))
+          .replace("__REPO__",repr(UPSTREAM)).replace("__REVISION__",repr(UPSTREAM_SHA))
+          .replace("__GEOMETRY_SOURCE__",repr(geometry_source))
+          .replace("__GEOMETRY_TUNER_SOURCE__",repr(geometry_tuner_source)))
     ast.parse(code)
     out=Path(out)
     out.parent.mkdir(parents=True,exist_ok=True)
