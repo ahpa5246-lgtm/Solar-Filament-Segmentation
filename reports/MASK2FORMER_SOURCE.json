@@ -8,8 +8,18 @@
     "license": "other"
   },
   "card_header": "\nlicense: other\ntags:\n- vision\n- image-segmentation\ndatasets:\n- coco\nwidget:\n- src: http://images.cocodataset.org/val2017/000000039769.jpg\n  example_title: Cats\n- src: http://images.cocodataset.org/val2017/000000039770.jpg\n  example_title: Castle\n",
-  "status": "blocked",
-  "error_type": "RuntimeError",
-  "http_status": null,
-  "diagnosis": "Model license not verified as compatible; observed fields recorded"
+  "weights_terms_url": "https://raw.githubusercontent.com/facebookresearch/Mask2Former/9b0651c6c1d5b3af2e6da0589b719c514ec0d69a/MODEL_ZOO.md",
+  "weights_terms_sha256": "6af2cff5f006cdb9bf2949146fd76336feca252f9c39ac0065ba974cca3723f8",
+  "usage_scope": "Noncommercial research; weights retain CC-BY-NC-4.0, distinct from MIT architecture code",
+  "use_safetensors": true,
+  "status": "verified",
+  "revision": "22c4a2f15dc88149b8b8d9f4d42c54431fbd66f6",
+  "model_license": "cc-by-nc-4.0",
+  "model_card_sha256": "5872a869d18256e9f6f725bfad1092b5bbe3d9993ddf2b20b29104964c65b816",
+  "architecture": [
+    "Mask2FormerForUniversalSegmentation"
+  ],
+  "num_queries": 100,
+  "model_card_url": "https://huggingface.co/facebook/mask2former-swin-tiny-coco-instance/blob/22c4a2f15dc88149b8b8d9f4d42c54431fbd66f6/README.md",
+  "pretrained_data": "COCO instance segmentation; not competition labels"
 }
