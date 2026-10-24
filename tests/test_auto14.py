@@ -146,3 +146,31 @@ def test_absent_owned_inventory_is_an_error_not_permission_to_reupload():
             return None
     with pytest.raises(RuntimeError,match="inventory unavailable"):
         runner.recover_existing(Api(),"owner/new-notebook")
+
+
+def test_version_status_bypasses_list_search_and_reports_completion():
+    """An immutable Kaggle v1 reference is NOT a separate kernel-list slug."""
+    class Api:
+        def kernels_list(self, **kwargs):
+            raise AssertionError("Version polling must never list a versioned slug")
+        def kernels_status(self, slug):
+            assert slug == "minahussain111/solar-autoresearch-d01/v1"
+            return SimpleNamespace(status="COMPLETE")
+    assert runner.recover_existing(Api(),"minahussain111/solar-autoresearch-d01/v1")=="COMPLETE"
+
+
+def test_unversioned_absence_still_requires_authenticated_inventory():
+    class Api:
+        def kernels_list(self, **kwargs):
+            return []
+        def kernels_status(self,slug):
+            raise AssertionError("Must not status-check unknown private kernels")
+    assert runner.recover_existing(Api(),"minahussain111/solar-autoresearch-d05") is None
+
+
+def test_invalid_version_reference_is_rejected_before_network():
+    class Api:
+        def kernels_list(self, **kwargs):
+            raise AssertionError("Unexpected listing call")
+    with pytest.raises(ValueError):
+        runner.recover_existing(Api(),"minahussain111/solar-autoresearch-d01/invalid")
