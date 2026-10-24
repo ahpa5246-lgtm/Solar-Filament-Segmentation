@@ -26,6 +26,7 @@ DAY=__DAY__
 EXPECTED_SHA=__SHA__
 PINNED_SOURCE=__SOURCE__
 UPSTREAM=__UPSTREAM__
+GEOMETRY_SOURCE=__GEOMETRY_SOURCE__
 RESULT=Path("/kaggle/working/auto14_final.json")
 FINAL_CSV=Path("/kaggle/working/submission.csv")
 report={"status":"STARTED","day":DAY,"training":False,"official_submission":False,
@@ -67,6 +68,9 @@ try:
     assert subprocess.check_output(["git","-C",str(source),"rev-parse","HEAD"],text=True).strip()==PINNED_SOURCE
     license_text=(source/"LICENSE").read_text()
     assert "MIT License" in license_text and "Farnoosh Memari" in license_text
+    (source/"solarseg/auto14_geometry.py").write_text(GEOMETRY_SOURCE)
+    post_path=source/"solarseg/postprocess.py"
+    post_path.write_text(patch_auto14_postprocess_source(post_path.read_text()))
     subprocess.run([sys.executable,"-m","pip","install","-q",
                     "numpy==1.26.4","scipy==1.13.1",
                     "opencv-python-headless==4.10.0.84","pycocotools==2.0.8"],check=True)
@@ -146,10 +150,13 @@ def build(day,checkpoint_sha,out):
     if type(day) is not int or day not in range(1,15):raise ValueError("Invalid chosen day")
     if not isinstance(checkpoint_sha,str) or len(checkpoint_sha)!=64 or any(c not in "0123456789abcdef" for c in checkpoint_sha):
         raise ValueError("Invalid selected checkpoint sha256")
-    code=(RUN_CODE.replace("__DAY__",str(day))
+    patch_source=(ROOT/"solar/auto14_upgrade.py").read_text()
+    geometry_source=(ROOT/"solar/auto14_geometry.py").read_text()
+    code=(patch_source+"\n"+RUN_CODE.replace("__DAY__",str(day))
           .replace("__SHA__",repr(checkpoint_sha))
           .replace("__SOURCE__",repr(UPSTREAM_SHA))
           .replace("__UPSTREAM__",repr(UPSTREAM))
+          .replace("__GEOMETRY_SOURCE__",repr(geometry_source))
           .replace("__MIN_PQ__",repr(MIN_CONFIRMATION_PQ))
           .replace("__MIN_N__",repr(MIN_CONFIRMATION_OBSERVATIONS)))
     ast.parse(code)
