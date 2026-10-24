@@ -3,6 +3,68 @@
   "assessment": "NO_NEW_SCORED_CHALLENGER",
   "auto14": {
     "1": {
+      "error_frames": [
+        {
+          "file": "data.py",
+          "line": 264
+        },
+        {
+          "file": "data.py",
+          "line": 254
+        },
+        {
+          "file": "data.py",
+          "line": 247
+        },
+        {
+          "file": "mask.py",
+          "line": 97
+        },
+        {
+          "file": "__init__.py",
+          "line": 333
+        },
+        {
+          "file": "train.py",
+          "line": 191
+        },
+        {
+          "file": "train.py",
+          "line": 122
+        },
+        {
+          "file": "train.py",
+          "line": 76
+        },
+        {
+          "file": "data.py",
+          "line": 264
+        },
+        {
+          "file": "data.py",
+          "line": 254
+        },
+        {
+          "file": "data.py",
+          "line": 247
+        },
+        {
+          "file": "mask.py",
+          "line": 97
+        },
+        {
+          "file": "__init__.py",
+          "line": 333
+        },
+        {
+          "file": "execute.py",
+          "line": 131
+        },
+        {
+          "file": "execute.py",
+          "line": 251
+        }
+      ],
       "exception_types": [
         "AttributeError",
         "CalledProcessError"
@@ -32,7 +94,7 @@
   "competition": "filament-segmentation-2026",
   "new_model_official_score_verified": false,
   "previous_v5_notebook": "minahussain111/solar-filament-research-v5/v3",
-  "snapshot_utc": "2026-10-24T21:48:09.702992+00:00",
+  "snapshot_utc": "2026-10-24T21:50:47.078850+00:00",
   "submission_attempted": false,
   "submissions": {
     "items": [
