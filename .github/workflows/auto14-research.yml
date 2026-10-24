@@ -8,6 +8,9 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/auto14-research.yml'
+      - 'scripts/run_auto14_daily.py'
+      - 'scripts/build_auto14_notebook.py'
+      - 'tests/test_auto14.py'
 
 permissions:
   contents: write
