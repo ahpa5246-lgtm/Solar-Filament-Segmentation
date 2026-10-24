@@ -1,0 +1,11 @@
+{
+  "training": false,
+  "test_inference": false,
+  "official_submission": false,
+  "requested_accelerator": "NvidiaTeslaT4",
+  "server_timeout_seconds": 1200,
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-filament-research-v6-resolution",
+  "error_type": "RuntimeError",
+  "http_status": null,
+  "diagnosis": "Fingerprint-verified Kaggle CPU replay is not complete"
+}
