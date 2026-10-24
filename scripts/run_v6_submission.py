@@ -12,6 +12,8 @@ COMPETITION='filament-segmentation-2026'
 REPORT=Path('reports/V6_OFFICIAL_SUBMISSION.json')
 
 
+# Executable from an uninstalled checkout in GitHub Actions.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from solar.v6_promotion import promotion_decision
 
 
