@@ -1,4 +1,4 @@
-name: Confirm fixed detector NMS without pilot holdout reuse
+name: Confirm fixed detector NMS with sanitized launch diagnostics
 on:
   push:
     branches: [main]

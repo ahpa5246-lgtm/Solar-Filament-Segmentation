@@ -32,7 +32,10 @@ def main():
             metadata=json.loads((folder/'kernel-metadata.json').read_text())
             if not metadata['is_private'] or not metadata['enable_gpu']:raise RuntimeError('Private GPU metadata guard failed')
             response=api.kernels_push(str(folder),timeout='1200',acc='NvidiaTeslaT4',no_run=False)
-            if response.error or response.invalidDatasetSources or response.invalidCompetitionSources:raise RuntimeError('Kaggle rejected required inference inputs or launch')
+            if response.error or response.invalidDatasetSources or response.invalidCompetitionSources:
+                from audit_v5_source import _redact
+                report['launch_rejection']={'error':_redact(str(response.error))[:1000],'invalid_dataset_sources':response.invalidDatasetSources,'invalid_competition_sources':response.invalidCompetitionSources}
+                raise RuntimeError('Kaggle rejected required inference inputs or launch; sanitized details recorded')
             version=int(response.versionNumber)
             if version<1:raise RuntimeError('Missing immutable execution version')
             reference=metadata['id']+'/v'+str(version);report['version']=version
