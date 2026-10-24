@@ -4,7 +4,7 @@
   "program": "Solar 14-day independent-challenger training",
   "results": {
     "1": {
-      "attempts": 1,
+      "attempts": 2,
       "config": {
         "base": 32,
         "batch": 8,
@@ -24,10 +24,11 @@
       },
       "day": 1,
       "error_type": "RuntimeError",
-      "execution_status": null,
-      "gpu_hours_remaining_before": 28.978,
+      "execution_status": "ERROR",
+      "gpu_hours_remaining_before": 28.64,
       "kaggle_notebook": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-d01",
-      "launch": "new",
+      "known_version": 1,
+      "launch": "resume_existing",
       "official_submission": false,
       "reason": "Check private Actions/Kaggle execution. Never auto-retry an uncertain Kaggle launch.",
       "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
