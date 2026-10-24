@@ -10,7 +10,9 @@ import datetime as dt
 import json
 import os
 from pathlib import Path
+import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from solar.auto14_plan import best_result, choose_experiment
 from scripts.build_auto14_notebook import build
 from scripts.run_auto14_daily import execute, load_state, save_state
