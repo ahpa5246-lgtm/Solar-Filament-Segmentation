@@ -1,6 +1,6 @@
 {
-  "best_day": null,
-  "latest_day": 1,
+  "best_day": "2",
+  "latest_day": 2,
   "program": "Solar 14-day independent-challenger training",
   "results": {
     "1": {
@@ -36,6 +36,50 @@
       "test_inference": false,
       "training": true,
       "utc_day": "2026-10-24",
+      "version": 1
+    },
+    "2": {
+      "attempts": 1,
+      "checkpoint_sha256": "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f",
+      "config": {
+        "base": 32,
+        "batch": 8,
+        "comparison": "tuning-local PQ; NO official score; no hidden test labels",
+        "confirmation_seed": 2026,
+        "day": 2,
+        "epochs": 30,
+        "holdout_fraction": 0.15,
+        "model": "Farnoosh-Memari MIT U-Net, modified fixed month-split research challenger",
+        "pos_frac": 0.7,
+        "pos_weight": 4.0,
+        "scale": 0.5,
+        "seed": 80,
+        "steps": 180,
+        "tuning_fraction_of_development": 0.18,
+        "tuning_seed": 2027
+      },
+      "confirmation_evaluated": false,
+      "day": 2,
+      "early_baghdad_request": true,
+      "elapsed_seconds": 3418.9,
+      "execution_status": "COMPLETE",
+      "gpu_hours_remaining_before": 28.64,
+      "kaggle_notebook": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-d02",
+      "launch": "new",
+      "local_tuning_pq": 0.40438,
+      "official_submission": false,
+      "research_slot_date_utc": "2026-10-25",
+      "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
+      "split_counts": {
+        "confirmation": 107,
+        "train": 489,
+        "val": 111
+      },
+      "status": "COMPLETE",
+      "test_inference": false,
+      "training": true,
+      "utc_day": "2026-10-24",
+      "validation_note": "Exploratory: tuning and model selection reuse same validation",
       "version": 1
     }
   },
