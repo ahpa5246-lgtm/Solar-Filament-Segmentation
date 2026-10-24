@@ -84,6 +84,8 @@ def test_fake_kaggle_recovers_completed_notebook_without_launch(monkeypatch):
         def quota_view(self):
             return SimpleNamespace(gpu_quota=SimpleNamespace(total_time_allowed=dt.timedelta(hours=30),
                                                time_used=dt.timedelta(hours=2)))
+        def kernels_list(self,**kwargs):
+            return [SimpleNamespace(ref=notebook_slug(2))]
         def kernels_status(self,slug):
             return SimpleNamespace(status="COMPLETE")
         def kernels_output(self,slug,path,file_pattern=None):
@@ -122,6 +124,25 @@ def test_non_404_kernel_status_errors_are_not_silent():
     class E(Exception):
         response=SimpleNamespace(status_code=403)
     class Api:
+        def kernels_list(self,**kwargs):
+            return [SimpleNamespace(ref="owner/slug")]
         def kernels_status(self,slug):
             raise E("private access denied")
     with pytest.raises(E):runner.recover_existing(Api(),"owner/slug")
+
+
+def test_missing_owned_notebook_must_not_call_status_or_launch():
+    class Api:
+        def kernels_list(self,**kwargs):
+            return [SimpleNamespace(ref="owner/unrelated")]
+        def kernels_status(self,*args):
+            raise AssertionError("A missing notebook cannot be status-polled")
+    assert runner.recover_existing(Api(),"owner/new-notebook") is None
+
+
+def test_absent_owned_inventory_is_an_error_not_permission_to_reupload():
+    class Api:
+        def kernels_list(self,**kwargs):
+            return None
+    with pytest.raises(RuntimeError,match="inventory unavailable"):
+        runner.recover_existing(Api(),"owner/new-notebook")

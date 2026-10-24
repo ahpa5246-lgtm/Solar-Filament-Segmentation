@@ -47,14 +47,22 @@ def _status(value):
 
 
 def recover_existing(api,slug):
-    """Fail closed on private/API errors; only HTTP 404 proves absent."""
-    try:
-        response=api.kernels_status(slug)
-    except Exception as exc:
-        code=getattr(getattr(exc,"response",None),"status_code",None)
-        if code==404:
-            return None
-        raise
+    """Discover owned notebook first: Kaggle may return 403 for an absent slug.
+
+    Do not interpret a 403 from a status request as absence. An authenticated
+    owned-list query must succeed, or we do not authorize a new upload.
+    """
+    kernel_slug=slug.split("/",1)[1]
+    owned=api.kernels_list(mine=True,search=kernel_slug,page_size=100)
+    if owned is None:
+        raise RuntimeError("Owned kernel inventory unavailable; refusing an ambiguous launch")
+    matches=[k for k in owned if k is not None and
+             str(getattr(k,"ref","")).lower()==slug.lower()]
+    if len(matches)>1:
+        raise RuntimeError("Ambiguous existing kernel inventory")
+    if not matches:
+        return None
+    response=api.kernels_status(slug)
     return _status(response.status)
 
 
@@ -129,6 +137,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser()
     parser.add_argument("--day",type=int,default=None)
     parser.add_argument("--state",type=Path,default=STATE)
+    parser.add_argument("--retry-failed",action="store_true",help="At most one safe retry after an early failure")
     args=parser.parse_args(argv)
     active=day_index(dt.datetime.now(dt.timezone.utc))
     if active is None:
@@ -140,13 +149,21 @@ def main(argv=None):
     state=load_state(args.state)
     history=state["results"]
     key=str(day)
-    if key in history and history[key].get("status") in {"COMPLETE","SKIPPED_QUOTA","FAILED"}:
+    prior=history.get(key,{})
+    if prior.get("status") in {"COMPLETE","SKIPPED_QUOTA"}:
         print("Day already recorded; no duplicate launch:",day)
         return
+    if prior.get("status")=="FAILED":
+        safe_retry=(args.retry_failed and prior.get("attempts",1)==1 and
+                    not prior.get("version") and not prior.get("launch"))
+        if not safe_retry:
+            print("Previous failure is not safe to retry without investigation:",day)
+            return
     if not os.environ.get("KAGGLE_API_TOKEN"):
         raise SystemExit("KAGGLE_API_TOKEN secret missing; refusing to launch")
     report={"day":day,"utc_day":dt.datetime.now(dt.timezone.utc).date().isoformat(),
-            "status":"STARTED","training":True,"test_inference":False,"official_submission":False}
+            "status":"STARTED","training":True,"test_inference":False,"official_submission":False,
+            "attempts":prior.get("attempts",0)+1}
     try:
         from kaggle.api.kaggle_api_extended import KaggleApi
         api=KaggleApi()
@@ -155,6 +172,7 @@ def main(argv=None):
     except Exception as exc:
         report["status"]="FAILED"
         report["error_type"]=type(exc).__name__
+        # Never publish raw API messages: they can contain private URLs or tokens.
         report["reason"]="Check private Actions/Kaggle execution. Never auto-retry an uncertain Kaggle launch."
     history[key]=report
     state["best_day"]=best_result(history)
