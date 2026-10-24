@@ -1,0 +1,68 @@
+{
+  "account": "minahussain111",
+  "assessment": "NO_NEW_SCORED_CHALLENGER",
+  "auto14": {
+    "1": {
+      "status": "ERROR"
+    },
+    "2": {
+      "status": "NOTEBOOK_NOT_FOUND"
+    },
+    "3": {
+      "status": "NOTEBOOK_NOT_FOUND"
+    },
+    "4": {
+      "status": "NOTEBOOK_NOT_FOUND"
+    }
+  },
+  "competition": "filament-segmentation-2026",
+  "new_model_official_score_verified": false,
+  "previous_v5_notebook": "minahussain111/solar-filament-research-v5/v3",
+  "snapshot_utc": "2026-10-24T21:42:34.834010+00:00",
+  "submission_attempted": false,
+  "submissions": {
+    "items": [
+      {
+        "description": "",
+        "public_score": 0.32,
+        "ref": "57571678",
+        "status": "SubmissionStatus.COMPLETE"
+      },
+      {
+        "description": "",
+        "public_score": 0.24,
+        "ref": "57569096",
+        "status": "SubmissionStatus.COMPLETE"
+      },
+      {
+        "description": "",
+        "public_score": 0.23,
+        "ref": "57562664",
+        "status": "SubmissionStatus.COMPLETE"
+      },
+      {
+        "description": "Initial Baseline - LightGBM Solar Filament Segmentation v1",
+        "public_score": 0.08,
+        "ref": "57529927",
+        "status": "SubmissionStatus.COMPLETE"
+      }
+    ],
+    "scores_available": 4,
+    "status": "READ"
+  },
+  "v5_csv": {
+    "integrity": {
+      "input_inventory_matched": false,
+      "max_area": 17620,
+      "min_area": 168,
+      "note": "Every encoded instance was checked; test file inventory and official score are separate",
+      "rle_all_rows_area_checked": true,
+      "rows": 1434,
+      "sha256": "94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6",
+      "unique_ids": 1434,
+      "unique_stems": 171
+    },
+    "status": "VALID"
+  },
+  "v5_status": "COMPLETE"
+}
