@@ -135,6 +135,28 @@ def _research(api):
                 continue
             state = _status(api, slug)
             result[str(day)] = {"status":state}
+            if state in {"ERROR", "FAILED", "CANCELED", "CANCELLED"}:
+                try:
+                    raw = api.kernels_logs(slug)
+                    events = json.loads(raw)
+                    if isinstance(events, list):
+                        log = "\n".join(str(item.get("data", "")) for item in events if isinstance(item, dict))
+                    else:
+                        log = str(raw)
+                    # Public diagnostics are deliberately limited to exception
+                    # types, no private paths, training labels or full logs.
+                    matches = re.findall(
+                        r"\b(?:AssertionError|ValueError|RuntimeError|KeyError|TypeError|"
+                        r"ModuleNotFoundError|ImportError|FileNotFoundError|OSError|"
+                        r"AttributeError|PermissionError|MemoryError|SystemExit|"
+                        r"CalledProcessError|CUDAOutOfMemoryError)\b", log
+                    )
+                    result[str(day)]["exception_types"] = sorted(set(matches))[:10]
+                    result[str(day)]["log_bytes"] = len(log.encode("utf-8"))
+                    result[str(day)]["log_sha256"] = hashlib.sha256(log.encode()).hexdigest()
+                except Exception as err:
+                    result[str(day)]["logs"] = "UNAVAILABLE_" + type(err).__name__
+                continue
             if state != "COMPLETE":
                 continue
             with tempfile.TemporaryDirectory() as output:
