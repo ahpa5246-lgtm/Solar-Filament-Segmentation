@@ -1,0 +1,38 @@
+{
+  "best_day": null,
+  "latest_day": 1,
+  "program": "Solar 14-day independent-challenger training",
+  "results": {
+    "1": {
+      "config": {
+        "base": 32,
+        "batch": 8,
+        "comparison": "tuning-local PQ; NO official score; no hidden test labels",
+        "confirmation_seed": 2026,
+        "day": 1,
+        "epochs": 24,
+        "holdout_fraction": 0.15,
+        "model": "Farnoosh-Memari MIT U-Net, modified fixed month-split research challenger",
+        "pos_frac": 0.7,
+        "pos_weight": 3.0,
+        "scale": 0.5,
+        "seed": 61,
+        "steps": 160,
+        "tuning_fraction_of_development": 0.18,
+        "tuning_seed": 2027
+      },
+      "day": 1,
+      "error_type": "ValueError",
+      "gpu_hours_remaining_before": 28.978,
+      "kaggle_notebook": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-d01",
+      "official_submission": false,
+      "reason": "Check private Actions/Kaggle execution. Never auto-retry an uncertain Kaggle launch.",
+      "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
+      "status": "FAILED",
+      "test_inference": false,
+      "training": true,
+      "utc_day": "2026-10-24"
+    }
+  },
+  "status": "active"
+}
