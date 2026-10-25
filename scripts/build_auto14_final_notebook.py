@@ -36,10 +36,9 @@ report={"status":"STARTED","day":DAY,"training":False,"official_submission":Fals
         "confirmation_threshold":__MIN_PQ__}
 started=time.perf_counter()
 try:
-    import torch
-    assert torch.cuda.is_available(),"CUDA required for final assessment"
-    import cv2
-    import numpy as np
+    # Do not import compiled NumPy/OpenCV/PyTorch extensions until the pinned
+    # environment has been installed. A running Python kernel cannot safely
+    # replace extension modules which were already imported before pip.
     input_root=Path("/kaggle/input")
     matches=[]
     for path in input_root.rglob("best.pt"):
@@ -88,8 +87,12 @@ assert np.array_equal(coco.decode(rle),a)
 assert np.array_equal(coco.decode(coco.merge([rle])),a)
 """
     subprocess.run([sys.executable,"-c",smoke],check=True)
-    # Import COCO only AFTER installing/checking the new compatible binary.
-    # Kaggle kernels cache imported C extensions across pip upgrades.
+    # Import all compiled extensions only AFTER the pinned installation
+    # and verification in a fresh interpreter. This prevents NumPy C ABI drift.
+    import torch
+    assert torch.cuda.is_available(),"CUDA required for final assessment"
+    import cv2
+    import numpy as np
     from pycocotools import mask as coco
     sys.path.insert(0,str(source))
     from solarseg.data import resolve_paths,load_records,group_by_stem,record_instance_rles
