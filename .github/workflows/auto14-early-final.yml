@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 140
     env:
-      KAGGLE_API_${{ secrets.KAGGLE }}: TOKEN
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
       KAGGLE_USERNAME: minahussain111
     steps:
       - uses: actions/checkout@v4
