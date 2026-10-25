@@ -36,11 +36,9 @@ report={"status":"STARTED","day":DAY,"training":False,"official_submission":Fals
         "confirmation_threshold":__MIN_PQ__}
 started=time.perf_counter()
 try:
-    import torch
-    assert torch.cuda.is_available(),"CUDA required for final assessment"
-    import cv2
-    import numpy as np
-    from pycocotools import mask as coco
+    # Do not import compiled NumPy/OpenCV/PyTorch extensions until the pinned
+    # environment has been installed. A running Python kernel cannot safely
+    # replace extension modules which were already imported before pip.
     input_root=Path("/kaggle/input")
     matches=[]
     for path in input_root.rglob("best.pt"):
@@ -89,6 +87,13 @@ assert np.array_equal(coco.decode(rle),a)
 assert np.array_equal(coco.decode(coco.merge([rle])),a)
 """
     subprocess.run([sys.executable,"-c",smoke],check=True)
+    # Import all compiled extensions only AFTER the pinned installation
+    # and verification in a fresh interpreter. This prevents NumPy C ABI drift.
+    import torch
+    assert torch.cuda.is_available(),"CUDA required for final assessment"
+    import cv2
+    import numpy as np
+    from pycocotools import mask as coco
     sys.path.insert(0,str(source))
     from solarseg.data import resolve_paths,load_records,group_by_stem,record_instance_rles
     from solarseg.infer import get_device,load_checkpoint,predict_image
@@ -161,8 +166,10 @@ finally:
 '''
 
 
-def build(day,checkpoint_sha,out):
+def build(day,checkpoint_sha,out,kernel_id=KERNEL_ID):
     if type(day) is not int or day not in range(1,15):raise ValueError("Invalid chosen day")
+    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025"):
+        raise ValueError("Only predeclared immutable private final notebook ids allowed")
     if not isinstance(checkpoint_sha,str) or len(checkpoint_sha)!=64 or any(c not in "0123456789abcdef" for c in checkpoint_sha):
         raise ValueError("Invalid selected checkpoint sha256")
     patch_source=(ROOT/"solar/auto14_upgrade.py").read_text()
@@ -186,7 +193,7 @@ def build(day,checkpoint_sha,out):
             {"cell_type":"code","metadata":{},"execution_count":None,"outputs":[],
              "source":code.splitlines(keepends=True)}]}
     out.write_text(json.dumps(nb,indent=1)+"\n")
-    metadata={"id":KERNEL_ID,"title":"solar-autoresearch-final-2026",
+    metadata={"id":kernel_id,"title":kernel_id.rsplit("/",1)[1],
               "code_file":out.name,"language":"python","kernel_type":"notebook",
               "is_private":True,"enable_gpu":True,"machine_shape":"NvidiaTeslaT4",
               "enable_internet":True,"dataset_sources":[],
