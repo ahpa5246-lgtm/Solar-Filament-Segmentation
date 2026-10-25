@@ -1,0 +1,56 @@
+name: Solar PQ 0.60 early challenger - real sealed Kaggle assessment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/auto14-early-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solar-auto14-early-final-once
+  cancel-in-progress: false
+
+jobs:
+  verify_and_submit_if_valid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    env:
+      KAGGLE_API_${{ secrets.KAGGLE }}: TOKEN
+      KAGGLE_USERNAME: minahussain111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify exact trained day-two provenance and independent final notebook
+        run: |
+          python -m pip install pytest==8.3.4
+          python -m pytest -q tests/test_auto14.py tests/test_auto14_final.py tests/test_auto14_early_final.py
+      - name: Install Kaggle official pinned client
+        run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
+      - name: Confirm heldout PQ then make one genuine official submission if passed
+        run: python scripts/run_auto14_early_final.py
+      - name: Preserve only sanitized official score and confirmation outcome
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ ! -f reports/AUTO14_EARLY_FINAL.json ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/AUTO14_EARLY_FINAL.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record sealed real Kaggle confirmation / official result [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Explain output
+        if: always()
+        run: |
+          echo '## Actual Kaggle confirmation and official attempt' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Candidate: independently trained private day-two U-Net, not reused V5 CSV.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'If heldout local PQ < 0.36 there is NO official submission.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Only an actual scored Kaggle competition submission establishes public PQ.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'See reports/AUTO14_EARLY_FINAL.json for exact evidence.' >> "$GITHUB_STEP_SUMMARY"
