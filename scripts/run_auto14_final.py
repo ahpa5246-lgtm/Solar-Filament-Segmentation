@@ -45,7 +45,11 @@ def candidate(state,minimum_completed=3,required_day=None):
     key=best_result(results) if required_day is None else str(required_day)
     if key is None:raise RuntimeError("No successfully trained locally scored candidates")
     if sum(record.get("status")=="COMPLETE" for record in results.values() if isinstance(record,dict))<minimum_completed:
-        raise RuntimeError("Fewer than required completed research days; no final selection")
+        raise RuntimeError(
+            "Fewer than three completed research days; no final selection"
+            if minimum_completed==3 else
+            "Fewer than required completed research days; no final selection"
+        )
     if key not in results or results[key].get("status")!="COMPLETE":
         raise RuntimeError("Required day has no completed checkpoint")
     record=results[key]
