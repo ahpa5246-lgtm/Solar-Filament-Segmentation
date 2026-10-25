@@ -1,0 +1,20 @@
+{
+  "candidate_selected_by": "Frozen research day 2",
+  "checkpoint_sha256": "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f",
+  "date_local": "2026-10-25",
+  "error_type": "RuntimeError",
+  "frozen_training_day": 2,
+  "gpu_hours_remaining_before": 27.532,
+  "kaggle_execution_status": "ERROR",
+  "notebook_url": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-early-final-20261025",
+  "official_submission": false,
+  "reason": "Check private Kaggle/Actions logs; never infer score on error",
+  "selected_day": 2,
+  "status": "FAILED",
+  "target_pq": 0.6,
+  "test_inference": false,
+  "training": false,
+  "user_requested_immediate_official_assessment": true,
+  "validation_rule": "untouched date-grouped confirmation >=0.36",
+  "version": 1
+}
