@@ -35,13 +35,19 @@ def save(report,path=REPORT):
     pending.replace(path)
 
 
-def candidate(state):
-    """Never select a model based on official leaderboard or confirmation."""
+def candidate(state,minimum_completed=3,required_day=None):
+    """Select only immutable completed checkpoints using local scores or frozen day."""
+    if type(minimum_completed) is not int or not 1<=minimum_completed<=14:
+        raise ValueError("Invalid candidate minimum")
+    if required_day is not None and (type(required_day) is not int or not 1<=required_day<=14):
+        raise ValueError("Invalid requested frozen training day")
     results=state.get("results",{})
-    key=best_result(results)
+    key=best_result(results) if required_day is None else str(required_day)
     if key is None:raise RuntimeError("No successfully trained locally scored candidates")
-    if sum(record.get("status")=="COMPLETE" for record in results.values() if isinstance(record,dict))<3:
-        raise RuntimeError("Fewer than three completed research days; no final selection")
+    if sum(record.get("status")=="COMPLETE" for record in results.values() if isinstance(record,dict))<minimum_completed:
+        raise RuntimeError("Fewer than required completed research days; no final selection")
+    if key not in results or results[key].get("status")!="COMPLETE":
+        raise RuntimeError("Required day has no completed checkpoint")
     record=results[key]
     sha=record.get("checkpoint_sha256")
     if (not isinstance(sha,str) or len(sha)!=64 or
@@ -83,11 +89,15 @@ def final_check(record,chosen_sha):
     return expected
 
 
-def execute(api,history,report):
-    day,sha=candidate(history)
+def execute(api,history,report,*,minimum_completed=3,required_day=None,
+            kernel_id=KERNEL_ID,report_path=REPORT):
+    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025"):
+        raise ValueError("Unapproved final Kaggle notebook identity")
+    day,sha=candidate(history,minimum_completed=minimum_completed,required_day=required_day)
     report.update(selected_day=day,checkpoint_sha256=sha,
-                  candidate_selected_by="best prior local tuning PQ; no leaderboard optimisation",
-                  notebook_url="https://www.kaggle.com/code/"+KERNEL_ID)
+                  candidate_selected_by=("Frozen research day "+str(day) if required_day is not None
+                                         else "best prior local tuning PQ; no leaderboard optimisation"),
+                  notebook_url="https://www.kaggle.com/code/"+kernel_id)
     remaining=gpu_hours(api)
     report["gpu_hours_remaining_before"]=round(remaining,3)
     if remaining<1.5:
@@ -95,10 +105,10 @@ def execute(api,history,report):
         return
     with tempfile.TemporaryDirectory(prefix="auto14-final-") as tmp:
         folder=Path(tmp)
-        status=recover_existing(api,KERNEL_ID)
-        reference=KERNEL_ID
+        status=recover_existing(api,kernel_id)
+        reference=kernel_id
         if status is None:
-            metadata=build(day,sha,folder/"auto14_final.ipynb")
+            metadata=build(day,sha,folder/"auto14_final.ipynb",kernel_id=kernel_id)
             if not metadata.get("is_private") or not metadata.get("enable_gpu"):
                 raise RuntimeError("Final Kaggle notebook metadata is unsafe")
             response=api.kernels_push(str(folder),timeout="6000",
@@ -107,13 +117,13 @@ def execute(api,history,report):
                 raise RuntimeError("Kaggle did not accept private final experiment")
             version=int(response.versionNumber)
             if version<1:raise RuntimeError("Missing immutable Kaggle execution version")
-            reference=KERNEL_ID+"/v"+str(version)
+            reference=kernel_id+"/v"+str(version)
             report["version"]=version
         else:
             report["resumed_existing_notebook"]=True
         deadline=time.monotonic()+6240
         while time.monotonic()<deadline:
-            status=recover_existing(api,reference) if reference==KERNEL_ID else (
+            status=recover_existing(api,reference) if reference==kernel_id else (
                 str(api.kernels_status(reference).status).split(".")[-1].upper()
             )
             if status in STOP:break
@@ -138,6 +148,10 @@ def execute(api,history,report):
         csvs=list(output.rglob("submission.csv"))
         if len(csvs)!=1 or hashlib.sha256(csvs[0].read_bytes()).hexdigest()!=expected:
             raise RuntimeError("Final CSV download missing or checksum differs")
+        # Never call an old V5 CSV a new trained challenger. The frozen
+        # V5 fingerprint comes from real Kaggle v3 artifact inventory.
+        if expected=="94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6":
+            raise RuntimeError("Challenger CSV duplicates old V5 submission")
         report.update(status="CSV_VERIFIED",csv_sha256=expected,final_test_images=180,
                       submission_rows=record["submission_rows"],csv_available_in_private_kaggle=True)
         # Upload is explicitly one-shot, identified by model checkpoint and CSV hash.
@@ -155,13 +169,13 @@ def execute(api,history,report):
             report["official_submission_attempted"]=True
             # This persists within the runner before upload; GitHub step commits
             # it after return. A failed/uncertain upload is NEVER blindly retried.
-            save(report)
+            save(report,report_path)
             response=api.competition_submit(str(csvs[0]),message,COMPETITION,quiet=True)
             ref=getattr(response,"ref",None)
             if ref is None:raise RuntimeError("Official submission outcome is uncertain; inspect Kaggle account")
             report["submission_ref"]=int(ref)
         report.update(status="SUBMITTED",official_submission=True)
-        save(report)
+        save(report,report_path)
         until=time.monotonic()+360
         while time.monotonic()<until:
             try:
@@ -178,7 +192,8 @@ def execute(api,history,report):
                 if not math.isfinite(value) or not 0<=value<=1:raise RuntimeError("Unexpected official score")
                 report.update(status="SCORED",official_public_score=value,
                               official_score_kind="Kaggle public evaluation metric (not local PQ)",
-                              official_target_0_70_reached=value>=0.70)
+                              official_target_0_70_reached=value>=0.70,
+                              official_target_0_60_reached=value>=0.60)
                 break
             if "ERROR" in status:break
             time.sleep(20)
