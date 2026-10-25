@@ -1,5 +1,34 @@
 # Solar Filament Segmentation — IEEE BigDataCup 2026
 
+## Download, setup and project overview
+
+Research pipelines for solar-filament instance segmentation.
+
+Notebook preparation; segmentation baselines; refinement; validation and submission tooling.
+
+![Project workflow illustration](docs/project-overview.svg)
+
+[Download source ZIP](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/archive/refs/heads/main.zip) · [Changes and branches](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/branches) · [Verification notes](docs/QUALITY_REVIEW.md)
+
+The ZIP contains source code. Installation steps and external runtime requirements are listed below.
+
+```bash
+git clone https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation.git
+cd Solar-Filament-Segmentation
+```
+
+From the repository directory:
+
+```text
+python -m venv .venv
+# Activate .venv before installing packages.
+python -m pip install -r requirements.txt
+# Follow the task-specific CLI / notebook instructions below.
+```
+
+The diagram is a project illustration. Test results and runtime limitations are recorded in [the review](docs/QUALITY_REVIEW.md); it is not a production-readiness certification.
+
+
 ## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 
 **Verified public scores (2026-10-23):** V1 0.08, V2 0.23, V4 0.24, **V5 Version 5: 0.32** (confirmed by the owner; not independently re-fetched in this session). V3 has no verified score.
