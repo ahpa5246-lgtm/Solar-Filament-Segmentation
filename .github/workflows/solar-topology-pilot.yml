@@ -1,0 +1,59 @@
+name: Solar soft-clDice independent GPU pilot (2026-10-26)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/launch_topology_pilot.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solar-fourteen-day-one-gpu
+  cancel-in-progress: false
+
+jobs:
+  topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      KAGGLE_USERNAME: minahussain111
+      OMP_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline preflight test dependencies
+        run: |
+          python -m pip install -q pytest==8.3.4 numpy==1.26.4
+          python -m pip install -q torch==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
+      - name: Run training upgrade and notebook contract tests BEFORE GPU use
+        run: |
+          python -m pytest -q tests/test_auto14.py tests/test_auto14_upgrade.py tests/test_auto14_geometry.py
+          python -m py_compile scripts/launch_topology_pilot.py
+      - name: Install pinned authenticated Kaggle client
+        run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
+      - name: One quota-gated private topology training (never competition submit)
+        run: python scripts/launch_topology_pilot.py
+      - name: Preserve safe outcome ledger even on failure
+        if: ${{ always() }}
+        run: |
+          if [ ! -f reports/TOPOLOGY_PILOT_20261026.json ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/TOPOLOGY_PILOT_20261026.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Kaggle soft-clDice pilot result [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Provide evidence links
+        if: ${{ always() }}
+        run: |
+          echo '## Kaggle topology pilot — real GPU evidence only' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Private notebook: https://www.kaggle.com/code/minahussain111/solar-topology-pilot-20261026' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Read reports/TOPOLOGY_PILOT_20261026.json for measured Kaggle COMPLETE, checkpoint hash, elapsed training and local tuning PQ.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Do not present local tuning PQ as official Public PQ. No official submission is performed here.' >> "$GITHUB_STEP_SUMMARY"
