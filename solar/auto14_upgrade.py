@@ -82,6 +82,23 @@ def patch_auto14_sources(train: str, losses: str, tune: str, postprocess: str | 
     )
     losses = _replace_exactly_once(
         losses,
+        '        if not 0 <= self.boundary_weight <= 8:\\n'
+        '            raise ValueError("Boundary weight must be between 0 and 8")\\n',
+        '        if not 0 <= self.boundary_weight <= 8:\\n'
+        '            raise ValueError("Boundary weight must be between 0 and 8")\\n'
+        '        self.topology_weight = float(os.environ.get("SOLAR_TOPOLOGY_WEIGHT", "0"))\\n'
+        '        if not 0 <= self.topology_weight <= 0.5:\\n'
+        '            raise ValueError("Topology weight must be between 0 and 0.5")\\n',
+        "loss topology initializer",
+    )
+    losses = _replace_exactly_once(
+        losses,
+        "class BCEDiceLoss(nn.Module):\\n",
+        "\ndef _soft_erode(x):\n    # Directional 3x1 / 1x3 erosion protects long thin structures.\n    return torch.minimum(\n        -F.max_pool2d(-x, (3, 1), stride=1, padding=(1, 0)),\n        -F.max_pool2d(-x, (1, 3), stride=1, padding=(0, 1)),\n    )\n\n\ndef _soft_skeleton(x, iterations=3):\n    # Differentiable approximation; compute on TRAINING pixels only.\n    opened = F.max_pool2d(_soft_erode(x), 3, stride=1, padding=1)\n    skeleton = F.relu(x - opened)\n    for _ in range(iterations):\n        x = _soft_erode(x)\n        opened = F.max_pool2d(_soft_erode(x), 3, stride=1, padding=1)\n        detail = F.relu(x - opened)\n        skeleton = skeleton + F.relu(detail - skeleton * detail)\n    return skeleton\n\n\ndef soft_cldice_loss(logits, target):\n    \"\"\"Soft skeleton connectivity; bounded and differentiable for empty masks.\"\"\"\n    probability = torch.sigmoid(logits.float())\n    soft_target = target.float().clamp(0.0, 1.0)\n    pred_skeleton = _soft_skeleton(probability)\n    target_skeleton = _soft_skeleton(soft_target)\n    eps = 1.0\n    precision = ((pred_skeleton * soft_target).sum() + eps) / (pred_skeleton.sum() + eps)\n    sensitivity = ((target_skeleton * probability).sum() + eps) / (target_skeleton.sum() + eps)\n    return 1.0 - (2.0 * precision * sensitivity) / (precision + sensitivity + 1e-6)\n\n\n" + "class BCEDiceLoss(nn.Module):\\n",
+        "loss topology helper",
+    )
+    losses = _replace_exactly_once(
+        losses,
         "        bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=self.pos_weight)\n",
         """        if self.boundary_weight == 0:
             bce = F.binary_cross_entropy_with_logits(logits, target, pos_weight=self.pos_weight)
@@ -99,6 +116,15 @@ def patch_auto14_sources(train: str, losses: str, tune: str, postprocess: str | 
             bce = (pixel_loss * weight).sum() / weight.sum()
 """,
         "loss forward",
+    )
+    losses = _replace_exactly_once(
+        losses,
+        "        return bce + self.dice_weight * soft_dice_loss(logits, target)\\n",
+        "        total = bce + self.dice_weight * soft_dice_loss(logits, target)\\n"
+        "        if self.topology_weight:\\n"
+        "            total = total + self.topology_weight * soft_cldice_loss(logits, target)\\n"
+        "        return total\\n",
+        "loss topology contribution",
     )
     tune = _replace_exactly_once(
         tune,
