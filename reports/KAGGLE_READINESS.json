@@ -1,6 +1,6 @@
 {
   "account": "minahussain111",
-  "assessment": "NO_NEW_SCORED_CHALLENGER",
+  "assessment": "NEW_LOCAL_MODEL_NEEDS_INDEPENDENT_CONFIRMATION",
   "auto14": {
     "1": {
       "error_frames": [
@@ -82,10 +82,28 @@
       "status": "ERROR"
     },
     "2": {
-      "status": "RUNNING"
+      "evidence": {
+        "best_checkpoint_sha256": "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f",
+        "boundary_weight": 0.0,
+        "day": 2,
+        "local_tuning_pq": 0.40438,
+        "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
+        "split_months_disjoint": true,
+        "status": "COMPLETE"
+      },
+      "status": "COMPLETE"
     },
     "3": {
-      "status": "NOTEBOOK_NOT_FOUND"
+      "evidence": {
+        "best_checkpoint_sha256": "8ce5296685f18cfdea41d9eedac198683eef157f01498872de78c23cd12d9701",
+        "boundary_weight": 0.0,
+        "day": 3,
+        "local_tuning_pq": 0.38915,
+        "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
+        "split_months_disjoint": true,
+        "status": "COMPLETE"
+      },
+      "status": "COMPLETE"
     },
     "4": {
       "status": "NOTEBOOK_NOT_FOUND"
@@ -94,7 +112,7 @@
   "competition": "filament-segmentation-2026",
   "new_model_official_score_verified": false,
   "previous_v5_notebook": "minahussain111/solar-filament-research-v5/v3",
-  "snapshot_utc": "2026-10-24T22:00:18.956746+00:00",
+  "snapshot_utc": "2026-10-26T11:19:03.567591+00:00",
   "submission_attempted": false,
   "submissions": {
     "items": [
