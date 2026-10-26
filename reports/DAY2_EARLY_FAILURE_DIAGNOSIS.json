@@ -1,0 +1,44 @@
+{
+  "execution_status": "ERROR",
+  "gpu_jobs_launched": 0,
+  "logs": {
+    "exception_types": [
+      "AssertionError",
+      "ModuleNotFoundError"
+    ],
+    "log_bytes": 14902,
+    "log_sha256": "847771cf5b2c06827d16fc8311e427f63f2f2ab5e4b4ca73ecd4922636686feb",
+    "missing_attributes": [],
+    "python_frames": [
+      {
+        "file": "execute.py",
+        "line": 131
+      },
+      {
+        "file": "execute.py",
+        "line": 251
+      }
+    ],
+    "traceback_count": 2
+  },
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-early-final-20261025",
+  "observed_at_utc": "2026-10-26T12:28:18.086862+00:00",
+  "read_only": true,
+  "requested_immutable_version": 1,
+  "result_manifest": {
+    "confirmation_local_pq": null,
+    "confirmation_observations": null,
+    "day": 2,
+    "elapsed_seconds": 914.6,
+    "error_type": "ModuleNotFoundError",
+    "final_test_images": null,
+    "official_submission": false,
+    "source_sha": "ef37d2e93d4cc9e248595e791ee39fe520d392d0",
+    "status": "FAILED",
+    "test_inference": false,
+    "training": false,
+    "training_checkpoint_sha256": null
+  },
+  "result_manifest_count": 1,
+  "submission_attempted": false
+}
