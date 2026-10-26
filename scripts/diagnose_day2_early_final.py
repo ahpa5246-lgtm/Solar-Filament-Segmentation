@@ -30,11 +30,11 @@ def extract(text: str) -> dict:
     return {
         "log_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
         "log_bytes": len(text.encode("utf-8")),
-        "exception_types": sorted(set(re.findall(r"\\b(?:"+"|".join(ALLOWED)+r")\\b", text))),
+        "exception_types": sorted(set(re.findall(r"\b(?:"+"|".join(ALLOWED)+r")\b", text))),
         "python_frames": [
             {"file": name, "line": int(number)}
             for name, number in re.findall(
-                r"""File ["'](?:[^"'\\n\\r]*/)?([A-Za-z0-9_]+\\.py)["'], line (\\d{1,6})""",
+                r"""File ["'](?:[^"'\n\r]*/)?([A-Za-z0-9_]+\.py)["'], line (\d{1,6})""",
                 text,
             )[-25:]
         ],
@@ -68,7 +68,7 @@ def main():
         else:
             decoded = raw
         if isinstance(decoded, list):
-            full = "\\n".join(str(item.get("data", "")) for item in decoded if isinstance(item, dict))
+            full = "\n".join(str(item.get("data", "")) for item in decoded if isinstance(item, dict))
         else:
             full = str(decoded)
         report["logs"] = extract(full)
@@ -76,7 +76,7 @@ def main():
         report["logs_error_type"] = type(error).__name__
     try:
         with tempfile.TemporaryDirectory(prefix="day2-diagnose-") as tmp:
-            api.kernels_output(REF, tmp, file_pattern=r"auto14_final\\.json$")
+            api.kernels_output(REF, tmp, file_pattern=r"auto14_final\.json$")
             paths = list(Path(tmp).rglob("auto14_final.json"))
             report["result_manifest_count"] = len(paths)
             if len(paths) == 1:
@@ -85,7 +85,7 @@ def main():
     except Exception as error:
         report["manifest_error_type"] = type(error).__name__
     OUT.parent.mkdir(exist_ok=True, parents=True)
-    OUT.write_text(json.dumps(report, indent=2, sort_keys=True)+"\\n")
+    OUT.write_text(json.dumps(report, indent=2, sort_keys=True)+"\n")
     print("Immutable Kaggle early-final:",report.get("execution_status"))
     print("Exception types:",report.get("logs",{}).get("exception_types"))
     print("Sanitized manifest:", report.get("result_manifest",{}).get("status"))
