@@ -206,6 +206,7 @@ def audit(api):
               "new_model_official_score_verified":False,
               "previous_v5_notebook":V5,
               "v5_status":_status(api,V5),
+              "topology_pilot_status": _status(api, f"{OWNER}/solar-topology-pilot-20261026"),
               "submissions":_submissions(api),
               "auto14":_research(api)}
     try:
