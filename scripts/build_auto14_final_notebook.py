@@ -15,6 +15,7 @@ sys.path.insert(0,str(ROOT))
 from solar.auto14_plan import UPSTREAM,UPSTREAM_SHA,notebook_slug
 
 KERNEL_ID="minahussain111/solar-autoresearch-final-2026"
+DAY2_VERIFICATION_KERNEL="minahussain111/solar-day2-independent-20261026"
 MIN_CONFIRMATION_PQ=0.36
 MIN_CONFIRMATION_OBSERVATIONS=20
 
@@ -168,7 +169,7 @@ finally:
 
 def build(day,checkpoint_sha,out,kernel_id=KERNEL_ID):
     if type(day) is not int or day not in range(1,15):raise ValueError("Invalid chosen day")
-    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025"):
+    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025",DAY2_VERIFICATION_KERNEL):
         raise ValueError("Only predeclared immutable private final notebook ids allowed")
     if not isinstance(checkpoint_sha,str) or len(checkpoint_sha)!=64 or any(c not in "0123456789abcdef" for c in checkpoint_sha):
         raise ValueError("Invalid selected checkpoint sha256")
