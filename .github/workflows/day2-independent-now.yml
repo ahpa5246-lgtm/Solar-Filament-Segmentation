@@ -1,0 +1,56 @@
+name: Verify the frozen solar day-two checkpoint on Kaggle (one-shot)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/day2-independent-now.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solar-fourteen-day-one-gpu
+  cancel-in-progress: false
+
+jobs:
+  independent_day2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      KAGGLE_USERNAME: minahussain111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify checkpoint fingerprint and no-duplicate/holdout guards on CPU
+        run: |
+          python -m pip install -q pytest==8.3.4
+          python -m pytest -q tests/test_day2_independent.py tests/test_auto14_early_final.py tests/test_auto14_final.py
+          python -m py_compile scripts/run_day2_independent.py scripts/build_day2_verification_notebook.py
+      - name: Install pinned authenticated Kaggle client
+        run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
+      - name: Evaluate frozen best day-two checkpoint on independent dates; officially submit only on pass
+        run: python scripts/run_day2_independent.py
+      - name: Preserve immutable outcome, including failure and official submission reference
+        if: always()
+        run: |
+          if [ ! -f reports/DAY2_INDEPENDENT_20261026.json ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/DAY2_INDEPENDENT_20261026.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record one-shot frozen day-two independent Kaggle result [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Explain scored result
+        if: always()
+        run: |
+          echo '## Frozen day-two real Kaggle independent confirmation' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Only complete Kaggle run + valid heldout >=0.36 may attempt one official submission.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Keep the original day-two checkpoint d213d3d8b; never overwrite with local 0.38691.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A new Public PQ appears ONLY when Kaggle returns a scored submission reference.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Consult reports/DAY2_INDEPENDENT_20261026.json for frozen evidence.' >> "$GITHUB_STEP_SUMMARY"
