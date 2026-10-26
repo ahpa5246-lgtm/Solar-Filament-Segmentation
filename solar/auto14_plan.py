@@ -114,6 +114,15 @@ def choose_experiment(day, history=None):
                 boundary = float(selected)
         plan["boundary_weight"] = boundary
         plan["model"] += "; optional edge-weighted BCE research arm"
+    # Connectivity experiments start only after three separate boundary-weight
+    # controls. All earlier Kaggle notebook plans remain byte-compatible.
+    # clDice encourages thin structures to remain connected. This is a
+    # training loss, NOT a local/official PQ measurement or a promise of 0.50.
+    if day >= 7:
+        topology_by_day = {7: 0.12, 8: 0.25, 9: 0.12, 10: 0.25,
+                           11: 0.12, 12: 0.25, 13: 0.12, 14: 0.25}
+        plan["topology_weight"] = topology_by_day[day]
+        plan["model"] += "; differentiable skeleton-connectivity research arm"
     return plan
 
 
