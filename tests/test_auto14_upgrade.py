@@ -96,6 +96,49 @@ def test_boundary_loss_upweights_wrong_edge_logits_and_has_gradient(monkeypatch)
         namespace["BCEDiceLoss"]()
 
 
+
+def test_topology_loss_rewards_connected_filaments_and_has_real_gradients(monkeypatch):
+    monkeypatch.setenv("SOLAR_BOUNDARY_WEIGHT", "0")
+    monkeypatch.setenv("SOLAR_TOPOLOGY_WEIGHT", "0.12")
+    namespace = {}
+    exec(compile(patch()["solarseg/losses.py"], "loss", "exec"), namespace)
+    gt = torch.zeros((1, 1, 32, 64))
+    gt[:, :, 15:17, 5:60] = 1.0
+    connected = torch.full_like(gt, -6.0)
+    connected[:, :, 15:17, 5:60] = 6.0
+    broken = connected.clone()
+    broken[:, :, 15:17, 27:36] = -6.0
+    connected_loss = namespace["soft_cldice_loss"](connected, gt)
+    broken_loss = namespace["soft_cldice_loss"](broken, gt)
+    assert broken_loss > connected_loss
+    logits = broken.clone().detach().requires_grad_()
+    measured = namespace["BCEDiceLoss"]()(logits, gt)
+    assert torch.isfinite(measured)
+    measured.backward()
+    assert torch.isfinite(logits.grad).all()
+    assert logits.grad.abs().sum().item() > 0
+    monkeypatch.setenv("SOLAR_TOPOLOGY_WEIGHT", "0.51")
+    with pytest.raises(ValueError, match="Topology weight"):
+        namespace["BCEDiceLoss"]()
+
+
+def test_topology_arms_are_bounded_and_only_start_after_boundary_controls(tmp_path):
+    for day in range(1, 7):
+        assert "topology_weight" not in choose_experiment(day)
+    for day in range(7, 15):
+        plan = choose_experiment(day)
+        assert 0.0 < plan["topology_weight"] <= 0.25
+        output = tmp_path / str(day) / "auto14.ipynb"
+        build(day, output)
+        import json
+        code = "".join(json.loads(output.read_text())["cells"][1]["source"])
+        compile(code, "topology Kaggle notebook", "exec")
+        assert '"SOLAR_TOPOLOGY_WEIGHT"' in code
+        assert "source_patches_sha256" in code
+        assert "confirmation_stems" in code
+        assert "competitions_submit" not in code
+
+
 def test_deterministic_month_round_robin_samples_every_month():
     namespace={}
     exec(compile(patch()["scripts/tune.py"],"balanced sampler","exec"),namespace)
