@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from solar.auto14_plan import best_result,UPSTREAM_SHA
-from scripts.build_auto14_final_notebook import build,KERNEL_ID,MIN_CONFIRMATION_PQ
+from scripts.build_auto14_final_notebook import build,KERNEL_ID,MIN_CONFIRMATION_PQ,DAY2_VERIFICATION_KERNEL
 from scripts.run_auto14_daily import recover_existing,gpu_hours
 
 DATE=dt.date(2026,11,7)
@@ -95,7 +95,7 @@ def final_check(record,chosen_sha):
 
 def execute(api,history,report,*,minimum_completed=3,required_day=None,
             kernel_id=KERNEL_ID,report_path=REPORT):
-    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025"):
+    if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025",DAY2_VERIFICATION_KERNEL):
         raise ValueError("Unapproved final Kaggle notebook identity")
     day,sha=candidate(history,minimum_completed=minimum_completed,required_day=required_day)
     report.update(selected_day=day,checkpoint_sha256=sha,
@@ -112,7 +112,11 @@ def execute(api,history,report,*,minimum_completed=3,required_day=None,
         status=recover_existing(api,kernel_id)
         reference=kernel_id
         if status is None:
-            metadata=build(day,sha,folder/"auto14_final.ipynb",kernel_id=kernel_id)
+            if kernel_id==DAY2_VERIFICATION_KERNEL:
+                from scripts.build_day2_verification_notebook import build_day2
+                metadata=build_day2(day,sha,folder/"auto14_final.ipynb")
+            else:
+                metadata=build(day,sha,folder/"auto14_final.ipynb",kernel_id=kernel_id)
             if not metadata.get("is_private") or not metadata.get("enable_gpu"):
                 raise RuntimeError("Final Kaggle notebook metadata is unsafe")
             response=api.kernels_push(str(folder),timeout="6000",
