@@ -9,6 +9,9 @@
     "log_bytes": 14902,
     "log_sha256": "847771cf5b2c06827d16fc8311e427f63f2f2ab5e4b4ca73ecd4922636686feb",
     "missing_attributes": [],
+    "missing_modules": [
+      "numpy.rec"
+    ],
     "python_frames": [
       {
         "file": "execute.py",
@@ -22,7 +25,7 @@
     "traceback_count": 2
   },
   "notebook": "https://www.kaggle.com/code/minahussain111/solar-autoresearch-early-final-20261025",
-  "observed_at_utc": "2026-10-26T12:28:18.086862+00:00",
+  "observed_at_utc": "2026-10-26T12:29:09.286018+00:00",
   "read_only": true,
   "requested_immutable_version": 1,
   "result_manifest": {
