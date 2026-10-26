@@ -56,3 +56,4 @@ jobs:
           echo 'Read-only: no competition submission was attempted.' >> "$GITHUB_STEP_SUMMARY"
           echo 'A valid prior V5 CSV does not establish a new trained model.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Review reports/KAGGLE_READINESS.json for official score inventory and RLE check.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This audit re-fetches current official submission scores; local tuning PQ remains separate.' >> "$GITHUB_STEP_SUMMARY"
