@@ -38,6 +38,9 @@ def extract(text: str) -> dict:
                 text,
             )[-25:]
         ],
+        "missing_modules": sorted(set(re.findall(
+            r"""No module named [\u0027\u0022]([A-Za-z_][A-Za-z_0-9.]{0,100})[\u0027\u0022]""", text
+        )))[:20],
         "missing_attributes": sorted(set(re.findall(
             r"""has no attribute ['"]([A-Za-z_][A-Za-z_0-9]{0,80})['"]""", text
         )))[:20],
