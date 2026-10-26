@@ -56,6 +56,7 @@ try:
     result["source_patches_sha256"] = hashlib.sha256(
         json.dumps(provenance, sort_keys=True).encode()).hexdigest()
     result["boundary_weight"] = float(PLAN.get("boundary_weight", 0.0))
+    result["topology_weight"] = float(PLAN.get("topology_weight", 0.0))
     subprocess.run([sys.executable,"-m","pip","install","-q",
                     "numpy==1.26.4","scipy==1.13.1",
                     "opencv-python-headless==4.10.0.84","pycocotools==2.0.11"],check=True)
@@ -83,7 +84,8 @@ assert np.array_equal(coco.decode(coco.merge([rle])),a)
            "--pos-frac",str(PLAN["pos_frac"]), "--seed",str(PLAN["seed"]),
            "--val-every","5"]
     subprocess.run(cmd,cwd=src,check=True,
-                   env={**os.environ,"SOLAR_BOUNDARY_WEIGHT":str(PLAN.get("boundary_weight",0.0))})
+                   env={**os.environ,"SOLAR_BOUNDARY_WEIGHT":str(PLAN.get("boundary_weight",0.0)),
+                        "SOLAR_TOPOLOGY_WEIGHT":str(PLAN.get("topology_weight",0.0))})
     split = json.loads((train_dir/"split.json").read_text())
     months = [{s[:6] for s in split[k]} for k in ("train","val","confirmation")]
     assert all(months) and not months[0]&months[1] and not months[0]&months[2] and not months[1]&months[2], "Month leakage or empty partitions"
@@ -149,7 +151,7 @@ def build(day, out, history=None):
                       "# Solar AutoResearch — day %02d\n" % day,
                       "MIT upstream credit: Farnoosh Memari, pinned immutable revision.\n",
                       "TRAIN / tuning / untouched-confirmation months are separated.\n",
-                      "GPU training with optional boundary-aware BCE and balanced tuning-month sampling.\n",
+                      "GPU training with optional boundary-aware BCE, topology-aware soft-clDice and balanced tuning-month sampling.\n",
                       "NO competition test inference or official submission.\n"]},
                   {"cell_type":"code","metadata":{},"execution_count":None,"outputs":[],"source":code.splitlines(keepends=True)}
               ]}
