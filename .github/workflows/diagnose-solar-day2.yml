@@ -1,0 +1,55 @@
+name: Diagnose immutable Kaggle day-two inference failure (read only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-solar-day2.yml'
+      - 'scripts/diagnose_day2_early_final.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solar-day2-diagnostics-readonly
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      KAGGLE_USERNAME: minahussain111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Confirm pure read-only source
+        run: |
+          python -m py_compile scripts/diagnose_day2_early_final.py
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('scripts/diagnose_day2_early_final.py').read_text()
+          assert 'competition_submit(' not in source
+          assert 'kernels_push(' not in source
+          assert 'kernels_output(REF' in source
+          print('No Kaggle compute, official writes, or new confirmation.')
+          PY
+      - name: Install pinned Kaggle API
+        run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
+      - name: Fetch immutable failure and sanitize
+        run: python scripts/diagnose_day2_early_final.py
+      - name: Record only de-identified error diagnostics
+        if: always()
+        run: |
+          if [ ! -f reports/DAY2_EARLY_FAILURE_DIAGNOSIS.json ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/DAY2_EARLY_FAILURE_DIAGNOSIS.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record Kaggle day-two original error diagnosis [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
