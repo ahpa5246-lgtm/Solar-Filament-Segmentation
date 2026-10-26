@@ -1,0 +1,40 @@
+{
+  "better_than_day2_local_pq": false,
+  "checkpoint_sha256": "887a6c60912236f1fe568dda012d66f5d2cb6ff2359b8fbaa91f3b3abf3e3d16",
+  "config": {
+    "base": 32,
+    "batch": 4,
+    "boundary_weight": 1.5,
+    "comparison": "tuning-local PQ; NO official score; no hidden test labels",
+    "confirmation_seed": 2026,
+    "day": 7,
+    "epochs": 24,
+    "holdout_fraction": 0.15,
+    "model": "Farnoosh-Memari MIT U-Net, modified fixed month-split research challenger; optional edge-weighted BCE research arm; differentiable skeleton-connectivity research arm",
+    "pos_frac": 0.7,
+    "pos_weight": 4.0,
+    "scale": 0.75,
+    "seed": 175,
+    "steps": 160,
+    "topology_weight": 0.12,
+    "tuning_fraction_of_development": 0.18,
+    "tuning_seed": 2027
+  },
+  "elapsed_seconds": 2397.8,
+  "experiment": "Independent topology-aware U-Net private GPU training",
+  "gpu_hours_remaining_before": 26.057,
+  "kaggle_execution_status": "COMPLETE",
+  "kaggle_notebook": "https://www.kaggle.com/code/minahussain111/solar-topology-pilot-20261026",
+  "local_tuning_pq": 0.38691,
+  "official_public_pq": null,
+  "official_submission": false,
+  "push_attempted": true,
+  "source_patches_sha256": "f91e1fcb292db3e4720b195ea07c382e079ceb8ca5abeaff542f45fef6cba1a9",
+  "split_counts": {
+    "confirmation": 107,
+    "train": 489,
+    "val": 111
+  },
+  "status": "COMPLETE",
+  "version": 1
+}
