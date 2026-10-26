@@ -112,7 +112,7 @@
   "competition": "filament-segmentation-2026",
   "new_model_official_score_verified": false,
   "previous_v5_notebook": "minahussain111/solar-filament-research-v5/v3",
-  "snapshot_utc": "2026-10-26T11:19:03.567591+00:00",
+  "snapshot_utc": "2026-10-26T11:20:22.050306+00:00",
   "submission_attempted": false,
   "submissions": {
     "items": [
@@ -144,6 +144,7 @@
     "scores_available": 4,
     "status": "READ"
   },
+  "topology_pilot_status": "RUNNING",
   "v5_csv": {
     "integrity": {
       "input_inventory_matched": false,
