@@ -154,6 +154,12 @@ def execute(api,day,history,report):
             raise RuntimeError("No verified source patch fingerprint from Kaggle")
         report["boundary_weight"] = record["boundary_weight"]
         report["source_patches_sha256"] = digest
+    if "topology_weight" in expected:
+        if record.get("topology_weight") != expected["topology_weight"]:
+            raise RuntimeError("Kaggle topology research configuration mismatch")
+        if not record.get("source_patches_sha256"):
+            raise RuntimeError("Topology source patch not attested")
+        report["topology_weight"] = record["topology_weight"]
     report.update(status="COMPLETE",local_tuning_pq=record["local_tuning_pq"],
                   checkpoint_sha256=record["best_checkpoint_sha256"],
                   split_counts=record["split_counts"],
