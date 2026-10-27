@@ -1,0 +1,18 @@
+{
+  "candidate_selected_by": "Frozen research day 2",
+  "checkpoint_sha256": "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f",
+  "date_utc": "2026-10-27",
+  "error_note": "Inspect Kaggle execution logs; do not retry uncertain remote writes",
+  "error_type": "RuntimeError",
+  "frozen_training_day": 2,
+  "gpu_hours_remaining_before": 23.731,
+  "kaggle_execution_status": "ERROR",
+  "notebook_url": "https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027",
+  "official_submission": false,
+  "official_submission_attempted": false,
+  "selected_day": 2,
+  "status": "FAILED",
+  "test_inference": false,
+  "training": false,
+  "version": 1
+}
