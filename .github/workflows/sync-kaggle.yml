@@ -72,6 +72,27 @@ jobs:
         run: |
           python -m pip install -q pytest
           python -m pytest -q tests/test_v5_builder.py -k 'not refiner_tta'
+      - name: Inspect existing failed manual training version
+        if: ${{ env.CHOICE == 'manual-training' }}
+        run: |
+          python - <<'PY'
+          import json, re
+          from kaggle.api.kaggle_api_extended import KaggleApi
+          api = KaggleApi()
+          api.authenticate()
+          ref = 'minahussain111/solar-manual-training-20261027/v2'
+          print('Existing notebook status:', api.kernels_status(ref))
+          raw = api.kernels_logs(ref)
+          try:
+              decoded = json.loads(raw) if isinstance(raw, str) else raw
+          except ValueError:
+              decoded = raw
+          full = '\n'.join(str(x.get('data','')) for x in decoded if isinstance(x,dict)) if isinstance(decoded,list) else str(decoded)
+          # Print only the traceback tail; never environment variables or tokens.
+          tail = full[full.rfind('Traceback'):][-10000:]
+          tail = re.sub(r'KGAT_[A-Za-z0-9_-]+', '[REDACTED]', tail)
+          print(tail)
+          PY
       - name: Stage notebooks and competition metadata
         run: |
           python - <<'PY'
