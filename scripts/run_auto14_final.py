@@ -117,15 +117,20 @@ def execute(api,history,report,*,minimum_completed=3,required_day=None,
                   candidate_selected_by=("Frozen research day "+str(day) if required_day is not None
                                          else "best prior local tuning PQ; no leaderboard optimisation"),
                   notebook_url="https://www.kaggle.com/code/"+kernel_id)
-    remaining=gpu_hours(api)
-    report["gpu_hours_remaining_before"]=round(remaining,3)
-    if remaining<1.5:
-        report.update(status="SKIPPED_QUOTA",reason="Insufficient final inference GPU quota")
-        return
+    if not resume_only:
+        remaining=gpu_hours(api)
+        report["gpu_hours_remaining_before"]=round(remaining,3)
+        if remaining<1.5:
+            report.update(status="SKIPPED_QUOTA",reason="Insufficient final inference GPU quota")
+            return
+    else:
+        report["gpu_quota_check"]="SKIPPED_EXISTING_COMPLETED_KERNEL"
     with tempfile.TemporaryDirectory(prefix="auto14-final-") as tmp:
         folder=Path(tmp)
-        status=recover_existing(api,kernel_id)
-        reference=kernel_id
+        # Never use a mutable notebook reference for recovering an immutable
+        # already-completed Kaggle v1 result.
+        reference=kernel_id+"/v1" if resume_only else kernel_id
+        status="COMPLETE" if resume_only else recover_existing(api,kernel_id)
         if status is None:
             if resume_only:
                 raise RuntimeError("Existing immutable Kaggle notebook missing; never launch new GPU job")
