@@ -134,3 +134,15 @@ def test_immediate_guard_does_not_relaunch_existing_remote_attempt(tmp_path, mon
     monkeypatch.setattr(runner, "IMMEDIATE_REPORT", intent)
     assert runner.immediate_main() is None
     assert json.loads(intent.read_text()) == {"status":"STARTED"}
+
+def test_isolated_preflight_contains_executable_cuda_and_pickle_assertions():
+    import ast
+    from scripts.kaggle_isolated_runtime import wrap_final_inference
+    wrapper = wrap_final_inference("pass")
+    raw = wrapper.split('preflight = r"""', 1)[1].split('"""', 1)[0]
+    tree = ast.parse(raw)
+    assertions = [node for node in ast.walk(tree) if isinstance(node, ast.Assert)]
+    assert len(assertions) >= 5, "GPU/NumPy isolation checks must not be commented out"
+    assert "\\nassert torch.cuda" not in raw
+    assert "torch.cuda.is_available()" in raw
+    assert "pickle.loads(pickle.dumps(probe))" in raw
