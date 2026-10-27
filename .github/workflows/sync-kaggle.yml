@@ -1,4 +1,4 @@
-name: Sync research notebooks to Kaggle (no GPU run)
+name: Sync research notebooks to Kaggle
 
 on:
   push:
@@ -41,7 +41,8 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     env:
       KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
-      CHOICE: ${{ github.event.inputs.notebook || (contains(github.event.head_commit.message, 'manual training notebook') && 'manual-training') || 'both' }}
+      RUN_TRAINING: ${{ contains(github.event.head_commit.message, '[run-solar-training]') }}
+      CHOICE: ${{ github.event.inputs.notebook || 'manual-training' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -98,7 +99,7 @@ jobs:
               api.kernels_output(ref, folder, file_pattern=r'(auto14_result\.json|metrics\.jsonl|submission.*json)$')
               for path in pathlib.Path(folder).rglob('*'):
                   if path.is_file(): print(path.name, path.read_text()[-5000:])
-          print(api.competitions_submissions('filament-segmentation-2026')[:3])
+          print(str(api.competitions_submissions('filament-segmentation-2026'))[:6000])
           PY
       - name: Stage notebooks and competition metadata
         run: |
@@ -206,13 +207,17 @@ jobs:
           name: v6-source-audit
           path: v6-review/
           retention-days: 14
-      - name: Push notebook code without starting a GPU run
+      - name: Push selected notebook and optionally start authorized training
         run: |
           set -euo pipefail
           for metadata in kaggle-deploy/*/kernel-metadata.json; do
             folder="$(dirname "$metadata")"
             echo "Syncing $folder (NO GPU RUN)"
-            kaggle kernels push -p "$folder" --no-run
+            if [ "$CHOICE" = manual-training ] && [ "$RUN_TRAINING" = true ]; then
+              kaggle kernels push -p "$folder"
+            else
+              kaggle kernels push -p "$folder" --no-run
+            fi
           done
       - name: Show links
         run: |

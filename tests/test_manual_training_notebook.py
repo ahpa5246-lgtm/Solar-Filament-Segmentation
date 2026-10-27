@@ -56,3 +56,12 @@ def test_persisted_result_requires_completed_checkpoint():
     assert "training_report['status'] == 'COMPLETE'" in code
     assert "ckpt.is_file()" in code
     assert "local_tuning_pq" in code
+
+
+def test_completed_training_exports_validated_competition_csv():
+    code = "".join(notebook()["cells"][3]["source"])
+    assert "scripts/predict.py" in code
+    assert "scripts/check_submission.py" in code
+    assert "/kaggle/working/submission.csv" in code
+    assert "submission_path" in code
+
