@@ -67,3 +67,22 @@ def test_failed_kaggle_research_emits_only_exception_names_not_private_logs():
     assert day["exception_types"]==["ModuleNotFoundError"]
     assert "private user" not in str(day)
     assert day["log_bytes"]>20 and len(day["log_sha256"])==64
+
+
+def test_official_best_rejects_unscored_or_unfinished_entries():
+    from scripts.kaggle_readiness_probe import official_best
+    inventory = {"status": "READ", "items": [
+        {"ref": "1", "status": "SubmissionStatus.COMPLETE", "public_score": 0.32},
+        {"ref": "2", "status": "SubmissionStatus.PENDING", "public_score": 0.99},
+        {"ref": "3", "status": "SubmissionStatus.COMPLETE", "public_score": None},
+        {"ref": "4", "status": "SubmissionStatus.COMPLETE", "public_score": float("nan")},
+    ]}
+    best = official_best(inventory)
+    assert best == {"status": "VERIFIED", "public_pq": 0.32,
+                    "submission_ref": "1", "target_0_50_reached": False}
+    inventory["items"].append({"ref": "5", "status": "SubmissionStatus.COMPLETE",
+                                "public_score": 0.51})
+    assert official_best(inventory)["target_0_50_reached"] is True
+    assert official_best(inventory)["submission_ref"] == "5"
+    assert official_best({"status": "UNAVAILABLE", "items": []})["public_pq"] is None
+    assert official_best({"status": "READ", "items": []})["status"] == "NO_COMPLETE_SCORED_SUBMISSION"
