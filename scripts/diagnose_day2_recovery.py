@@ -20,12 +20,16 @@ OUT = Path("reports/DAY2_RECOVERY_FAILURE_DIAGNOSIS.json")
 def main():
     global REF, OUT
     if sys.argv[1:] == ["--immediate"]:
-        # Read-only inspection of the actual failed 2026-10-27 Kaggle kernel.
-        # This does not relaunch evaluation or inspect sealed labels.
+        # Immutable first failed notebook: never relaunch.
         REF = "minahussain111/solar-day2-confirmation-20261027/v1"
         OUT = Path("reports/AUTO14_IMMEDIATE_FAILURE_DIAGNOSIS.json")
+    elif sys.argv[1:] == ["--retry"]:
+        # Read-only status of the corrected r2 Kaggle notebook, which the
+        # existing auto14-final workflow may already be executing.
+        REF = "minahussain111/solar-day2-confirmation-20261027-r2/v1"
+        OUT = Path("reports/AUTO14_R2_OBSERVATION.json")
     elif len(sys.argv) != 1:
-        raise SystemExit("Usage: python -m scripts.diagnose_day2_recovery [--immediate]")
+        raise SystemExit("Usage: python -m scripts.diagnose_day2_recovery [--immediate|--retry]")
     if not os.environ.get("KAGGLE_API_TOKEN"):
         raise SystemExit("Missing authenticated Kaggle token")
     from kaggle.api.kaggle_api_extended import KaggleApi
