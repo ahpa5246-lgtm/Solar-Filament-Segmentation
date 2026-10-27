@@ -1,5 +1,5 @@
 name: Kaggle official score and real CSV readiness (read-only)
-# Recheck the accelerated Kaggle day-two run after ABI-preflight deployment.
+# Authenticated refresh on 2026-10-27 after completed day-two r2 Kaggle notebook.
 
 on:
   workflow_dispatch:
