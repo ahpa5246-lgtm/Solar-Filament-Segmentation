@@ -41,6 +41,7 @@ jobs:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     env:
       KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      INSPECT_ONLY: ${{ contains(github.event.head_commit.message, '[inspect-solar]') }}
       RUN_TRAINING: ${{ contains(github.event.head_commit.message, '[run-solar-training]') }}
       CHOICE: ${{ github.event.inputs.notebook || 'manual-training' }}
     steps:
@@ -81,7 +82,7 @@ jobs:
           from kaggle.api.kaggle_api_extended import KaggleApi
           api = KaggleApi()
           api.authenticate()
-          ref = 'minahussain111/solar-manual-training-20261027/v2'
+          ref = 'minahussain111/solar-manual-training-20261027/v4'
           print('Existing notebook status:', api.kernels_status(ref))
           raw = api.kernels_logs(ref)
           try:
@@ -208,6 +209,7 @@ jobs:
           path: v6-review/
           retention-days: 14
       - name: Push selected notebook and optionally start authorized training
+        if: ${{ env.INSPECT_ONLY != 'true' }}
         run: |
           set -euo pipefail
           for metadata in kaggle-deploy/*/kernel-metadata.json; do
