@@ -37,18 +37,42 @@ jobs:
         run: python -m pytest -q tests/test_kaggle_readiness_probe.py
       - name: Check authenticated Kaggle score and real V5 submission file
         run: python scripts/kaggle_readiness_probe.py
-      - name: Record sanitized score and status evidence only
+      - name: Record only newer sanitized evidence without stale-report rebase conflicts
         if: always()
         run: |
           set -euo pipefail
           if [ ! -f reports/KAGGLE_READINESS.json ]; then exit 0; fi
+          cp reports/KAGGLE_READINESS.json "$RUNNER_TEMP/solar-local-audit.json"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add reports/KAGGLE_READINESS.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Record Kaggle competition readiness evidence [skip ci]'
-          git pull --rebase origin main
-          git push origin HEAD:main
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git show origin/main:reports/KAGGLE_READINESS.json > "$RUNNER_TEMP/solar-remote-audit.json" || echo '{}' > "$RUNNER_TEMP/solar-remote-audit.json"
+            if ! python - "$RUNNER_TEMP/solar-local-audit.json" "$RUNNER_TEMP/solar-remote-audit.json" <<'PY'
+          import datetime as dt
+          import json
+          import sys
+          def stamp(path):
+              try:
+                  value = json.load(open(path)).get("snapshot_utc")
+                  return dt.datetime.fromisoformat(value) if value else dt.datetime.min.replace(tzinfo=dt.timezone.utc)
+              except (OSError, ValueError, TypeError):
+                  return dt.datetime.min.replace(tzinfo=dt.timezone.utc)
+          sys.exit(0 if stamp(sys.argv[1]) > stamp(sys.argv[2]) else 1)
+          PY
+            then
+              echo 'A newer or identical Kaggle audit is already recorded; skip stale report.'
+              exit 0
+            fi
+            git reset --hard origin/main
+            cp "$RUNNER_TEMP/solar-local-audit.json" reports/KAGGLE_READINESS.json
+            git add reports/KAGGLE_READINESS.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'Record Kaggle competition readiness evidence [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          echo 'Audit completed but GitHub branch advanced during three safe retries.'
+          exit 1
       - name: Explain official status
         if: always()
         run: |
