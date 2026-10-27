@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Verify Kaggle r2 recovery with frozen training and one-shot submission contract
+      - name: Verify Kaggle 429 recovery with frozen training and one-shot submission contract
         run: |
           python -m pip install pytest==8.3.4
           python -m compileall -q scripts/build_auto14_final_notebook.py scripts/kaggle_isolated_runtime.py scripts/run_auto14_final.py
@@ -40,19 +40,19 @@ jobs:
           test -n "$KAGGLE_API_TOKEN" || { echo "::error::Missing existing repository secret KAGGLE"; exit 1; }
       - name: Install the official pinned Kaggle client
         run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
-      - name: Reuse final scorer for independent day-two checkpoint and official Kaggle submission
+      - name: Recover completed immutable Kaggle notebook outputs and submit only if independently verified
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "schedule" ]; then
             python scripts/run_auto14_final.py
           else
-            python scripts/run_auto14_final.py --immediate
+            python scripts/run_auto14_final.py --deliver-existing
           fi
       - name: Preserve sanitized local confirmation and official score without secrets
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          for report in reports/AUTO14_IMMEDIATE_RETRY_20261027.json reports/AUTO14_FINAL.json; do
+          for report in reports/AUTO14_DELIVERY_20261027.json reports/AUTO14_FINAL.json; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
           if git diff --cached --quiet; then exit 0; fi
@@ -65,7 +65,7 @@ jobs:
         if: ${{ always() }}
         run: |
           echo '## Kaggle result evidence' >> "$GITHUB_STEP_SUMMARY"
-          echo '- [Run report](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/blob/main/reports/AUTO14_IMMEDIATE_RETRY_20261027.json)' >> "$GITHUB_STEP_SUMMARY"
+          echo '- [Run report](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/blob/main/reports/AUTO14_DELIVERY_20261027.json)' >> "$GITHUB_STEP_SUMMARY"
           echo '- [Kaggle private notebook](https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027-r2)' >> "$GITHUB_STEP_SUMMARY"
           echo '- [Official submissions](https://www.kaggle.com/competitions/filament-segmentation-2026/submissions)' >> "$GITHUB_STEP_SUMMARY"
           echo 'Only a real Kaggle scored submission establishes official PQ; local tuning PQ is not the public score.' >> "$GITHUB_STEP_SUMMARY"
