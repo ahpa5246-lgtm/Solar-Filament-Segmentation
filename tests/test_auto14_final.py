@@ -90,3 +90,23 @@ def test_ambiguous_official_history_blocks_second_upload():
                     SimpleNamespace(description="Auto14 verified",ref=124)]
     with pytest.raises(RuntimeError,match="More than one"):
         official_history(API(),"Auto14 verified")
+
+
+def test_future_final_notebook_isolates_compiled_numpy_before_confirmation(tmp_path):
+    from scripts.kaggle_isolated_runtime import wrap_final_inference, PACKAGES
+    meta = build(2, "d" * 64, tmp_path / "final.ipynb")
+    assert meta["id"] == KERNEL_ID and meta["is_private"]
+    notebook = json.loads((tmp_path / "final.ipynb").read_text())
+    source = "".join(notebook["cells"][1]["source"])
+    compile(source, "isolated final cell", "exec")
+    assert "solar_final_isolated_venv" in source
+    assert "venv" in source and "--system-site-packages" in source
+    assert "--ignore-installed" in source and "--no-deps" in source
+    assert "numpy.rec" in source
+    assert "np.__version__" in source
+    assert "confirmation_local_pq" in source
+    assert "training_checkpoint_sha256" in source
+    assert "competition_submit(" not in source
+    assert "numpy==1.26.4" in PACKAGES
+    with pytest.raises((SyntaxError, ValueError)):
+        wrap_final_inference("this is not python ?!")
