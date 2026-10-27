@@ -74,6 +74,28 @@ jobs:
         run: |
           python -m pip install -q pytest
           python -m pytest -q tests/test_v5_builder.py -k 'not refiner_tta'
+      - name: Verify scored V5 submission provenance without GPU
+        if: ${{ env.INSPECT_ONLY == 'true' }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, tempfile
+          from pathlib import Path
+          from kaggle.api.kaggle_api_extended import KaggleApi
+          api=KaggleApi(); api.authenticate()
+          rows=api.competition_submissions('filament-segmentation-2026') or []
+          row=next(r for r in rows if int(r.ref)==57571678)
+          assert float(row.public_score)==0.32
+          expected='94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6'
+          with tempfile.TemporaryDirectory() as folder:
+              api.competition_download_submission(57571678, folder, quiet=True)
+              files=[p for p in Path(folder).rglob('*') if p.is_file()]
+              assert len(files)==1
+              actual=hashlib.sha256(files[0].read_bytes()).hexdigest()
+              report={'official_submission_ref':57571678,'official_public_pq':0.32,
+                      'submitted_file_sha256':actual,'archived_api_v3_csv_sha256':expected,
+                      'exact_csv_match':actual==expected,'training':False,'official_submission':False}
+              print('V5_SCORED_PROVENANCE='+json.dumps(report,sort_keys=True))
+          PY
       - name: Inspect existing failed manual training version
         if: ${{ env.CHOICE == 'manual-training' }}
         run: |
