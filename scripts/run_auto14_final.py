@@ -240,4 +240,57 @@ def main():
         raise SystemExit(1)
 
 
-if __name__=="__main__":main()
+# Explicit user-requested, one-shot evaluation of the existing day-two checkpoint.
+# Reuse this finalization runner and its original GitHub Actions workflow.
+IMMEDIATE_REPORT=ROOT/"reports/AUTO14_IMMEDIATE_20261027.json"
+
+def immediate_main():
+    if IMMEDIATE_REPORT.exists():
+        print("An immediate Kaggle attempt is already recorded; refusing another upload.")
+        return
+    if not STATE.exists():
+        raise SystemExit("No immutable research ledger available")
+    if not os.environ.get("KAGGLE_API_TOKEN"):
+        raise SystemExit("Missing KAGGLE secret; no Kaggle operation attempted")
+    history=json.loads(STATE.read_text())
+    day,sha=candidate(history,minimum_completed=1,required_day=2)
+    training=history["results"]["2"]
+    if (training.get("execution_status")!="COMPLETE"
+            or training.get("confirmation_evaluated") is not False
+            or training.get("official_submission") is not False):
+        raise RuntimeError("Frozen day-two model has not preserved independent confirmation")
+    from kaggle.api.kaggle_api_extended import KaggleApi
+    api=KaggleApi()
+    api.authenticate()
+    report={"status":"STARTED","date_utc":str(dt.datetime.now(dt.timezone.utc).date()),
+            "training":False,"official_submission":False,
+            "official_submission_attempted":False,"test_inference":False,
+            "checkpoint_sha256":sha,"frozen_training_day":day,
+            "notebook_url":"https://www.kaggle.com/code/"+IMMEDIATE_KERNEL}
+    # Persist a one-shot intent BEFORE any Kaggle network launch. A failed or
+    # ambiguous API response must be reviewed; never blindly retry.
+    save(report,IMMEDIATE_REPORT)
+    try:
+        execute(api,history,report,minimum_completed=1,required_day=2,
+                kernel_id=IMMEDIATE_KERNEL,report_path=IMMEDIATE_REPORT)
+    except Exception as error:
+        report["error_type"]=type(error).__name__
+        report["error_note"]="Inspect Kaggle execution logs; do not retry uncertain remote writes"
+        report["status"]=("SUBMISSION_UNCERTAIN" if report.get("official_submission_attempted")
+                          else "FAILED")
+    finally:
+        save(report,IMMEDIATE_REPORT)
+        print("Immediate Kaggle assessment:",report["status"],
+              "held-out PQ:",report.get("confirmation_local_pq"),
+              "public PQ:",report.get("official_public_score"),
+              "submission:",report.get("submission_ref"))
+    if report["status"] in ("FAILED","SUBMISSION_UNCERTAIN"):
+        raise SystemExit(1)
+
+if __name__=="__main__":
+    if len(sys.argv)==2 and sys.argv[1]=="--immediate":
+        immediate_main()
+    elif len(sys.argv)==1:
+        main()
+    else:
+        raise SystemExit("Usage: run_auto14_final.py [--immediate]")
