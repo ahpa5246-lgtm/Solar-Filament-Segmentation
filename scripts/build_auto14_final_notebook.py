@@ -16,12 +16,12 @@ from solar.auto14_plan import UPSTREAM,UPSTREAM_SHA,notebook_slug
 
 KERNEL_ID="minahussain111/solar-autoresearch-final-2026"
 DAY2_VERIFICATION_KERNEL="minahussain111/solar-day2-independent-20261026"
-IMMEDIATE_KERNEL="minahussain111/solar-day2-confirmation-20261027"
+IMMEDIATE_KERNEL="minahussain111/solar-day2-confirmation-20261027-r2"
 MIN_CONFIRMATION_PQ=0.36
 MIN_CONFIRMATION_OBSERVATIONS=20
 
 RUN_CODE=r'''
-import hashlib,json,math,subprocess,sys,time
+import hashlib,json,math,os,subprocess,sys,time
 from pathlib import Path
 
 DAY=__DAY__
@@ -71,9 +71,10 @@ try:
     (source/"solarseg/auto14_geometry.py").write_text(GEOMETRY_SOURCE)
     post_path=source/"solarseg/postprocess.py"
     post_path.write_text(patch_auto14_postprocess_source(post_path.read_text()))
-    subprocess.run([sys.executable,"-m","pip","install","-q",
-                    "numpy==1.26.4","scipy==1.13.1",
-                    "opencv-python-headless==4.10.0.84","pycocotools==2.0.11"],check=True)
+    if os.environ.get("SOLAR_PACKAGES_READY") != "1":
+        subprocess.run([sys.executable,"-m","pip","install","-q",
+                        "numpy==1.26.4","scipy==1.13.1",
+                        "opencv-python-headless==4.10.0.84","pycocotools==2.0.11"],check=True)
     # Verify the actual compiled COCO extension in a NEW process, not merely
     # that import/installation succeeded. The Kaggle day-1 traceback ended in
     # pycocotools.mask.decode with missing NumPy macro NPY_OWNDATA.
@@ -190,11 +191,12 @@ def build(day,checkpoint_sha,out,kernel_id=KERNEL_ID):
           .replace("__MIN_PQ__",repr(MIN_CONFIRMATION_PQ))
           .replace("__MIN_N__",repr(MIN_CONFIRMATION_OBSERVATIONS)))
     ast.parse(code)
-    if kernel_id in (KERNEL_ID, IMMEDIATE_KERNEL):
-        # The previously failed day-two kernel is immutable. Only the not-yet-
-        # launched final kernel receives the isolated NumPy/COCO ABI repair.
+    if kernel_id == KERNEL_ID:
         from scripts.kaggle_isolated_runtime import wrap_final_inference
         code = wrap_final_inference(code)
+    elif kernel_id == IMMEDIATE_KERNEL:
+        from scripts.kaggle_isolated_runtime import wrap_final_inference_target
+        code = wrap_final_inference_target(code)
     out=Path(out);out.parent.mkdir(parents=True,exist_ok=True)
     nb={"nbformat":4,"nbformat_minor":5,
         "metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"}},
