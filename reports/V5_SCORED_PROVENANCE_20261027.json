@@ -1,0 +1,11 @@
+{
+  "archived_api_v3_csv_sha256": "94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6",
+  "exact_csv_match": true,
+  "official_public_pq": 0.32,
+  "official_submission": false,
+  "official_submission_ref": 57571678,
+  "submitted_file_sha256": "94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6",
+  "training": false,
+  "evidence_run": "https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/actions/runs/40562500372",
+  "observed_at_utc": "2026-10-27T18:43:08Z"
+}
