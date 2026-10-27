@@ -48,7 +48,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Scope push to new manual training notebook
-        if: \${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: |
           set -euo pipefail
           files="$(git diff-tree --no-commit-id --name-only -r HEAD)"
