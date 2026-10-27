@@ -8,7 +8,7 @@ permissions:
   contents: write
 concurrency:
   group: v6-fixed-nms-confirmation
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   infer:
     runs-on: ubuntu-latest
