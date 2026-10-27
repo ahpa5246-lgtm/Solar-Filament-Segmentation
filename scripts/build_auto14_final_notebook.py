@@ -94,6 +94,12 @@ assert np.array_equal(coco.decode(coco.merge([rle])),a)
     assert torch.cuda.is_available(),"CUDA required for final assessment"
     import cv2
     import numpy as np
+    # Training may have serialized NumPy-2 record arrays. NumPy 1.26 keeps
+    # np.rec but lacks the importable numpy.rec path; install a narrow alias
+    # before torch.load, without modifying checkpoint bytes or labels.
+    if not hasattr(np, "rec") or not hasattr(np.rec, "recarray"):
+        raise RuntimeError("NumPy record-array API missing")
+    sys.modules.setdefault("numpy.rec", np.rec)
     from pycocotools import mask as coco
     sys.path.insert(0,str(source))
     from solarseg.data import resolve_paths,load_records,group_by_stem,record_instance_rles
