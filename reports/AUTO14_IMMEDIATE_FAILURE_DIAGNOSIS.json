@@ -1,0 +1,30 @@
+{
+  "execution_status": "ERROR",
+  "gpu_jobs_launched": 0,
+  "immutable_version": 1,
+  "logs": {
+    "exception_types": [
+      "CalledProcessError"
+    ],
+    "log_bytes": 4258,
+    "log_sha256": "ec032a36f9a30b848952fe06827992ce4aa24b995a8a5812bde432e30d79aa30",
+    "missing_attributes": [],
+    "missing_modules": [],
+    "python_frames": [
+      {
+        "file": "execute.py",
+        "line": 131
+      },
+      {
+        "file": "execute.py",
+        "line": 251
+      }
+    ],
+    "traceback_count": 2
+  },
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-independent-20261026",
+  "observed_at_utc": "2026-10-27T14:58:29.852457+00:00",
+  "read_only": true,
+  "result_manifest_count": 0,
+  "submission_attempted": false
+}
