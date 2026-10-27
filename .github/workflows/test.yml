@@ -33,6 +33,29 @@ jobs:
           assert np.array_equal(coco.decode(coco.merge([rle])),a)
           print("COCO binary NumPy encode/decode/merge/area smoke PASS")
           PY
+      - name: Smoke-test isolated final NumPy ABI without Kaggle or GPU
+        run: |
+          python -m venv --system-site-packages "$RUNNER_TEMP/solar-final-abi"
+          "$RUNNER_TEMP/solar-final-abi/bin/python" -m pip install -q --no-deps --ignore-installed \
+            numpy==1.26.4 scipy==1.13.1 opencv-python-headless==4.10.0.84 pycocotools==2.0.11
+          "$RUNNER_TEMP/solar-final-abi/bin/python" - <<'PY'
+          import sys
+          from pathlib import Path
+          import numpy as np
+          import numpy.rec
+          import cv2
+          import scipy
+          import torch
+          from pycocotools import mask as coco
+          assert np.__version__ == '1.26.4'
+          assert Path(np.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+          mask = np.zeros((16, 16), dtype=np.uint8)
+          mask[2:5, 4:7] = 1
+          rle = coco.encode(np.asfortranarray(mask))
+          assert int(coco.area(rle)) == 9
+          assert np.array_equal(coco.decode(rle), mask)
+          print('Isolated final NumPy/COCO ABI smoke PASS')
+          PY
       - name: Preserve verification evidence
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
