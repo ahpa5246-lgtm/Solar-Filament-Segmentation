@@ -1,5 +1,5 @@
 {
-  "execution_status": "QUEUED",
+  "execution_status": "COMPLETE",
   "gpu_jobs_launched": 0,
   "immutable_version": 1,
   "logs": {
@@ -8,7 +8,7 @@
       "checkpoint_error": false,
       "disk_space_error": false,
       "failed_git_clone": false,
-      "failed_package_install": false,
+      "failed_package_install": true,
       "failed_venv": false,
       "notebook_syntax_error": false,
       "numpy_abi_error": false,
@@ -16,17 +16,18 @@
       "process_error": false,
       "torch_cuda_error": false
     },
-    "log_bytes": 0,
-    "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "log_bytes": 9623,
+    "log_sha256": "5466548584795cd345d921538ac85e21f03cef18fa5f7ff3d3c61b4d7d4ce5a0",
     "missing_attributes": [],
     "missing_modules": [],
     "process_exit_codes": [],
     "python_frames": [],
     "traceback_count": 0
   },
+  "manifest_error_type": "HTTPError",
+  "manifest_http_status": 429,
   "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027-r2",
-  "observed_at_utc": "2026-10-27T15:06:25.554718+00:00",
+  "observed_at_utc": "2026-10-27T15:54:00.492299+00:00",
   "read_only": true,
-  "result_manifest_count": 0,
   "submission_attempted": false
 }
