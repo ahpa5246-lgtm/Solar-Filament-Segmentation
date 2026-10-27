@@ -100,7 +100,7 @@ def _download_outputs_with_rate_limit_retry(api,reference,output):
             time.sleep(delay)
         try:
             return api.kernels_output(
-                reference,str(output),file_pattern=r"(auto14_final\\.json|submission\\.csv)$")
+                reference,str(output),file_pattern=r"(auto14_final\.json|submission\.csv)$")
         except Exception as exc:
             code=getattr(getattr(exc,"response",None),"status_code",None)
             if code!=429 or attempt==5:
