@@ -96,6 +96,11 @@ def main():
                 report["result_manifest"] = {k: manifest.get(k) for k in KEYS}
     except Exception as exc:
         report["manifest_error_type"] = type(exc).__name__
+        response = getattr(exc, "response", None)
+        code = getattr(response, "status_code", None)
+        if isinstance(code, int) and 100 <= code <= 599:
+            report["manifest_http_status"] = code
+        # Don't record response body or raw URLs, which may contain credentials.
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n")
     print("Read-only recovery diagnosis:", report.get("execution_status"))
