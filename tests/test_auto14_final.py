@@ -173,3 +173,47 @@ def test_immediate_retry_requires_failure_diagnosis(monkeypatch,tmp_path):
     monkeypatch.setattr(runner, "PRIOR_IMMEDIATE_DIAGNOSIS", tmp_path / "missing-diag.json")
     with pytest.raises(SystemExit, match="read-only diagnosis"):
         runner.immediate_main()
+
+def test_kaggle_output_download_retries_429_then_succeeds(monkeypatch, tmp_path):
+    from scripts import run_auto14_final as runner
+    sleep_calls=[]
+    monkeypatch.setattr(runner.time,"sleep",sleep_calls.append)
+    class Response:
+        status_code=429
+    class Throttle(Exception):
+        response=Response()
+    class API:
+        calls=0
+        def kernels_output(self,ref,out,file_pattern):
+            self.calls+=1
+            assert "auto14_final" in file_pattern and "submission" in file_pattern
+            if self.calls==1:
+                raise Throttle()
+            return "OK"
+    api=API()
+    assert runner._download_outputs_with_rate_limit_retry(api,"immutable/v1",tmp_path)=="OK"
+    assert api.calls==2
+    assert sleep_calls==[30]
+
+
+def test_kaggle_output_download_does_not_retry_unrelated_failure(monkeypatch,tmp_path):
+    from scripts import run_auto14_final as runner
+    monkeypatch.setattr(runner.time,"sleep",lambda _: pytest.fail("Should not retry non-429"))
+    class Response:
+        status_code=403
+    class Denied(Exception):
+        response=Response()
+    class API:
+        def kernels_output(self,ref,out,file_pattern):
+            raise Denied()
+    with pytest.raises(Denied):
+        runner._download_outputs_with_rate_limit_retry(API(),"immutable/v1",tmp_path)
+
+
+def test_delivery_existing_guard_prevents_duplicate_attempt(tmp_path,monkeypatch):
+    from scripts import run_auto14_final as runner
+    report=tmp_path/"delivery.json"
+    report.write_text('{"status":"STARTED"}')
+    monkeypatch.setattr(runner,"DELIVERY_REPORT",report)
+    assert runner.deliver_existing() is None
+    assert json.loads(report.read_text())=={"status":"STARTED"}
