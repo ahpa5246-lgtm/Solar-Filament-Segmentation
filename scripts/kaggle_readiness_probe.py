@@ -119,6 +119,27 @@ def _submissions(api):
         return {"status": "UNAVAILABLE_"+type(err).__name__, "items": [], "scores_available": 0}
 
 
+
+def official_best(submissions):
+    """Only scored COMPLETE Kaggle entries count as official Public PQ."""
+    if submissions.get("status") != "READ":
+        return {"status": "UNVERIFIED", "public_pq": None,
+                "submission_ref": None, "target_0_50_reached": False}
+    scored = []
+    for row in submissions.get("items", []):
+        score = row.get("public_score")
+        status = str(row.get("status", "")).upper()
+        if ("COMPLETE" in status and type(score) in (int, float)
+                and math.isfinite(score) and 0 <= score <= 1):
+            scored.append((float(score), str(row.get("ref"))))
+    if not scored:
+        return {"status": "NO_COMPLETE_SCORED_SUBMISSION", "public_pq": None,
+                "submission_ref": None, "target_0_50_reached": False}
+    score, ref = max(scored, key=lambda x: x[0])
+    return {"status": "VERIFIED", "public_pq": score,
+            "submission_ref": ref, "target_0_50_reached": score >= 0.50}
+
+
 def _research(api):
     result = {}
     for day in range(1, 5):
@@ -220,6 +241,7 @@ def audit(api):
                 report["v5_csv"]={"status":"VALID","integrity":csv_integrity(candidates[0])}
     except Exception as err:
         report["v5_csv"]={"status":"UNAVAILABLE_OR_INVALID_"+type(err).__name__}
+    report["best_official"] = official_best(report["submissions"])
     report["assessment"]="NO_NEW_SCORED_CHALLENGER" if not any(
         v.get("evidence",{}).get("status")=="COMPLETE"
         for v in report["auto14"].values()) else "NEW_LOCAL_MODEL_NEEDS_INDEPENDENT_CONFIRMATION"
