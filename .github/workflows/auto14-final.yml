@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Verify frozen training, notebook isolation, one-shot submission contract
+      - name: Verify Kaggle r2 recovery with frozen training and one-shot submission contract
         run: |
           python -m pip install pytest==8.3.4
           python -m compileall -q scripts/build_auto14_final_notebook.py scripts/kaggle_isolated_runtime.py scripts/run_auto14_final.py
@@ -52,7 +52,7 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          for report in reports/AUTO14_IMMEDIATE_20261027.json reports/AUTO14_FINAL.json; do
+          for report in reports/AUTO14_IMMEDIATE_RETRY_20261027.json reports/AUTO14_FINAL.json; do
             if [ -f "$report" ]; then git add "$report"; fi
           done
           if git diff --cached --quiet; then exit 0; fi
@@ -65,7 +65,7 @@ jobs:
         if: ${{ always() }}
         run: |
           echo '## Kaggle result evidence' >> "$GITHUB_STEP_SUMMARY"
-          echo '- [Run report](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/blob/main/reports/AUTO14_IMMEDIATE_20261027.json)' >> "$GITHUB_STEP_SUMMARY"
-          echo '- [Kaggle private notebook](https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027)' >> "$GITHUB_STEP_SUMMARY"
+          echo '- [Run report](https://github.com/ahpa5246-lgtm/Solar-Filament-Segmentation/blob/main/reports/AUTO14_IMMEDIATE_RETRY_20261027.json)' >> "$GITHUB_STEP_SUMMARY"
+          echo '- [Kaggle private notebook](https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027-r2)' >> "$GITHUB_STEP_SUMMARY"
           echo '- [Official submissions](https://www.kaggle.com/competitions/filament-segmentation-2026/submissions)' >> "$GITHUB_STEP_SUMMARY"
           echo 'Only a real Kaggle scored submission establishes official PQ; local tuning PQ is not the public score.' >> "$GITHUB_STEP_SUMMARY"
