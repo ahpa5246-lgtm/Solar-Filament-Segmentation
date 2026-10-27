@@ -11,15 +11,22 @@ def read_calibration_result(api, reference, output):
     """Retry rate-limited reads of one immutable version; never execute a kernel."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    for attempt, delay in enumerate((0, 30, 60, 120)):
-        if delay:
-            time.sleep(delay)
-        try:
-            api.kernels_output(reference, str(output), file_pattern=r'score_calibration\.json$')
+    token = ''  # Explicit token disables SDK automatic pagination/restarts.
+    for page in range(100):
+        for attempt, delay in enumerate((0, 30, 60, 120)):
+            if delay:
+                time.sleep(delay)
+            try:
+                _, next_token = api.kernels_output(reference, str(output),
+                    file_pattern=r'score_calibration\.json$', page_token=token, page_size=1000)
+                break
+            except Exception as error:
+                if getattr(getattr(error, 'response', None), 'status_code', None) != 429 or attempt == 3:
+                    raise
+        print('Read-only output page', page + 1, flush=True)
+        if list(output.rglob('score_calibration.json')) or not next_token:
             break
-        except Exception as error:
-            if getattr(getattr(error, 'response', None), 'status_code', None) != 429 or attempt == 3:
-                raise
+        token = next_token
     files = list(output.rglob('score_calibration.json'))
     if len(files) != 1:
         raise RuntimeError('Expected exactly one immutable calibration result')

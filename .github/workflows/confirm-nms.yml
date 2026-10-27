@@ -1,4 +1,4 @@
-name: Compare preserved V5 weights on matched validation (no training)
+name: Recover matched V5 comparison (read-only, no GPU launch)
 on:
   push:
     branches: [main]
