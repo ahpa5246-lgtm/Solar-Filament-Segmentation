@@ -8,7 +8,289 @@
   "gpu_hours_remaining_before": 22.21053138888889,
   "version": 2,
   "status": "COMPLETE",
-  "error_type": "HTTPError",
-  "http_status": 429,
-  "execution_error_detail": "Log diagnostics unavailable"
+  "result": {
+    "status": "completed",
+    "training": false,
+    "test_inference": false,
+    "official_submission": false,
+    "promote": false,
+    "experiment": "V5 fixed-weight detector score calibration",
+    "thresholds": [
+      0.3,
+      0.45,
+      0.6
+    ],
+    "baseline": 0.6,
+    "limitations": [
+      "Historical V5 validation reused; not a pristine final holdout.",
+      "Recovered API v3 weights are not independently linked to scored web Version 5.",
+      "Exploratory local comparison only; no automatic promotion or submission."
+    ],
+    "checkpoint_sha256": {
+      "detector": "60a8f48340cc1076710027c1b159c747035217613a61e186b8705aa6fc310a36",
+      "refiner": "0bf638645601d436f048ef238c9cd1336b4ff73184ed4553f20b11b44db09e57"
+    },
+    "gpu": "Tesla T4",
+    "used_gpus": 1,
+    "tuning_observations": 65,
+    "confirmation_observations": 67,
+    "processed_observations": 132,
+    "selected": 0.6,
+    "tuning_pq": {
+      "0.3": 0.34851780022435275,
+      "0.45": 0.3784120194233339,
+      "0.6": 0.40503051142227725
+    },
+    "detector_cache_parity_min": 1.0,
+    "confirmation_baseline": {
+      "reference_micro_pq": 0.40736969428848335,
+      "reference_tp": 458,
+      "reference_fp": 295,
+      "reference_fn": 289,
+      "canonical_micro_pq": 0.40736969428848335,
+      "canonical_tp": 458,
+      "canonical_fp": 295,
+      "canonical_fn": 289,
+      "canonical_sq": 0.667090110734416,
+      "canonical_rq": 0.6106666666666667,
+      "canonical_precision": 0.6082337317397079,
+      "canonical_recall": 0.6131191432396251,
+      "likely_splits": 10,
+      "likely_merges": 19,
+      "matched_iou_quantiles": [
+        0.5004198152812762,
+        0.5934510763375639,
+        0.6730479506089895,
+        0.7368757635197459,
+        0.876265466816648
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.38531675662201875,
+        "low": 0.3418115005958265,
+        "high": 0.42629172841072,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 67,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 67,
+      "annotation_variants": 103
+    },
+    "confirmation_candidate": {
+      "reference_micro_pq": 0.40736969428848335,
+      "reference_tp": 458,
+      "reference_fp": 295,
+      "reference_fn": 289,
+      "canonical_micro_pq": 0.40736969428848335,
+      "canonical_tp": 458,
+      "canonical_fp": 295,
+      "canonical_fn": 289,
+      "canonical_sq": 0.667090110734416,
+      "canonical_rq": 0.6106666666666667,
+      "canonical_precision": 0.6082337317397079,
+      "canonical_recall": 0.6131191432396251,
+      "likely_splits": 10,
+      "likely_merges": 19,
+      "matched_iou_quantiles": [
+        0.5004198152812762,
+        0.5934510763375639,
+        0.6730479506089895,
+        0.7368757635197459,
+        0.876265466816648
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.38531675662201875,
+        "low": 0.3418115005958265,
+        "high": 0.42629172841072,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 67,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 67,
+      "annotation_variants": 103
+    },
+    "paired_macro_delta_ci": {
+      "estimate": 0.0,
+      "low": 0.0,
+      "high": 0.0,
+      "unit": "physical observation",
+      "replicates": 2000,
+      "seed": 42
+    },
+    "error_profiles": {
+      "baseline": {
+        "truth": {
+          "all": {
+            "total": 747,
+            "matched": 458,
+            "matched_fraction": 0.6131191432396251
+          },
+          "area_bin_1": {
+            "total": 336,
+            "matched": 228,
+            "matched_fraction": 0.6785714285714286
+          },
+          "area_bin_0": {
+            "total": 308,
+            "matched": 175,
+            "matched_fraction": 0.5681818181818182
+          },
+          "area_bin_2": {
+            "total": 100,
+            "matched": 55,
+            "matched_fraction": 0.55
+          },
+          "elongation_ge_5": {
+            "total": 14,
+            "matched": 7,
+            "matched_fraction": 0.5
+          },
+          "area_bin_3": {
+            "total": 3,
+            "matched": 0,
+            "matched_fraction": 0.0
+          },
+          "elongation_ge_10": {
+            "total": 1,
+            "matched": 0,
+            "matched_fraction": 0.0
+          }
+        },
+        "prediction": {
+          "all": {
+            "total": 753,
+            "matched": 458,
+            "matched_fraction": 0.6082337317397079
+          },
+          "area_bin_1": {
+            "total": 312,
+            "matched": 216,
+            "matched_fraction": 0.6923076923076923
+          },
+          "area_bin_0": {
+            "total": 381,
+            "matched": 200,
+            "matched_fraction": 0.5249343832020997
+          },
+          "area_bin_2": {
+            "total": 60,
+            "matched": 42,
+            "matched_fraction": 0.7
+          },
+          "elongation_ge_5": {
+            "total": 17,
+            "matched": 9,
+            "matched_fraction": 0.5294117647058824
+          }
+        },
+        "unmatched_truth_best_iou_quantiles": [
+          0.0,
+          0.0,
+          0.09303520945772295,
+          0.3784786641929499,
+          0.4993464052287582
+        ],
+        "area_bin_edges_native_pixels": [
+          0,
+          1024,
+          4096,
+          16384,
+          65536,
+          "infinity"
+        ],
+        "interpretation": "Descriptive strict-IoU>0.5 presence; annotator variants counted separately; shape uses bounding boxes, not skeletons."
+      },
+      "candidate": {
+        "truth": {
+          "all": {
+            "total": 747,
+            "matched": 458,
+            "matched_fraction": 0.6131191432396251
+          },
+          "area_bin_1": {
+            "total": 336,
+            "matched": 228,
+            "matched_fraction": 0.6785714285714286
+          },
+          "area_bin_0": {
+            "total": 308,
+            "matched": 175,
+            "matched_fraction": 0.5681818181818182
+          },
+          "area_bin_2": {
+            "total": 100,
+            "matched": 55,
+            "matched_fraction": 0.55
+          },
+          "elongation_ge_5": {
+            "total": 14,
+            "matched": 7,
+            "matched_fraction": 0.5
+          },
+          "area_bin_3": {
+            "total": 3,
+            "matched": 0,
+            "matched_fraction": 0.0
+          },
+          "elongation_ge_10": {
+            "total": 1,
+            "matched": 0,
+            "matched_fraction": 0.0
+          }
+        },
+        "prediction": {
+          "all": {
+            "total": 753,
+            "matched": 458,
+            "matched_fraction": 0.6082337317397079
+          },
+          "area_bin_1": {
+            "total": 312,
+            "matched": 216,
+            "matched_fraction": 0.6923076923076923
+          },
+          "area_bin_0": {
+            "total": 381,
+            "matched": 200,
+            "matched_fraction": 0.5249343832020997
+          },
+          "area_bin_2": {
+            "total": 60,
+            "matched": 42,
+            "matched_fraction": 0.7
+          },
+          "elongation_ge_5": {
+            "total": 17,
+            "matched": 9,
+            "matched_fraction": 0.5294117647058824
+          }
+        },
+        "unmatched_truth_best_iou_quantiles": [
+          0.0,
+          0.0,
+          0.09303520945772295,
+          0.3784786641929499,
+          0.4993464052287582
+        ],
+        "area_bin_edges_native_pixels": [
+          0,
+          1024,
+          4096,
+          16384,
+          65536,
+          "infinity"
+        ],
+        "interpretation": "Descriptive strict-IoU>0.5 presence; annotator variants counted separately; shape uses bounding boxes, not skeletons."
+      }
+    },
+    "local_gain_supported": false,
+    "elapsed_seconds": 262.73090225899995,
+    "peak_cuda_bytes": 1535738880
+  },
+  "recovery": "read-only immutable output retrieval; no GPU launch"
 }
