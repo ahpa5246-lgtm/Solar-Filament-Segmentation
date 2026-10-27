@@ -45,6 +45,23 @@ def test_paused_arm_cannot_reach_final_candidate_selection():
         raise AssertionError('Paused arm reached final selection')
 
 
+def test_read_only_recovery_retries_429_without_gpu(tmp_path, monkeypatch):
+    from scripts import run_v6_confirmation as recovery
+    from types import SimpleNamespace
+    calls=[]
+    class Limited(Exception):
+        response=SimpleNamespace(status_code=429)
+    class API:
+        def kernels_output(self, reference, folder, file_pattern):
+            calls.append(reference)
+            if len(calls)==1: raise Limited()
+            Path(folder, 'score_calibration.json').write_text(json.dumps({'status':'completed'}))
+    monkeypatch.setattr(recovery.time, 'sleep', lambda _: None)
+    result=recovery.read_calibration_result(API(), 'owner/kernel/v2', tmp_path)
+    assert result['status']=='completed'
+    assert calls==['owner/kernel/v2', 'owner/kernel/v2']
+
+
 def test_bootstrap_uses_py313_wheels_without_changing_frozen_source(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / 'scripts'))
     from build_v5_score_calibration import build

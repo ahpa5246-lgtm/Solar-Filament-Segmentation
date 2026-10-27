@@ -7,10 +7,49 @@ import time
 from pathlib import Path
 
 
+def read_calibration_result(api, reference, output):
+    """Retry rate-limited reads of one immutable version; never execute a kernel."""
+    output = Path(output)
+    output.mkdir(parents=True, exist_ok=True)
+    for attempt, delay in enumerate((0, 30, 60, 120)):
+        if delay:
+            time.sleep(delay)
+        try:
+            api.kernels_output(reference, str(output), file_pattern=r'score_calibration\.json$')
+            break
+        except Exception as error:
+            if getattr(getattr(error, 'response', None), 'status_code', None) != 429 or attempt == 3:
+                raise
+    files = list(output.rglob('score_calibration.json'))
+    if len(files) != 1:
+        raise RuntimeError('Expected exactly one immutable calibration result')
+    return json.loads(files[0].read_text())
+
+
+def resume_calibration(api):
+    path = Path('reports/V5_SCORE_CALIBRATION_EXECUTION.json')
+    report = json.loads(path.read_text())
+    if report.get('status') != 'COMPLETE' or type(report.get('version')) is not int:
+        raise RuntimeError('Only a known completed immutable calibration run can be recovered')
+    reference = 'minahussain111/solar-filament-research-v6-confirmation/v' + str(report['version'])
+    with tempfile.TemporaryDirectory(prefix='v5-calibration-read-') as tmp:
+        report['result'] = read_calibration_result(api, reference, tmp)
+    if report['result'].get('status') != 'completed':
+        raise RuntimeError('Recovered comparison did not complete successfully')
+    for key in ('error_type', 'http_status', 'execution_error_detail'):
+        report.pop(key, None)
+    report['recovery'] = 'read-only immutable output retrieval; no GPU launch'
+    path.write_text(json.dumps(report, indent=2) + '\n')
+    print('Recovered V5 comparison:', json.dumps(report['result'], sort_keys=True), flush=True)
+
+
 def main():
     from kaggle.api.kaggle_api_extended import KaggleApi
     from run_v6_cpu_audit import error_context
     api=KaggleApi();api.authenticate()
+    if '--resume-score-calibration' in sys.argv:
+        resume_calibration(api)
+        return
     calibration = '--score-calibration' in sys.argv
     result_name = 'score_calibration.json' if calibration else 'resolution_audit.json'
     report_path = Path('reports/V5_SCORE_CALIBRATION_EXECUTION.json' if calibration else 'reports/V6_KAGGLE_CONFIRMATION_EXECUTION.json')
