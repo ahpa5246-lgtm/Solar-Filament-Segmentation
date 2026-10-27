@@ -1,7 +1,20 @@
 {
   "best_day": "2",
   "latest_day": 4,
+  "official_baseline": {
+    "notebook": "minahussain111/solar-filament-research-v5",
+    "public_pq": 0.32,
+    "web_version": 5
+  },
+  "pause_reason": "User-authorized return to V5 after manual U-Net web Version 4 scored Public PQ 0.29 versus V5 0.32. No new independent-challenger training before matched V5 diagnosis.",
   "program": "Solar 14-day independent-challenger training",
+  "rejected_official_challenger": {
+    "evidence": "Owner screenshot in current session, 2026-10-27",
+    "notebook": "minahussain111/solar-manual-training-20261027",
+    "promote": false,
+    "public_pq": 0.29,
+    "web_version": 4
+  },
   "results": {
     "1": {
       "attempts": 2,
@@ -170,5 +183,5 @@
       "version": 1
     }
   },
-  "status": "active"
+  "status": "paused_v5_recovery"
 }

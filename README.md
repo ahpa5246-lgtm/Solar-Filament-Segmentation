@@ -1,5 +1,7 @@
 # Solar Filament Segmentation — IEEE BigDataCup 2026
 
+**Recovery decision (2026-10-27): retain V5 Public PQ 0.32.** The independent manual U-Net web Version 4 scored **0.29** and is rejected as a replacement. Daily independent training is paused in the runner and ledger. A bounded, no-training comparison reuses archived V5 detector/refiner weights and matched validation observations; it does not promise a new official score. See [recovery protocol](reports/V5_RECOVERY_20261027.md).
+
 ## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 
 **Verified public scores (2026-10-23):** V1 0.08, V2 0.23, V4 0.24, **V5 Version 5: 0.32** (confirmed by the owner; not independently re-fetched in this session). V3 has no verified score.

@@ -37,6 +37,8 @@ def save(report,path=REPORT):
 
 def candidate(state,minimum_completed=3,required_day=None):
     """Select only immutable completed checkpoints using local scores or frozen day."""
+    if str(state.get('status', 'active')).startswith('paused'):
+        raise RuntimeError('Independent challenger arm is paused; preserve V5')
     if type(minimum_completed) is not int or not 1<=minimum_completed<=14:
         raise ValueError("Invalid candidate minimum")
     if required_day is not None and (type(required_day) is not int or not 1<=required_day<=14):

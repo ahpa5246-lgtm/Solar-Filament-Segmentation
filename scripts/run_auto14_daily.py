@@ -183,6 +183,9 @@ def main(argv=None):
     if day!=active:
         raise SystemExit("Manual day must equal today's UTC slot; no backfill/duplicate GPU runs")
     state=load_state(args.state)
+    if state.get('status', 'active') != 'active':
+        print('Independent training paused; preserve V5 baseline:', state.get('status'))
+        return
     history=state["results"]
     key=str(day)
     prior=history.get(key,{})
