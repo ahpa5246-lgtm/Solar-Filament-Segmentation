@@ -1,0 +1,33 @@
+{
+  "execution_status": "ERROR",
+  "gpu_jobs_launched": 0,
+  "immutable_version": 1,
+  "logs": {
+    "exception_types": [
+      "CalledProcessError",
+      "ModuleNotFoundError"
+    ],
+    "log_bytes": 13582,
+    "log_sha256": "5bf2b10c3f8dcdc2715c0b7a327feea7e75e5a25796ee41acbdae394f00228ec",
+    "missing_attributes": [],
+    "missing_modules": [
+      "numpy.rec"
+    ],
+    "python_frames": [
+      {
+        "file": "execute.py",
+        "line": 131
+      },
+      {
+        "file": "execute.py",
+        "line": 251
+      }
+    ],
+    "traceback_count": 5
+  },
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-independent-20261026",
+  "observed_at_utc": "2026-10-27T11:13:20.997176+00:00",
+  "read_only": true,
+  "result_manifest_count": 0,
+  "submission_attempted": false
+}
