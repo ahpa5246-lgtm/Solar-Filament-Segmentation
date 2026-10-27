@@ -121,8 +121,9 @@ def test_immediate_day_two_notebook_reuses_private_isolated_final_builder(tmp_pa
     assert meta["id"] == IMMEDIATE_KERNEL
     assert meta["is_private"] and meta["enable_gpu"] and meta["enable_internet"]
     assert meta["kernel_sources"] == ["minahussain111/solar-autoresearch-d02"]
-    assert "solar_final_isolated_venv" in code
-    assert "numpy.rec" in code and "submission.csv" in code
+    assert "solar_final_pinned_packages_r2" in code
+    assert "PYTHONPATH" in code and "numpy.rec" in code and "submission.csv" in code
+    assert "auto14_bootstrap.json" in code
     assert sha in code
     assert "competition_submit(" not in code
 
@@ -146,3 +147,29 @@ def test_isolated_preflight_contains_executable_cuda_and_pickle_assertions():
     assert "\\nassert torch.cuda" not in raw
     assert "torch.cuda.is_available()" in raw
     assert "pickle.loads(pickle.dumps(probe))" in raw
+
+def test_target_inference_wrapper_pins_packages_without_venv():
+    import ast
+    from scripts.kaggle_isolated_runtime import wrap_final_inference_target
+    code = wrap_final_inference_target("pass")
+    compile(code, "Kaggle target-pinned bootstrap", "exec")
+    assert "solar_final_pinned_packages_r2" in code
+    assert "--target" in code and "PYTHONPATH" in code
+    assert "--system-site-packages" not in code
+    assert "auto14_bootstrap.json" in code
+    assert "numpy.rec" in code
+    assert "torch.cuda.is_available()" in code
+    inner = code.split('preflight = r"""', 1)[1].split('"""', 1)[0]
+    tree = ast.parse(inner)
+    assert sum(isinstance(node, ast.Assert) for node in ast.walk(tree)) >= 7
+
+
+def test_immediate_retry_requires_failure_diagnosis(monkeypatch,tmp_path):
+    import scripts.run_auto14_final as runner
+    monkeypatch.setattr(runner, "IMMEDIATE_REPORT", tmp_path / "new.json")
+    monkeypatch.setattr(runner, "STATE", tmp_path / "state.json")
+    (tmp_path / "state.json").write_text('{"results": {}}')
+    monkeypatch.setattr(runner, "PRIOR_IMMEDIATE_REPORT", tmp_path / "missing-old.json")
+    monkeypatch.setattr(runner, "PRIOR_IMMEDIATE_DIAGNOSIS", tmp_path / "missing-diag.json")
+    with pytest.raises(SystemExit, match="read-only diagnosis"):
+        runner.immediate_main()
