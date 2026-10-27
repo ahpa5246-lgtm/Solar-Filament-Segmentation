@@ -93,8 +93,23 @@ def final_check(record,chosen_sha):
     return expected
 
 
+def _download_outputs_with_rate_limit_retry(api,reference,output):
+    """Read existing Kaggle output only; retry bounded HTTP 429, never push GPU jobs."""
+    for attempt,delay in enumerate((0,30,60,120,180,240)):
+        if delay:
+            time.sleep(delay)
+        try:
+            return api.kernels_output(
+                reference,str(output),file_pattern=r"(auto14_final\\.json|submission\\.csv)$")
+        except Exception as exc:
+            code=getattr(getattr(exc,"response",None),"status_code",None)
+            if code!=429 or attempt==5:
+                raise
+            print("Kaggle output download rate limited (429), bounded retry",attempt+1,flush=True)
+
+
 def execute(api,history,report,*,minimum_completed=3,required_day=None,
-            kernel_id=KERNEL_ID,report_path=REPORT):
+            kernel_id=KERNEL_ID,report_path=REPORT,resume_only=False):
     if kernel_id not in (KERNEL_ID,"minahussain111/solar-autoresearch-early-final-20261025",DAY2_VERIFICATION_KERNEL,IMMEDIATE_KERNEL):
         raise ValueError("Unapproved final Kaggle notebook identity")
     day,sha=candidate(history,minimum_completed=minimum_completed,required_day=required_day)
@@ -112,6 +127,8 @@ def execute(api,history,report,*,minimum_completed=3,required_day=None,
         status=recover_existing(api,kernel_id)
         reference=kernel_id
         if status is None:
+            if resume_only:
+                raise RuntimeError("Existing immutable Kaggle notebook missing; never launch new GPU job")
             if kernel_id==DAY2_VERIFICATION_KERNEL:
                 from scripts.build_day2_verification_notebook import build_day2
                 metadata=build_day2(day,sha,folder/"auto14_final.ipynb")
@@ -139,7 +156,7 @@ def execute(api,history,report,*,minimum_completed=3,required_day=None,
         report["kaggle_execution_status"]=status
         if status!="COMPLETE":raise RuntimeError("Final inference did not complete")
         output=folder/"output"
-        api.kernels_output(reference,str(output),file_pattern=r"(auto14_final\.json|submission\.csv)$")
+        _download_outputs_with_rate_limit_retry(api,reference,output)
         records=list(output.rglob("auto14_final.json"))
         if len(records)!=1:raise RuntimeError("No unique final validation evidence in Kaggle outputs")
         record=json.loads(records[0].read_text())
@@ -306,10 +323,66 @@ def immediate_main():
     if report["status"] in ("FAILED","SUBMISSION_UNCERTAIN"):
         raise SystemExit(1)
 
+# Recover ONLY the already completed immutable r2 Kaggle notebook.
+# Its prior GitHub run failed fetching outputs with HTTP 429, before submission.
+DELIVERY_REPORT=ROOT/"reports/AUTO14_DELIVERY_20261027.json"
+
+def deliver_existing():
+    if DELIVERY_REPORT.exists():
+        print("Delivery intent already exists; never resubmit or replay ambiguous write")
+        return
+    if not IMMEDIATE_REPORT.exists():
+        raise SystemExit("Missing completed r2 source-run report")
+    source=json.loads(IMMEDIATE_REPORT.read_text())
+    if (source.get("status")!="FAILED"
+            or source.get("error_type")!="HTTPError"
+            or source.get("kaggle_execution_status")!="COMPLETE"
+            or source.get("official_submission_attempted") is not False
+            or source.get("official_submission") is not False
+            or source.get("version")!=1
+            or source.get("checkpoint_sha256")!="d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f"):
+        raise RuntimeError("Source run could have submitted or altered confirmation; fail closed")
+    if not os.environ.get("KAGGLE_API_TOKEN"):
+        raise SystemExit("Missing existing KAGGLE secret")
+    from kaggle.api.kaggle_api_extended import KaggleApi
+    api=KaggleApi()
+    api.authenticate()
+    reference=IMMEDIATE_KERNEL+"/v1"
+    status=str(api.kernels_status(reference).status).split(".")[-1].upper()
+    if status!="COMPLETE":
+        raise RuntimeError("Immutable r2 Kaggle kernel is not COMPLETE")
+    history=json.loads(STATE.read_text())
+    report={"status":"STARTED","source_kernel_version":reference,
+            "resume_existing_only":True,"official_submission":False,
+            "official_submission_attempted":False,"training":False,"test_inference":False}
+    save(report,DELIVERY_REPORT)
+    try:
+        execute(api,history,report,minimum_completed=1,required_day=2,
+                kernel_id=IMMEDIATE_KERNEL,report_path=DELIVERY_REPORT,resume_only=True)
+    except Exception as exc:
+        report["status"]=("SUBMISSION_UNCERTAIN" if report.get("official_submission_attempted")
+                          else "FAILED")
+        report["error_type"]=type(exc).__name__
+        response=getattr(exc,"response",None)
+        code=getattr(response,"status_code",None)
+        if isinstance(code,int) and 100<=code<=599:
+            report["http_status"]=code
+    finally:
+        save(report,DELIVERY_REPORT)
+        print("R2 delivery:",report["status"],
+              "local confirmation:",report.get("confirmation_local_pq"),
+              "official:",report.get("official_public_score"),
+              "submission:",report.get("submission_ref"))
+    if report.get("status") in ("FAILED","SUBMISSION_UNCERTAIN"):
+        raise SystemExit(1)
+
+
 if __name__=="__main__":
     if len(sys.argv)==2 and sys.argv[1]=="--immediate":
         immediate_main()
+    elif len(sys.argv)==2 and sys.argv[1]=="--deliver-existing":
+        deliver_existing()
     elif len(sys.argv)==1:
         main()
     else:
-        raise SystemExit("Usage: run_auto14_final.py [--immediate]")
+        raise SystemExit("Usage: run_auto14_final.py [--immediate|--deliver-existing]")
