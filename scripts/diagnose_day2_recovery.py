@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import sys
 
 from scripts.diagnose_day2_early_final import extract, KEYS
 
@@ -17,6 +18,14 @@ OUT = Path("reports/DAY2_RECOVERY_FAILURE_DIAGNOSIS.json")
 
 
 def main():
+    global REF, OUT
+    if sys.argv[1:] == ["--immediate"]:
+        # Read-only inspection of the actual failed 2026-10-27 Kaggle kernel.
+        # This does not relaunch evaluation or inspect sealed labels.
+        REF = "minahussain111/solar-day2-confirmation-20261027/v1"
+        OUT = Path("reports/AUTO14_IMMEDIATE_FAILURE_DIAGNOSIS.json")
+    elif len(sys.argv) != 1:
+        raise SystemExit("Usage: python -m scripts.diagnose_day2_recovery [--immediate]")
     if not os.environ.get("KAGGLE_API_TOKEN"):
         raise SystemExit("Missing authenticated Kaggle token")
     from kaggle.api.kaggle_api_extended import KaggleApi
