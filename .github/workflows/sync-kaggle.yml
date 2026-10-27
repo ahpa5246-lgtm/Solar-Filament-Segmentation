@@ -99,7 +99,7 @@ jobs:
               api.kernels_output(ref, folder, file_pattern=r'(auto14_result\.json|metrics\.jsonl|submission.*json)$')
               for path in pathlib.Path(folder).rglob('*'):
                   if path.is_file(): print(path.name, path.read_text()[-5000:])
-          print(str(api.competitions_submissions('filament-segmentation-2026'))[:6000])
+          print(str(api.competition_submissions('filament-segmentation-2026'))[:6000])
           PY
       - name: Stage notebooks and competition metadata
         run: |
@@ -219,6 +219,31 @@ jobs:
               kaggle kernels push -p "$folder" --no-run
             fi
           done
+      - name: Observe authorized Kaggle training startup
+        if: ${{ env.CHOICE == 'manual-training' && env.RUN_TRAINING == 'true' }}
+        run: |
+          python -u - <<'PY'
+          import json, time, re
+          from kaggle.api.kaggle_api_extended import KaggleApi
+          api = KaggleApi()
+          api.authenticate()
+          ref = 'minahussain111/solar-manual-training-20261027'
+          for attempt in range(12):
+              response = api.kernels_status(ref)
+              print('Kaggle execution:', response, flush=True)
+              raw = api.kernels_logs(ref)
+              try: raw = json.loads(raw)
+              except (ValueError, TypeError): pass
+              full = '\n'.join(str(x.get('data','')) for x in raw if isinstance(x, dict)) if isinstance(raw, list) else str(raw)
+              full = re.sub(r'KGAT_[A-Za-z0-9_-]+', '[REDACTED]', full)
+              print(full[-5000:], flush=True)
+              status = str(response.status).split('.')[-1].upper()
+              if status in ('ERROR', 'FAILED', 'CANCELLED'):
+                  raise RuntimeError('Kaggle notebook execution failed; inspect preceding traceback')
+              if status == 'COMPLETE' or '"epoch": 1' in full:
+                  break
+              time.sleep(25)
+          PY
       - name: Show links
         run: |
           echo "### Kaggle notebooks updated (not executed)" >> "$GITHUB_STEP_SUMMARY"
