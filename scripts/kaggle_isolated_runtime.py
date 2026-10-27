@@ -49,6 +49,12 @@ subprocess.run([str(python), "-m", "pip", "install", "--no-cache-dir",
                 "--no-deps", "--ignore-installed", *PACKAGES], check=True)
 preflight = r"""
 import numpy as np
+# NumPy 1.26 exposes np.rec but does not provide the numpy.rec import path.
+# A checkpoint serialized in a NumPy 2 session may reference that path.
+import sys
+if not hasattr(np, "rec") or not hasattr(np.rec, "recarray"):
+    raise RuntimeError("NumPy record-array API missing")
+sys.modules.setdefault("numpy.rec", np.rec)
 import numpy.rec
 import scipy
 import cv2
