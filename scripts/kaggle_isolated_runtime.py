@@ -62,7 +62,7 @@ from pycocotools import mask as coco
 import torch
 from pathlib import Path
 import sys
-assert np.__version__ == "1.26.4", "NumPy version mismatch"
+# Fail before opening sealed confirmation data if the GPU or checkpoint\n# deserialization compatibility prerequisites are unavailable.\nassert torch.cuda.is_available(), "CUDA unavailable in isolated inference process"\nimport pickle\nprobe = np.rec.array([(1,)], dtype=[("value", "i4")])\nassert np.array_equal(pickle.loads(pickle.dumps(probe)), probe), "NumPy record-array pickle compatibility failed"\nassert np.__version__ == "1.26.4", "NumPy version mismatch"
 assert Path(np.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()), "NumPy not isolated"
 m = np.zeros((16, 16), dtype=np.uint8)
 m[2:5, 4:7] = 1
