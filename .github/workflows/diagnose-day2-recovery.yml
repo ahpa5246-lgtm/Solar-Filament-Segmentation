@@ -1,0 +1,56 @@
+name: Read-only diagnosis of failed solar day-two recovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-day2-recovery.yml'
+      - 'scripts/diagnose_day2_recovery.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: solar-day2-recovery-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE }}
+      KAGGLE_USERNAME: minahussain111
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate diagnostic cannot launch or submit
+        run: |
+          python -m py_compile scripts/diagnose_day2_recovery.py
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('scripts/diagnose_day2_recovery.py').read_text()
+          assert 'kernels_push(' not in source
+          assert 'competition_submit(' not in source
+          assert 'kernels_output(REF' in source
+          assert 'kernels_logs(REF' in source
+          print('Read-only diagnostic source validated')
+          PY
+      - name: Install pinned Kaggle client
+        run: python -m pip install 'git+https://github.com/Kaggle/kaggle-cli.git@2076e087da9fb8186636d2fe4d8c9f8cf6c56ac9'
+      - name: Inspect immutable failed recovery notebook
+        run: python -m scripts.diagnose_day2_recovery
+      - name: Preserve sanitized evidence
+        if: always()
+        run: |
+          if [ ! -f reports/DAY2_RECOVERY_FAILURE_DIAGNOSIS.json ]; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add reports/DAY2_RECOVERY_FAILURE_DIAGNOSIS.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record read-only Kaggle day-two recovery failure evidence [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
