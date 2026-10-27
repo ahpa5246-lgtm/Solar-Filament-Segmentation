@@ -1,0 +1,18 @@
+{
+  "candidate_selected_by": "Frozen research day 2",
+  "checkpoint_sha256": "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f",
+  "error_type": "HTTPError",
+  "gpu_quota_check": "SKIPPED_EXISTING_COMPLETED_KERNEL",
+  "http_status": 429,
+  "kaggle_execution_status": "COMPLETE",
+  "notebook_url": "https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027-r2",
+  "official_submission": false,
+  "official_submission_attempted": false,
+  "resume_existing_only": true,
+  "resumed_existing_notebook": true,
+  "selected_day": 2,
+  "source_kernel_version": "minahussain111/solar-day2-confirmation-20261027-r2/v1",
+  "status": "FAILED",
+  "test_inference": false,
+  "training": false
+}
