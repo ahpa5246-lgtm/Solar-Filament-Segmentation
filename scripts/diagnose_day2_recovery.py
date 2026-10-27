@@ -33,7 +33,7 @@ def main():
     api.authenticate()
     report = {
         "observed_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-independent-20261026",
+        "notebook": "https://www.kaggle.com/code/" + REF.split("/v", 1)[0],
         "immutable_version": 1,
         "read_only": True,
         "gpu_jobs_launched": 0,
@@ -57,6 +57,29 @@ def main():
                           if isinstance(item, dict))
                 if isinstance(decoded, list) else str(decoded))
         report["logs"] = extract(full)
+        # Categorize failures from remote logs without exposing notebook source,
+        # private paths, model weights, data, or authentication tokens.
+        import re
+        patterns = {
+            "failed_package_install": r"(?i)(?:pip install|wheel|requirement|No matching distribution)",
+            "failed_venv": r"(?i)(?:venv|ensurepip|virtual environment)",
+            "failed_git_clone": r"(?i)(?:git clone|fatal: repository|checkout.*failed)",
+            "torch_cuda_error": r"(?i)(?:cuda.*(?:unavailable|failed|error)|libcudart)",
+            "numpy_abi_error": r"(?i)(?:numpy\\.rec|NPY_OWNDATA|dtype size changed|multiarray)",
+            "checkpoint_error": r"(?i)(?:best\\.pt|checkpoint.*(?:missing|failed|error))",
+            "process_error": r"(?i)(?:CalledProcessError|returned non-zero exit status)",
+            "notebook_syntax_error": r"(?i)(?:SyntaxError|IndentationError)",
+            "permission_error": r"(?i)(?:Permission denied|Errno 13)",
+            "disk_space_error": r"(?i)(?:No space left|Errno 28)",
+        }
+        report["logs"]["failure_indicators"] = {
+            label: bool(re.search(pattern, full))
+            for label, pattern in patterns.items()
+        }
+        report["logs"]["process_exit_codes"] = sorted(set(re.findall(
+            r"returned non-zero exit status (\\d{1,3})", full
+        )))[:5]
+        # Only classified metadata is recorded; raw Kaggle logs stay private.
     except Exception as exc:
         report["logs_error_type"] = type(exc).__name__
     try:
@@ -73,6 +96,8 @@ def main():
     OUT.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n")
     print("Read-only recovery diagnosis:", report.get("execution_status"))
     print("Missing modules:", report.get("logs", {}).get("missing_modules"))
+    print("Failure indicators:", report.get("logs", {}).get("failure_indicators"))
+    print("Exit codes:", report.get("logs", {}).get("process_exit_codes"))
     print("Manifest:", report.get("result_manifest", {}).get("status"))
     print("No GPU, Kaggle notebook push or official submission.")
 
