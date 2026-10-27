@@ -242,7 +242,9 @@ def main():
 
 # Explicit user-requested, one-shot evaluation of the existing day-two checkpoint.
 # Reuse this finalization runner and its original GitHub Actions workflow.
-IMMEDIATE_REPORT=ROOT/"reports/AUTO14_IMMEDIATE_20261027.json"
+IMMEDIATE_REPORT=ROOT/"reports/AUTO14_IMMEDIATE_RETRY_20261027.json"
+PRIOR_IMMEDIATE_REPORT=ROOT/"reports/AUTO14_IMMEDIATE_20261027.json"
+PRIOR_IMMEDIATE_DIAGNOSIS=ROOT/"reports/AUTO14_IMMEDIATE_FAILURE_DIAGNOSIS.json"
 
 def immediate_main():
     if IMMEDIATE_REPORT.exists():
@@ -250,6 +252,23 @@ def immediate_main():
         return
     if not STATE.exists():
         raise SystemExit("No immutable research ledger available")
+    if not PRIOR_IMMEDIATE_REPORT.exists() or not PRIOR_IMMEDIATE_DIAGNOSIS.exists():
+        raise SystemExit("Prior failed run and read-only diagnosis are required for safe recovery")
+    failed=json.loads(PRIOR_IMMEDIATE_REPORT.read_text())
+    diagnosis=json.loads(PRIOR_IMMEDIATE_DIAGNOSIS.read_text())
+    flags=diagnosis.get("logs",{}).get("failure_indicators",{})
+    if (failed.get("status")!="FAILED"
+            or failed.get("kaggle_execution_status")!="ERROR"
+            or failed.get("official_submission_attempted") is not False
+            or failed.get("official_submission") is not False
+            or failed.get("confirmation_local_pq") is not None
+            or failed.get("checkpoint_sha256") != "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f"
+            or diagnosis.get("execution_status")!="ERROR"
+            or diagnosis.get("result_manifest_count")!=0
+            or diagnosis.get("notebook")!="https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027"
+            or flags.get("failed_venv") is not True
+            or diagnosis.get("submission_attempted") is not False):
+        raise RuntimeError("Prior Kaggle failed kernel may have evaluated confirmation or submitted; fail closed")
     if not os.environ.get("KAGGLE_API_TOKEN"):
         raise SystemExit("Missing KAGGLE secret; no Kaggle operation attempted")
     history=json.loads(STATE.read_text())
