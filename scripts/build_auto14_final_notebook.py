@@ -183,6 +183,11 @@ def build(day,checkpoint_sha,out,kernel_id=KERNEL_ID):
           .replace("__MIN_PQ__",repr(MIN_CONFIRMATION_PQ))
           .replace("__MIN_N__",repr(MIN_CONFIRMATION_OBSERVATIONS)))
     ast.parse(code)
+    if kernel_id == KERNEL_ID:
+        # The previously failed day-two kernel is immutable. Only the not-yet-
+        # launched final kernel receives the isolated NumPy/COCO ABI repair.
+        from scripts.kaggle_isolated_runtime import wrap_final_inference
+        code = wrap_final_inference(code)
     out=Path(out);out.parent.mkdir(parents=True,exist_ok=True)
     nb={"nbformat":4,"nbformat_minor":5,
         "metadata":{"kernelspec":{"display_name":"Python 3","language":"python","name":"python3"}},
