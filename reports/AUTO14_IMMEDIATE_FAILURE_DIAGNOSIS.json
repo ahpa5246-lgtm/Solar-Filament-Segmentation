@@ -6,10 +6,23 @@
     "exception_types": [
       "CalledProcessError"
     ],
+    "failure_indicators": {
+      "checkpoint_error": false,
+      "disk_space_error": false,
+      "failed_git_clone": false,
+      "failed_package_install": false,
+      "failed_venv": true,
+      "notebook_syntax_error": false,
+      "numpy_abi_error": false,
+      "permission_error": false,
+      "process_error": true,
+      "torch_cuda_error": false
+    },
     "log_bytes": 4258,
     "log_sha256": "ec032a36f9a30b848952fe06827992ce4aa24b995a8a5812bde432e30d79aa30",
     "missing_attributes": [],
     "missing_modules": [],
+    "process_exit_codes": [],
     "python_frames": [
       {
         "file": "execute.py",
@@ -22,8 +35,8 @@
     ],
     "traceback_count": 2
   },
-  "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-independent-20261026",
-  "observed_at_utc": "2026-10-27T14:58:29.852457+00:00",
+  "notebook": "https://www.kaggle.com/code/minahussain111/solar-day2-confirmation-20261027",
+  "observed_at_utc": "2026-10-27T15:00:08.371667+00:00",
   "read_only": true,
   "result_manifest_count": 0,
   "submission_attempted": false
