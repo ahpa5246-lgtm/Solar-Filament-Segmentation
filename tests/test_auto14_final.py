@@ -110,3 +110,27 @@ def test_future_final_notebook_isolates_compiled_numpy_before_confirmation(tmp_p
     assert "numpy==1.26.4" in PACKAGES
     with pytest.raises((SyntaxError, ValueError)):
         wrap_final_inference("this is not python ?!")
+
+def test_immediate_day_two_notebook_reuses_private_isolated_final_builder(tmp_path):
+    from scripts.build_auto14_final_notebook import IMMEDIATE_KERNEL
+    sha = "d213d3d8bb616a6b9d44fef1219f48727eed148fe68a79e7c0800f534af97a3f"
+    meta = build(2, sha, tmp_path / "immediate.ipynb", kernel_id=IMMEDIATE_KERNEL)
+    nb = json.loads((tmp_path / "immediate.ipynb").read_text())
+    code = "".join(nb["cells"][1]["source"])
+    compile(code, "immediate Kaggle notebook", "exec")
+    assert meta["id"] == IMMEDIATE_KERNEL
+    assert meta["is_private"] and meta["enable_gpu"] and meta["enable_internet"]
+    assert meta["kernel_sources"] == ["minahussain111/solar-autoresearch-d02"]
+    assert "solar_final_isolated_venv" in code
+    assert "numpy.rec" in code and "submission.csv" in code
+    assert sha in code
+    assert "competition_submit(" not in code
+
+
+def test_immediate_guard_does_not_relaunch_existing_remote_attempt(tmp_path, monkeypatch):
+    import scripts.run_auto14_final as runner
+    intent = tmp_path / "already-started.json"
+    intent.write_text('{"status":"STARTED"}')
+    monkeypatch.setattr(runner, "IMMEDIATE_REPORT", intent)
+    assert runner.immediate_main() is None
+    assert json.loads(intent.read_text()) == {"status":"STARTED"}
