@@ -18,7 +18,7 @@ def read_calibration_result(api, reference, output):
                 time.sleep(delay)
             try:
                 _, next_token = api.kernels_output(reference, str(output),
-                    file_pattern=r'score_calibration\.json$', page_token=token, page_size=1000)
+                    file_pattern=r'score_calibration\.json$', page_token=token, page_size=100)
                 break
             except Exception as error:
                 if getattr(getattr(error, 'response', None), 'status_code', None) != 429 or attempt == 3:

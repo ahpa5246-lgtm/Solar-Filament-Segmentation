@@ -69,7 +69,7 @@ def test_output_recovery_keeps_pagination_progress(tmp_path, monkeypatch):
     class API:
         def kernels_output(self, reference, folder, file_pattern, page_token, page_size):
             tokens.append(page_token)
-            assert page_size==1000
+            assert page_size==100
             if page_token=='': return [], 'page-two'
             Path(folder,'score_calibration.json').write_text(json.dumps({'status':'completed'}))
             return [], 'many-unused-package-pages'

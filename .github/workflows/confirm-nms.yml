@@ -1,4 +1,4 @@
-name: Recover matched V5 comparison (read-only, no GPU launch)
+name: Retrieve completed V5 comparison (100 files per page, no GPU)
 on:
   push:
     branches: [main]
