@@ -8,5 +8,17 @@
   "gpu_hours_remaining_before": 19.509320555555558,
   "version": 1,
   "reference": "minahussain111/solar-v5-weight-interpolation-pq50/v1",
-  "kaggle_status": "ERROR"
+  "kaggle_status": "ERROR",
+  "execution_errors": [
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "papermill.exceptions.PapermillExecutionError:",
+    "CalledProcessError                        Traceback (most recent call last)",
+    "CalledProcessError: Command '['/usr/bin/python3', '/kaggle/working/solar_final_runtime_r2.py']' returned non-zero exit status 1."
+  ]
 }
