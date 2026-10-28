@@ -22,6 +22,23 @@ def validate_partitions(train, tuning, confirmation):
         raise ValueError('Training, tuning and confirmation dates must be nonempty and disjoint')
 
 
+def safe_scaled_step(scaler, optimizer, parameters, max_norm=5.):
+    """Never update weights from nonfinite gradients; recover AMP scale safely."""
+    import torch
+    parameters=list(parameters)
+    scaler.unscale_(optimizer)
+    norm=torch.nn.utils.clip_grad_norm_(parameters,max_norm,error_if_nonfinite=False)
+    finite=bool(torch.isfinite(norm))
+    if finite:
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        # Explicit skip also covers norm overflow with individually finite gradients.
+        scaler.update(new_scale=scaler.get_scale()*.5)
+    optimizer.zero_grad(set_to_none=True)
+    return finite
+
+
 def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
         refiner_checkpoint, source, out, seconds=6600):
     import ast, csv, hashlib, json, random, shutil, time
@@ -118,17 +135,18 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
                     collate_fn=lambda batch: tuple(zip(*batch)),generator=torch.Generator().manual_seed(2028))
         optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=LEARNING_RATE,weight_decay=1e-4)
         scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,EPOCHS,eta_min=1e-6)
-        scaler=torch.amp.GradScaler('cuda'); total_steps=0
+        scaler=torch.amp.GradScaler('cuda',init_scale=1024.); total_steps=0
+        successful_updates=0; skipped_updates=0; consecutive_skips=0
+        budget_stop=False
         for epoch in range(1,EPOCHS+1):
-            if time.perf_counter()-started>seconds-1900:
+            if time.perf_counter()-started>seconds-700:
                 report['budget_stopped_before_epoch']=epoch; break
             model.train(); losses=[]; optimizer.zero_grad(set_to_none=True)
             for step,(batch,targets,_) in enumerate(loader,1):
-                if time.perf_counter()-started>seconds-1900:
+                if time.perf_counter()-started>seconds-700:
                     torch.save({'model':model.state_dict(),'epoch':epoch,'partial_epoch':True,'optimizer':optimizer.state_dict()},out/'last_detector.pt')
-                    report.update(status='BUDGET_STOPPED',gradient_samples=total_steps,confirmation_complete=False)
-                    save_report()
-                    raise TimeoutError('Training budget exhausted; checkpoint preserved, confirmation incomplete')
+                    report.update(partial_epoch=epoch,gradient_samples=total_steps)
+                    save_report(); budget_stop=True; break
                 batch=[im.cuda() for im in batch]
                 targets=[{k:v.cuda() for k,v in target.items()} for target in targets]
                 with torch.autocast('cuda',dtype=torch.float16):
@@ -139,11 +157,16 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
                 divisor=min(4,len(loader)-group_start)
                 scaler.scale(loss/divisor).backward()
                 if step%4==0 or step==len(loader):
-                    scaler.unscale_(optimizer)
-                    torch.nn.utils.clip_grad_norm_(model.parameters(),5.,error_if_nonfinite=True)
-                    scaler.step(optimizer); scaler.update(); optimizer.zero_grad(set_to_none=True)
+                    updated=safe_scaled_step(scaler,optimizer,model.parameters())
+                    successful_updates+=int(updated); skipped_updates+=int(not updated)
+                    consecutive_skips=0 if updated else consecutive_skips+1
+                    report.update(optimizer_updates=successful_updates,overflow_skipped_updates=skipped_updates,amp_scale=scaler.get_scale())
+                    if consecutive_skips>=20:
+                        raise RuntimeError('Persistent gradient overflow after 20 scale reductions; stop safely')
                 losses.append(float(loss.detach())); total_steps+=1
                 if step%100==0: print('V5 finetune epoch',epoch,'step',step,'/',len(loader),flush=True)
+            if budget_stop: break
+            if not successful_updates: raise RuntimeError('No finite optimizer updates')
             scheduler.step()
             row={'epoch':epoch,'loss':sum(losses)/len(losses),'learning_rate':optimizer.param_groups[0]['lr']}
             torch.save({'model':model.state_dict(),'epoch':epoch,'optimizer':optimizer.state_dict()},out/'last_detector.pt')

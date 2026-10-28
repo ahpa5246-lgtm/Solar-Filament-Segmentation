@@ -42,6 +42,10 @@ def main():
     if args.launch:
         if not training_allowed(state):
             print('Existing or ambiguous V5 launch retained; no duplicate:',state.get('version'),flush=True);return
+        if state.get('retry_of'):
+            old_status=str(api.kernels_status(state['retry_of']).status).split('.')[-1].upper()
+            if old_status not in {'ERROR','FAILED','CANCELED','CANCELLED'}:
+                raise RuntimeError('Previous attempt is not terminal; retry forbidden')
         quota=api.quota_view().gpu_quota
         remaining=(quota.total_time_allowed-quota.time_used).total_seconds()/3600
         if remaining<4.25:raise RuntimeError('Insufficient GPU quota for bounded continuation')
@@ -82,7 +86,9 @@ def main():
         raise RuntimeError('V5 training not complete; inspect existing version, do not duplicate')
     with tempfile.TemporaryDirectory(prefix='v5-training-read-') as temp:
         state['result']=retrieve(api,ref,temp)
-    if state['result'].get('status')!='COMPLETE':raise RuntimeError('Training result did not pass completion checks')
+    if state['result'].get('status')!='COMPLETE':
+        state['status']='INCOMPLETE';save(state)
+        raise RuntimeError('Training result did not pass completion checks')
     state['status']='COMPLETE';save(state)
     print('V5_TRAINING_COMPLETE',json.dumps(state),flush=True)
 
