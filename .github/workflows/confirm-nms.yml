@@ -2,7 +2,7 @@ name: Verify current Kaggle training and official submission scores
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/confirm-nms.yml']
+    paths: ['.github/workflows/confirm-nms.yml','scripts/observe_kaggle_current.py']
   workflow_dispatch:
 permissions:
   contents: write

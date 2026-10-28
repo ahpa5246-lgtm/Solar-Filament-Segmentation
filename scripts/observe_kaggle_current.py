@@ -5,11 +5,13 @@ from pathlib import Path
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 api=KaggleApi(); api.authenticate()
-ref='minahussain111/solar-v5-finetune-pq50-20261028/v1'
+training=json.loads(Path('reports/V5_FINETUNE_STATE.json').read_text())
+ref=training.get('reference')
+if not ref:raise RuntimeError('No immutable training reference to inspect')
 response=api.kernels_status(ref)
 report={'observed_at_utc':datetime.now(timezone.utc).isoformat(),
         'reference':ref,'kaggle_status':str(response.status),
-        'training_launched':False,'submission_created':False}
+        'observer_launched_training':False,'observer_created_submission':False}
 raw=api.kernels_logs(ref)
 try: events=json.loads(raw) if isinstance(raw,str) else raw
 except ValueError: events=[]

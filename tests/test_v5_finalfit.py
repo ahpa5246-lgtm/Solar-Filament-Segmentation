@@ -8,13 +8,14 @@ def test_final_assessment_freezes_version_hash_and_test_inventory(tmp_path,monke
     from build_v5_finalfit import build
     with pytest.raises(ValueError):build(tmp_path/'bad.ipynb',1,'a'*64)
     out=tmp_path/'final.ipynb';meta=build(out,2,'a'*64)
-    assert meta['is_private'] and meta['kernel_sources']==['minahussain111/solar-v5-finetune-pq50-20261028/2']
+    assert meta['is_private'] and meta['kernel_sources']==['minahussain111/solar-v5-finetune-pq50-20261028']
     tree=ast.parse(''.join(json.loads(out.read_text())['cells'][1]['source']))
     values={n.targets[0].id:ast.literal_eval(n.value) for n in tree.body
             if isinstance(n,ast.Assign) and isinstance(n.targets[0],ast.Name) and n.targets[0].id in {'SOURCE','EXPECTED_SHA'}}
     assert hashlib.sha256(values['SOURCE'].encode()).hexdigest()==values['EXPECTED_SHA']
     assert "expected='" not in values['SOURCE'] or 'a'*64 in values['SOURCE']
     assert 'solar/v5_finalfit.py' in values['SOURCE']
+    assert 'selected_training_version=2' in values['SOURCE']
     assert 'len(files)!=180' in values['SOURCE']
     assert 'competition_submit' not in values['SOURCE']
 

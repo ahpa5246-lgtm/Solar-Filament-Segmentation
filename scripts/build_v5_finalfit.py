@@ -22,6 +22,7 @@ def build(output,version,expected_sha):
 from hashlib import sha256
 from solar.v5_finalfit import run
 expected={expected_sha!r}
+selected_training_version={version}
 checkpoints=[p for p in Path('/kaggle/input').rglob('best_detector.pt') if sha256(p.read_bytes()).hexdigest()==expected]
 if len(checkpoints)!=1:raise RuntimeError('Expected exactly one frozen continuation checkpoint')
 run(one('MAGFiLO_1.0_Annotations_kaggle2026_train.json'),one('training_manifest.csv'),
@@ -34,6 +35,6 @@ run(one('MAGFiLO_1.0_Annotations_kaggle2026_train.json'),one('training_manifest.
     nb['cells'][0]['source']=['# Selected V5 continuation: full-data fitting and official test inference\n',
       'One fixed epoch on all labeled TRAIN observations; no test labels or test calibration.\n']
     output.write_text(json.dumps(nb,indent=1)+'\n')
-    meta.update(id=KERNEL,title=KERNEL.split('/')[1],kernel_sources=[f'minahussain111/solar-v5-finetune-pq50-20261028/{version}'])
+    meta.update(id=KERNEL,title=KERNEL.split('/')[1],kernel_sources=['minahussain111/solar-v5-finetune-pq50-20261028'])
     (output.parent/'kernel-metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
     return meta
