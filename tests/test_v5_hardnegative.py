@@ -63,3 +63,23 @@ def test_new_experiment_requires_two_completed_no_gain_precursors():
     interpolation["result"]["selected_alpha"] = 0.05
     with pytest.raises(ValueError):
         prerequisites(training, interpolation)
+
+
+def test_hardnegative_launch_fails_closed_on_existing_or_uncertain_kernel():
+    from scripts.run_v5_hardnegative import refuse_untracked_kernel
+    class FakeApi:
+        def __init__(self, status): self.status = status
+        def kernels_status(self, slug):
+            assert slug == "minahussain111/solar-v5-hardnegative-pq50"
+            if self.status == 200:
+                return object()
+            error = RuntimeError("API response")
+            error.status = self.status
+            raise error
+    refuse_untracked_kernel(FakeApi(404))
+    with pytest.raises(RuntimeError, match="Untracked Kaggle"):
+        refuse_untracked_kernel(FakeApi(200))
+    with pytest.raises(RuntimeError, match="API response"):
+        refuse_untracked_kernel(FakeApi(429))
+    with pytest.raises(RuntimeError, match="API response"):
+        refuse_untracked_kernel(FakeApi(500))
