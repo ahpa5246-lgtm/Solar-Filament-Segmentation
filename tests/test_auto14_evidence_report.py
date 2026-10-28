@@ -15,7 +15,8 @@ def test_no_run_is_not_an_official_score():
 def test_failure_records_only_exploratory_not_official():
     state={"results":{
         "1":{"day":1,"status":"FAILED"},
-        "2":{"day":2,"status":"COMPLETE","local_tuning_pq":.4171,
+        "2":{"day":2,"status":"COMPLETE","execution_status":"COMPLETE",
+             "training":True,"local_tuning_pq":.4171,
              "checkpoint_sha256":"a"*64}}}
     output=report(state,{"status":"REJECTED","confirmation_local_pq":.35})
     assert "0.41710" in output and "0.35000" in output
