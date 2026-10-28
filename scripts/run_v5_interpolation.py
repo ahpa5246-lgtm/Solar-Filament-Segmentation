@@ -29,7 +29,7 @@ def retrieve(api, reference, folder):
                 time.sleep(delay)
             try:
                 _, following = api.kernels_output(reference, str(folder),
-                    file_pattern=r"interpolation_result\\.json$", page_token=token, page_size=100)
+                    file_pattern=r"interpolation_result\.json$", page_token=token, page_size=100)
                 break
             except Exception as error:
                 if getattr(getattr(error, "response", None), "status_code", None) != 429 or delay == 120:
@@ -93,6 +93,29 @@ def main():
         time.sleep(45)
     if state.get("kaggle_status") != "COMPLETE":
         state["status"] = "NEEDS_DIAGNOSIS"
+        # Read the already-accepted immutable version. Never push or rerun it.
+        try:
+            raw = api.kernels_logs(state["reference"])
+            events = json.loads(raw) if isinstance(raw, str) else raw
+            if isinstance(events, dict):
+                events = events.get("logs", events.get("log", [events]))
+            if not isinstance(events, list):
+                events = [events]
+            lines = []
+            for event in events:
+                entry = event.get("data", "") if isinstance(event, dict) else str(event)
+                for line in str(entry).splitlines():
+                    line = line.strip()
+                    if any(marker in line for marker in (
+                        "Traceback", "Error:", "Exception:", "ModuleNotFoundError",
+                        "ImportError", "KeyError", "AssertionError", "CUDA out of memory",
+                        "No such file", "Killed", "not found", "failed")):
+                        # Record only diagnostic lines, never full logs or signed URLs.
+                        if "http" not in line and "token" not in line.lower():
+                            lines.append(line[:500])
+            state["execution_errors"] = lines[-16:]
+        except Exception as error:
+            state["log_read_error_type"] = type(error).__name__
         save(state)
         raise RuntimeError("Kaggle interpolation incomplete; do not duplicate GPU")
     with tempfile.TemporaryDirectory(prefix="v5-interpolation-read-") as temp:
