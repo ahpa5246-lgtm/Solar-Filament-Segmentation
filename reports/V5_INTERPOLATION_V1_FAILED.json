@@ -1,0 +1,26 @@
+{
+  "status": "NEEDS_DIAGNOSIS",
+  "push_attempted": true,
+  "training": false,
+  "official_submission": false,
+  "source_reference": "minahussain111/solar-v5-finetune-pq50-20261028/v2",
+  "expected_best_checkpoint_sha256": "60a8f48340cc1076710027c1b159c747035217613a61e186b8705aa6fc310a36",
+  "gpu_hours_remaining_before": 19.509320555555558,
+  "version": 1,
+  "reference": "minahussain111/solar-v5-weight-interpolation-pq50/v1",
+  "kaggle_status": "ERROR",
+  "execution_errors": [
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "ValueError: Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+    "Traceback (most recent call last):",
+    "papermill.exceptions.PapermillExecutionError:",
+    "CalledProcessError                        Traceback (most recent call last)",
+    "CalledProcessError: Command '['/usr/bin/python3', '/kaggle/working/solar_final_runtime_r2.py']' returned non-zero exit status 1."
+  ],
+  "archived_reason": "Immutable Kaggle v1 failed because BatchNorm num_batches_tracked drifted between original and trained checkpoints; not a model-quality result.",
+  "relaunch_permitted": false
+}
