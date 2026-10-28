@@ -8,6 +8,7 @@ on:
       - '.github/workflows/solar-topology-pilot.yml'
       - 'scripts/run_v5_finetune.py'
       - 'scripts/run_v5_interpolation.py'
+      - 'scripts/run_v5_hardnegative.py'
 permissions:
   contents: write
 concurrency:
@@ -64,7 +65,7 @@ jobs:
 
 
   interpolation:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[launch-v5-hardnegative]')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
