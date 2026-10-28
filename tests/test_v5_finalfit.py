@@ -29,3 +29,10 @@ def test_incomplete_or_unimproved_training_cannot_launch_final_gpu(monkeypatch):
         with pytest.raises(ValueError):require_candidate(state)
     result={'status':'COMPLETE','best_epoch':2,'best_tuning_pq':.42,'baseline_tuning_pq':.4}
     assert require_candidate({'status':'COMPLETE','result':result})==result
+
+
+def test_tuning_gain_cannot_promote_overlap_policy_with_confirmation_regression():
+    from solar.v5_finalfit import overlap_promotion_supported
+    assert not overlap_promotion_supported({'union':.405,'preserve':.413},.407,.399,{'low':-.022})
+    assert not overlap_promotion_supported({'union':.405,'preserve':.413},.407,.411,{'low':-.01})
+    assert overlap_promotion_supported({'union':.405,'preserve':.43},.407,.44,{'low':.01})

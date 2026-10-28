@@ -3,6 +3,12 @@ import ast, csv, hashlib, json, random, time
 from pathlib import Path
 
 
+def overlap_promotion_supported(tuning_pq,baseline_pq,candidate_pq,delta):
+    """A tuning gain alone cannot justify replacing the baseline policy."""
+    return (tuning_pq['preserve']>tuning_pq['union'] and
+            candidate_pq>baseline_pq and delta['low']>0)
+
+
 def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,seconds=6600):
     import cv2, numpy as np, pandas as pd, torch
     from pycocotools.coco import COCO
@@ -63,10 +69,16 @@ def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,s
     selected_policy='preserve' if tuning_pq['preserve']>tuning_pq['union'] else 'union'
     # Selection is frozen before confirmation metrics are calculated.
     confirmation_metrics={policy:evaluate(truth,predictions,confirmation) for policy,predictions in predictions_by_policy.items()}
-    comparison=dict(selected_policy=selected_policy,tuning_pq=tuning_pq,
+    proposed_policy=selected_policy
+    delta=paired_ci(confirmation_metrics['union'],confirmation_metrics['preserve'])
+    supported=overlap_promotion_supported(tuning_pq,micro(confirmation_metrics['union']),
+                                         micro(confirmation_metrics['preserve']),delta)
+    selected_policy=proposed_policy if supported else 'union'
+    comparison=dict(selected_policy=selected_policy,proposed_policy=proposed_policy,
+        confirmation_gain_supported=supported,tuning_pq=tuning_pq,
         tuning_observations=len(tuning),confirmation_observations=len(confirmation),
         confirmation={policy:aggregate(metrics) for policy,metrics in confirmation_metrics.items()},
-        paired_macro_delta_ci=paired_ci(confirmation_metrics['union'],confirmation_metrics['preserve']),
+        paired_macro_delta_ci=delta,
         interpretation='Historical validation reuse; exploratory joint-policy comparison, not an official score')
     (out/'overlap_comparison.json').write_text(json.dumps(comparison,indent=2)+'\n')
     del predictions_by_policy,tuning_metrics,confirmation_metrics
