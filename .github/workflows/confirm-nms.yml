@@ -1,4 +1,4 @@
-name: Retrieve completed V5 comparison (100 files per page, no GPU)
+name: Verify current Kaggle training and official submission scores
 on:
   push:
     branches: [main]
@@ -26,15 +26,15 @@ jobs:
       - name: Verify V5 recovery guards before any GPU request
         run: python -m pytest -q tests/test_v5_recovery.py tests/test_auto14.py
       - name: Run one private inference experiment with quota and timeout guards
-        run: python scripts/run_v6_confirmation.py --resume-score-calibration
+        run: python scripts/observe_kaggle_current.py
       - name: Persist aggregate metrics only
         if: ${{ always() }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          if [ ! -f reports/V5_SCORE_CALIBRATION_EXECUTION.json ]; then exit 0; fi
-          git add reports/V5_SCORE_CALIBRATION_EXECUTION.json
+          if [ ! -f reports/KAGGLE_CURRENT_EVIDENCE.json ]; then exit 0; fi
+          git add reports/KAGGLE_CURRENT_EVIDENCE.json
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Record fixed-weight V5 score calibration and matched comparison [skip ci]"
+          git commit -m "Record live Kaggle execution and official submission evidence [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main
