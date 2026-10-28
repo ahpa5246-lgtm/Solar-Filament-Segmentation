@@ -60,6 +60,20 @@ def retrieve(api, ref, folder):
     raise RuntimeError("Completed immutable output unavailable; never repush")
 
 
+def refuse_untracked_kernel(api):
+    """Fail closed if Kaggle has an existing version but GitHub has no launch identity."""
+    try:
+        api.kernels_status(KERNEL)
+    except Exception as error:
+        status = getattr(error, "status", None)
+        if status is None:
+            status = getattr(getattr(error, "response", None), "status_code", None)
+        if str(status) == "404":
+            return
+        raise  # Network, authentication, rate limits and other uncertainty are not absence.
+    raise RuntimeError("Untracked Kaggle hard-negative kernel exists; reconcile its version before any push")
+
+
 def main(phase):
     from kaggle.api.kaggle_api_extended import KaggleApi
     api = KaggleApi()
@@ -72,6 +86,7 @@ def main(phase):
         if state:
             print("Existing hard-negative launch intent retained; never duplicate", flush=True)
             return
+        refuse_untracked_kernel(api)
         for reference in (training["reference"], interpolation["reference"]):
             observed = str(api.kernels_status(reference).status).split(".")[-1].upper()
             if observed != "COMPLETE":
