@@ -34,7 +34,10 @@ def interpolate_states(baseline, trained, alpha):
                 raise ValueError("Nonfinite checkpoint tensor: " + key)
             result[key] = value.clone() if alpha == 0 else other.clone() if alpha == 1 else torch.lerp(value, other, alpha)
         else:
-            if not torch.equal(value, other):
+            # BatchNorm counters advance during continuation; they are not
+            # learnable weights and must not block safe interpolation.
+            # Preserve the baseline counter rather than blending integers.
+            if not torch.equal(value, other) and not key.endswith(".num_batches_tracked"):
                 raise ValueError("Nonfloating checkpoint state changed: " + key)
             result[key] = value.clone()
     return result
