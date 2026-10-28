@@ -1,5 +1,5 @@
 {
-  "status": "ACCEPTED",
+  "status": "NEEDS_DIAGNOSIS",
   "kernel": "minahussain111/solar-v5-finetune-pq50-20261028",
   "training": true,
   "official_submission": false,
@@ -7,5 +7,11 @@
   "gpu_hours_remaining_before": 21.71741222222222,
   "push_attempted": true,
   "version": 1,
-  "reference": "minahussain111/solar-v5-finetune-pq50-20261028/v1"
+  "reference": "minahussain111/solar-v5-finetune-pq50-20261028/v1",
+  "kaggle_status": "ERROR",
+  "execution_errors": [
+    "RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped. To disable this error and scale the gradients by the non-finite norm anyway, set `error_if_nonfinite=False`",
+    "RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped. To disable this error and scale the gradients by the non-finite norm anyway, set `error_if_nonfinite=False`",
+    "RuntimeError: The total norm of order 2.0 for gradients from `parameters` is non-finite, so it cannot be clipped. To disable this error and scale the gradients by the non-finite norm anyway, set `error_if_nonfinite=False`"
+  ]
 }
