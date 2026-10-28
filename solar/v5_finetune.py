@@ -40,7 +40,7 @@ def safe_scaled_step(scaler, optimizer, parameters, max_norm=5.):
 
 
 def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
-        refiner_checkpoint, source, out, seconds=6600):
+        refiner_checkpoint, source, out, seconds=6600, hard_negative=False):
     import ast, csv, hashlib, json, random, shutil, time
     from pathlib import Path
     import cv2
@@ -54,10 +54,14 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
     from .v6_cached_search import micro, paired_ci
     from .v6_audit import measure_rles
 
+    epochs = 4 if hard_negative else EPOCHS
+    learning_rate = 2e-6 if hard_negative else LEARNING_RATE
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
     report = dict(status='STARTED', training=True, test_inference=False, official_submission=False,
                   target_official_pq=.50, architecture='unchanged V5 Mask R-CNN ResNet50-FPN-v2 + fixed CropUNet ResNet18',
-                  epochs_requested=EPOCHS, learning_rate=LEARNING_RATE,
+                  epochs_requested=epochs, learning_rate=learning_rate,
+                  sampling='fitting-only baseline false-positive weighted sampling' if hard_negative else 'original uniform shuffled fitting',
+                  hypothesis='Hard-negative upweighting plus smaller LR may improve V5 proposal precision without 16-epoch regression' if hard_negative else 'original V5 continuation',
                   selection='full detector/refiner tuning micro PQ; baseline included at epoch zero',
                   limitations=['Historically reused V5 validation; not a pristine holdout.',
                                'API-v3 validation weights are attested; exact scored-web-V5 checkpoint identity remains unresolved.',
@@ -131,14 +135,49 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
                        ANN_PATH=Path(annotation),IMAGE_DIR=images,IMAGE_SIZE=1024)
         exec(compile(ast.Module(body=definitions,type_ignores=[]),'archived_apache_v5_dataset','exec'),namespace)
         dataset=namespace['FilamentDataset'](pd.DataFrame(fitting),augment=True)
-        loader=torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=True,num_workers=0,
+        sampler = None
+        if hard_negative:
+            from .v5_hardnegative import sampling_weights, count_unmatched_predictions
+            from collections import Counter
+            fitting_truth = references(annotation, set(training))
+            if set(fitting_truth) != set(training):
+                raise ValueError('Hard-negative mining inventory differs from fitting-only observations')
+            false_positives = {}
+            model.eval()
+            for index, row in enumerate(fitting, 1):
+                if time.perf_counter()-started > seconds-2500:
+                    raise TimeoutError('Hard-negative mining exceeded reserved training budget')
+                stem = row['observation_id']
+                image = cv2.imread(str(images / row['file_name']), cv2.IMREAD_GRAYSCALE)
+                if image is None or image.shape != (2048,2048):
+                    raise ValueError('Missing fitting image for hard-negative mining')
+                masks, scores = detect(model, image, 1024)
+                proposals = postprocess(masks, scores, 'union')
+                false_positives[stem] = count_unmatched_predictions(proposals, fitting_truth[stem])
+                if index % 100 == 0:
+                    print('V5 hard-negative fitting scan', index, '/', len(fitting), flush=True)
+            weights = sampling_weights(training, false_positives)
+            sampler = torch.utils.data.WeightedRandomSampler(
+                torch.tensor(weights, dtype=torch.double), num_samples=len(dataset),
+                replacement=True, generator=torch.Generator().manual_seed(2031))
+            report['hard_negative_mining'] = {
+                'source': 'original frozen detector; fitting images and labels only',
+                'observations': len(false_positives),
+                'with_false_positives': sum(v > 0 for v in false_positives.values()),
+                'total_unmatched_proposals': sum(false_positives.values()),
+                'weight_min': min(weights), 'weight_max': max(weights),
+                'confirmation_or_tuning_used': False}
+            save_report()
+            del fitting_truth
+        loader=torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=sampler is None,
+                    sampler=sampler,num_workers=0,
                     collate_fn=lambda batch: tuple(zip(*batch)),generator=torch.Generator().manual_seed(2028))
-        optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=LEARNING_RATE,weight_decay=1e-4)
-        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,EPOCHS,eta_min=1e-6)
+        optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=learning_rate,weight_decay=1e-4)
+        scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,epochs,eta_min=5e-7 if hard_negative else 1e-6)
         scaler=torch.amp.GradScaler('cuda',init_scale=1024.); total_steps=0
         successful_updates=0; skipped_updates=0; consecutive_skips=0
         budget_stop=False
-        for epoch in range(1,EPOCHS+1):
+        for epoch in range(1,epochs+1):
             if time.perf_counter()-started>seconds-700:
                 report['budget_stopped_before_epoch']=epoch; break
             model.train(); losses=[]; optimizer.zero_grad(set_to_none=True)
@@ -170,7 +209,7 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
             scheduler.step()
             row={'epoch':epoch,'loss':sum(losses)/len(losses),'learning_rate':optimizer.param_groups[0]['lr']}
             torch.save({'model':model.state_dict(),'epoch':epoch,'optimizer':optimizer.state_dict()},out/'last_detector.pt')
-            if epoch%2==0 or epoch==EPOCHS:
+            if hard_negative or epoch%2==0 or epoch==epochs:
                 groups,_=assess(tuning)
                 row['tuning_pipeline_pq']=micro(groups)
                 if better_checkpoint(row['tuning_pipeline_pq'],best):
