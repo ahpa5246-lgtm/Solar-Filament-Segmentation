@@ -107,12 +107,21 @@ def refine(model,helpers,image,rles,overlap_policy='union'):
     return postprocess(results,[1.]*len(results),overlap_policy)
 
 
+def refine_proposals(model,helpers,image,masks,scores,policy,preserve_refined=False):
+    """Apply both overlap stages explicitly; union remains the baseline."""
+    proposals=postprocess(masks,scores,policy)
+    return refine(model,helpers,image,proposals,
+                  overlap_policy='none' if preserve_refined and policy=='nms' else 'union')
+
+
 @torch.inference_mode()
-def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000,full_confirmation=False):
+def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000,full_confirmation=False,preserve_refined=False):
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     report={'status':'running','training':False,'test_inference':False,'official_submission':False,
-            'pilot_observations_per_subset':None if full_confirmation else 16,'refiner':'flip4 threshold 0.85, final overlap union',
-            'score_threshold':.6,'mask_threshold':.4,'source_sha256':SOURCE_SHA}
+            'pilot_observations_per_subset':None if full_confirmation else 16,'refiner':'flip4 threshold 0.85; final policy recorded per candidate',
+            'score_threshold':.6,'mask_threshold':.4,'source_sha256':SOURCE_SHA,
+            'candidate_final_overlap':'none' if preserve_refined else 'union',
+            'experiment':'joint proposal NMS and refined identity preservation' if preserve_refined else 'resolution/overlap replay'}
     try:
         verify_artifacts({'training_manifest.csv':manifest,'best_detector_predictions_1024.pkl':detector_predictions,
                           'refined_validation_predictions_2048.pkl':plain_predictions},V3_ARTIFACT_SHA256)
@@ -148,7 +157,8 @@ def run(annotation,manifest,detector_predictions,plain_predictions,detector_chec
                     if resolution==1024 and policy=='union':
                         parity.append(measure_rles(cached[stem],proposals,shape=(1024,1024))['pq_local'])
                         if parity[-1]<.99:raise RuntimeError('Archived detector mask parity failed before resolution comparison')
-                    strategies[f'{resolution}|{policy}'][stem]=refine(refiner,helpers,image,proposals)
+                    strategies[f'{resolution}|{policy}'][stem]=refine_proposals(
+                        refiner,helpers,image,masks,scores,policy,preserve_refined=preserve_refined)
             report['processed_observations']=number+1
             print(f'Native resolution pilot {number+1}/{len(stems)}',flush=True)
         torch.cuda.synchronize();report['inference_and_reconstruction_seconds']=time.perf_counter()-started

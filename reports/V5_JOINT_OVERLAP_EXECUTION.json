@@ -1,0 +1,14 @@
+{
+  "status": "ACCEPTED",
+  "kernel": "minahussain111/solar-filament-research-v6-confirmation",
+  "training": false,
+  "test_inference": false,
+  "official_submission": false,
+  "experiment": "union/union versus NMS/none; fixed archived weights",
+  "started_at_utc": "2026-10-28T18:41:27.619580+00:00",
+  "server_timeout_seconds": 1200,
+  "push_attempted": true,
+  "version": 4,
+  "reference": "minahussain111/solar-filament-research-v6-confirmation/v4",
+  "kaggle_status": "COMPLETE"
+}
