@@ -1,6 +1,11 @@
 {
-  "status": "RETRY_PREPARED",
-  "retry_of": "minahussain111/solar-v5-finetune-pq50-20261028/v1",
-  "reason": "Terminal ERROR verified; recoverable AMP gradient overflow fixed with tested safe optimizer skip and scale reduction",
-  "previous_evidence": "reports/V5_FINETUNE_V1_FAILED.json"
+  "status": "ACCEPTED",
+  "kernel": "minahussain111/solar-v5-finetune-pq50-20261028",
+  "training": true,
+  "official_submission": false,
+  "target_official_pq": 0.5,
+  "gpu_hours_remaining_before": 21.438786666666665,
+  "push_attempted": true,
+  "version": 2,
+  "reference": "minahussain111/solar-v5-finetune-pq50-20261028/v2"
 }
