@@ -37,3 +37,27 @@ def test_only_explicitly_scored_official_submission_reports_new_score():
 def test_invalid_official_score_rejected(score):
     with pytest.raises(ValueError):
         report({},{"status":"SCORED","official_submission":True,"official_public_score":score})
+
+
+def test_paused_challenger_does_not_claim_scheduled_gpu_or_submission():
+    state={"status":"paused_v5_recovery","results":{
+        "2":{"status":"COMPLETE","execution_status":"COMPLETE",
+             "training":True,"local_tuning_pq":0.40438,
+             "checkpoint_sha256":"a"*64},
+        "3":{"status":"COMPLETE","execution_status":"ERROR",
+             "training":True,"local_tuning_pq":0.9,
+             "checkpoint_sha256":"b"*64}}}
+    output=report(state,{})
+    assert "Successful training notebooks with verified COMPLETE evidence: **1**" in output
+    assert "Independent-challenger training is paused" in output
+    assert "blocked from candidate selection and submission" in output
+    assert "No new official Kaggle score verified" in output
+    assert "0.40438" in output
+    assert "0.90000" in output  # Unverified local claim remains visible but is not counted as completed.
+
+
+def test_complete_without_checkpoint_is_not_successful_training():
+    state={"results":{"1":{"status":"COMPLETE","execution_status":"COMPLETE",
+                              "training":True,"local_tuning_pq":0.5}}}
+    output=report(state,{})
+    assert "Successful training notebooks with verified COMPLETE evidence: **0**" in output
