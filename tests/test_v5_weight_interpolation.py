@@ -29,3 +29,13 @@ def test_grid_is_predeclared_and_baseline_included():
     assert ALPHAS[0] == 0.0
     assert ALPHAS[-1] == 1.0
     assert len(ALPHAS) == len(set(ALPHAS))
+
+
+def test_batchnorm_tracking_counters_may_drift_but_are_not_interpolated():
+    base = {"backbone.body.bn1.num_batches_tracked": torch.tensor(125, dtype=torch.int64),
+            "backbone.body.bn1.running_mean": torch.tensor([1.0])}
+    trained = {"backbone.body.bn1.num_batches_tracked": torch.tensor(240, dtype=torch.int64),
+               "backbone.body.bn1.running_mean": torch.tensor([3.0])}
+    candidate = interpolate_states(base, trained, 0.25)
+    assert candidate["backbone.body.bn1.num_batches_tracked"].item() == 125
+    assert torch.allclose(candidate["backbone.body.bn1.running_mean"], torch.tensor([1.5]))
