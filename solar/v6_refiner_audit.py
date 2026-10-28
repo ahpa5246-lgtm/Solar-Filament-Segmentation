@@ -46,10 +46,40 @@ def load_components(path):
 
 
 def postprocess(rles,scores,policy):
-    if policy not in {'union','nms','none'}:raise ValueError('Unknown overlap policy')
+    if policy not in {'union','nms','none','aligned_union'}:raise ValueError('Unknown overlap policy')
     scores=np.asarray(scores,dtype=float)
     if scores.shape!=(len(rles),) or not np.isfinite(scores).all():raise ValueError('One finite confidence per mask is required')
     if not rles:return []
+    if policy=='aligned_union':
+        # Remove duplicate proposals before forming an orientation-aware graph.
+        rles=postprocess(rles,scores,'nms')
+        axes=[]
+        for rle in rles:
+            y,x=np.nonzero(coco.decode(rle))
+            if len(x)<3:
+                axes.append(None);continue
+            coords=np.column_stack((x,y)).astype(float)
+            covariance=np.cov(coords,rowvar=False)
+            values,vectors=np.linalg.eigh(covariance)
+            axes.append(vectors[:,-1] if values[-1]>4*max(values[0],1e-8) else None)
+        overlaps=coco.iou(rles,rles,[0]*len(rles))>0
+        for i in range(len(rles)):
+            for j in range(i):
+                # Thirty degrees fixed before evaluation; compact blobs are not
+                # joined merely because they touch a different filament.
+                aligned=axes[i] is not None and axes[j] is not None and abs(float(axes[i]@axes[j]))>=np.cos(np.pi/6)
+                overlaps[i,j]=overlaps[j,i]=bool(overlaps[i,j] and aligned)
+        seen=set();result=[]
+        for start in range(len(rles)):
+            if start in seen:continue
+            stack=[start];group=[]
+            while stack:
+                index=stack.pop()
+                if index in seen:continue
+                seen.add(index);group.append(index)
+                stack.extend(np.flatnonzero(overlaps[index]).tolist())
+            result.append(coco.merge([rles[index] for index in group]))
+        return result
     if policy=='none':return list(rles)
     iou=coco.iou(rles,rles,[0]*len(rles))
     if policy=='nms':

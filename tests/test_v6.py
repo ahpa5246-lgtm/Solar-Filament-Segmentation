@@ -367,3 +367,52 @@ def test_refiner_preserves_crossing_instances_when_explicitly_requested(monkeypa
     assert len(refine(None,helpers,image,rles))==1  # Exact baseline replay remains explicit.
     with pytest.raises(ValueError):
         refine(None,helpers,image,[],overlap_policy='invalid')
+
+
+def test_joint_overlap_pipeline_keeps_crossings_and_removes_duplicates(monkeypatch):
+    import torch
+    from pycocotools import mask as coco
+    from solar import v6_resolution_audit as module
+    monkeypatch.setattr(torch.Tensor, 'cuda', lambda self: self)
+    a=np.zeros((2048,2048),np.uint8);a[100:140,100:500]=1
+    b=np.zeros_like(a);b[110:510,290:330]=1
+    rles=[coco.encode(np.asfortranarray(x)) for x in (a,b,a)]
+    def bounds(mask):
+        y,x=np.nonzero(mask)
+        return int(x.min()),int(y.min()),int(x.max()+1),int(y.max()+1)
+    helpers={'square_bounds':bounds,
+             'predict_refiner_probabilities':lambda model,batch,use_tta: torch.ones(len(batch),256,256)}
+    image=np.zeros_like(a)
+    results=module.refine_proposals(None,helpers,image,rles,[.9,.8,.7],'nms',preserve_refined=True)
+    assert len(results)==2
+    for result,expected in zip(results,(a,b)):
+        np.testing.assert_array_equal(coco.decode(result),expected)
+    assert len(module.refine_proposals(None,helpers,image,rles,[.9,.8,.7],'union'))==1
+
+
+def test_final_nms_suppresses_masks_that_become_duplicates_during_refinement(monkeypatch):
+    import torch
+    from pycocotools import mask as coco
+    from solar.v6_resolution_audit import refine_proposals
+    monkeypatch.setattr(torch.Tensor, 'cuda', lambda self: self)
+    a=np.zeros((2048,2048),np.uint8);a[100:140,100:200]=1
+    b=np.zeros_like(a);b[200:240,100:200]=1
+    rles=[coco.encode(np.asfortranarray(x)) for x in (a,b)]
+    helpers={'square_bounds':lambda mask:(80,80,260,260),
+             'predict_refiner_probabilities':lambda model,batch,use_tta:torch.ones(len(batch),256,256)}
+    assert len(refine_proposals(None,helpers,a,rles,[.9,.8],'nms',preserve_refined=True))==2
+    assert len(refine_proposals(None,helpers,a,rles,[.9,.8],'nms',preserve_refined=True,refined_nms=True))==1
+
+
+def test_aligned_union_joins_collinear_fragments_but_preserves_crossings():
+    from pycocotools import mask as coco
+    from solar.v6_refiner_audit import postprocess
+    a=np.zeros((128,128),np.uint8);a[60:65,10:75]=1
+    b=np.zeros_like(a);b[60:65,65:120]=1
+    crossing=np.zeros_like(a);crossing[10:120,60:65]=1
+    encoded=[coco.encode(np.asfortranarray(x)) for x in (a,b,crossing,a)]
+    results=postprocess(encoded,[.9,.8,.7,.6],'aligned_union')
+    assert len(results)==2
+    decoded=[coco.decode(r) for r in results]
+    assert any(np.array_equal(m,a|b) for m in decoded)
+    assert any(np.array_equal(m,crossing) for m in decoded)

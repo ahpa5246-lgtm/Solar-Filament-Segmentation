@@ -1,0 +1,21 @@
+{
+  "status": "ACCEPTED",
+  "kernel": "minahussain111/solar-filament-research-v6-confirmation",
+  "training": false,
+  "test_inference": false,
+  "official_submission": false,
+  "experiment": "baseline union versus orientation-aware union at both stages",
+  "justification": "NMS/none and NMS/NMS both fragmented instances and raised FP; rejoin aligned overlapping fragments while retaining crossings",
+  "fixed_parameters": {
+    "max_angle_degrees": 30,
+    "min_eigenvalue_ratio": 4,
+    "duplicate_nms_iou": 0.5
+  },
+  "started_at_utc": "2026-10-28T18:54:21.241741+00:00",
+  "server_timeout_seconds": 1200,
+  "push_attempted": true,
+  "uploaded_notebook_sha256": "f9afafdfdfeb9b4e1dd501eca784430d06cf596537613620d5115b6d2605803b",
+  "version": 6,
+  "reference": "minahussain111/solar-filament-research-v6-confirmation/v6",
+  "kaggle_status": "RUNNING"
+}

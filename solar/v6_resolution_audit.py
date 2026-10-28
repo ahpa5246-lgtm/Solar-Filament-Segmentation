@@ -84,7 +84,7 @@ def refine(model,helpers,image,rles,overlap_policy='union'):
 
     A changed policy is an experimental setting, never an accuracy claim.
     """
-    if overlap_policy not in {'union','nms','none'}:
+    if overlap_policy not in {'union','nms','none','aligned_union'}:
         raise ValueError('Unknown overlap policy')
     tasks=[];results=[]
     for rle in rles:
@@ -107,12 +107,22 @@ def refine(model,helpers,image,rles,overlap_policy='union'):
     return postprocess(results,[1.]*len(results),overlap_policy)
 
 
+def refine_proposals(model,helpers,image,masks,scores,policy,preserve_refined=False,refined_nms=False):
+    """Apply both overlap stages explicitly; union remains the baseline."""
+    proposals=postprocess(masks,scores,policy)
+    return refine(model,helpers,image,proposals,
+                  overlap_policy=(policy if refined_nms else 'none') if preserve_refined and policy!='union' else 'union')
+
+
 @torch.inference_mode()
-def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000,full_confirmation=False):
+def run(annotation,manifest,detector_predictions,plain_predictions,detector_checkpoint,refiner_checkpoint,source,out,seconds=1000,full_confirmation=False,preserve_refined=False,refined_nms=False,candidate_policy='nms'):
+    if candidate_policy not in {'nms','aligned_union'}:raise ValueError('Unknown candidate policy')
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
     report={'status':'running','training':False,'test_inference':False,'official_submission':False,
-            'pilot_observations_per_subset':None if full_confirmation else 16,'refiner':'flip4 threshold 0.85, final overlap union',
-            'score_threshold':.6,'mask_threshold':.4,'source_sha256':SOURCE_SHA}
+            'pilot_observations_per_subset':None if full_confirmation else 16,'refiner':'flip4 threshold 0.85; final policy recorded per candidate',
+            'score_threshold':.6,'mask_threshold':.4,'source_sha256':SOURCE_SHA,
+            'candidate_final_overlap':(candidate_policy if refined_nms else 'none') if preserve_refined else 'union',
+            'experiment':'joint proposal NMS and refined identity preservation' if preserve_refined else 'resolution/overlap replay'}
     try:
         verify_artifacts({'training_manifest.csv':manifest,'best_detector_predictions_1024.pkl':detector_predictions,
                           'refined_validation_predictions_2048.pkl':plain_predictions},V3_ARTIFACT_SHA256)
@@ -132,7 +142,7 @@ def run(annotation,manifest,detector_predictions,plain_predictions,detector_chec
         stems=sorted(tuning+confirmation);truth=references(annotation,set(stems))
         cached=load_predictions(Path(detector_predictions));images=Path(annotation).parent/'train_images'
         resolutions=[1024] if full_confirmation else [1024,2048]
-        strategies={f'{resolution}|{policy}':{} for resolution in resolutions for policy in ['union','nms']}
+        strategies={f'{resolution}|{policy}':{} for resolution in resolutions for policy in ['union',candidate_policy]}
         parity=[];started=time.perf_counter();torch.cuda.reset_peak_memory_stats()
         report.update(gpu=torch.cuda.get_device_name(0),visible_gpus=torch.cuda.device_count(),used_gpus=1,
                       torch=str(torch.__version__),detector_epoch=int(saved['epoch']))
@@ -143,18 +153,19 @@ def run(annotation,manifest,detector_predictions,plain_predictions,detector_chec
             if image is None or image.shape!=(2048,2048):raise ValueError('Native training observation missing')
             for resolution in resolutions:
                 masks,scores=detect(detector,image,resolution)
-                for policy in ['union','nms']:
+                for policy in ['union',candidate_policy]:
                     proposals=postprocess(masks,scores,policy)
                     if resolution==1024 and policy=='union':
                         parity.append(measure_rles(cached[stem],proposals,shape=(1024,1024))['pq_local'])
                         if parity[-1]<.99:raise RuntimeError('Archived detector mask parity failed before resolution comparison')
-                    strategies[f'{resolution}|{policy}'][stem]=refine(refiner,helpers,image,proposals)
+                    strategies[f'{resolution}|{policy}'][stem]=refine_proposals(
+                        refiner,helpers,image,masks,scores,policy,preserve_refined=preserve_refined,refined_nms=refined_nms)
             report['processed_observations']=number+1
             print(f'Native resolution pilot {number+1}/{len(stems)}',flush=True)
         torch.cuda.synchronize();report['inference_and_reconstruction_seconds']=time.perf_counter()-started
         report['peak_cuda_bytes']=torch.cuda.max_memory_allocated();report['detector_cache_parity_min']=min(parity)
         trials=[{'strategy':name,'tuning_micro_pq':micro(evaluate(truth,pred,tuning))} for name,pred in strategies.items()]
-        baseline='1024|union';selected='1024|nms' if full_confirmation else max(trials,key=lambda row:(row['tuning_micro_pq'],row['strategy']==baseline))['strategy']
+        baseline='1024|union';selected=f'1024|{candidate_policy}' if full_confirmation else max(trials,key=lambda row:(row['tuning_micro_pq'],row['strategy']==baseline))['strategy']
         base=evaluate(truth,strategies[baseline],confirmation);candidate=evaluate(truth,strategies[selected],confirmation)
         delta=paired_ci(base,candidate)
         report.update(status='completed',tuning_grid=trials,baseline=baseline,selected=selected,
