@@ -19,8 +19,24 @@ def report(state,final):
     final=final if isinstance(final,dict) else {}
     records=state.get("results",{})
     if not isinstance(records,dict):records={}
-    completed=[v for v in records.values() if isinstance(v,dict) and v.get("status")=="COMPLETE"]
+    completed=[v for v in records.values() if isinstance(v,dict)
+               and v.get("status")=="COMPLETE"
+               and v.get("execution_status")=="COMPLETE"
+               and v.get("training") is True
+               and type(v.get("local_tuning_pq")) in (int,float)
+               and math.isfinite(v["local_tuning_pq"])
+               and 0<=v["local_tuning_pq"]<=1
+               and isinstance(v.get("checkpoint_sha256"),str)
+               and len(v["checkpoint_sha256"])==64
+               and all(c in "0123456789abcdef" for c in v["checkpoint_sha256"])]
     attempted=sum(isinstance(v,dict) for v in records.values())
+    paused=str(state.get("status","")).startswith("paused")
+    research_schedule=("Independent-challenger training is paused to preserve V5; no additional GPU training is authorized."
+                       if paused else
+                       "One private Nvidia T4 Kaggle notebook is scheduled for each day 2026-10-24 through 2026-11-06 UTC.")
+    final_delivery=("The existing November 7 final workflow is blocked from candidate selection and submission while the challenger remains paused."
+                    if paused else
+                    "The frozen one-shot final workflow is scheduled for November 7 UTC. Its promotion rule requires a valid, unused month-grouped confirmation set and local PQ >= 0.36. When those conditions pass, it generates COCO-compressed-RLE predictions for all 180 competition test images, checks IDs/masks/CSV structure, and attempts one official Kaggle upload.")
     selected=final.get("selected_day")
     scored=(final.get("status")=="SCORED" and final.get("official_submission") is True)
     public=final.get("official_public_score") if scored else None
@@ -56,11 +72,11 @@ The Kaggle challenge provides 707 training and 180 hidden-test physical images, 
 
 The existing repository retains its own V5 detector-plus-crop-refiner code and checkpoints. The 14-day challenger is **derived from a public MIT-licensed U-Net implementation by Farnoosh Memari** (copyright 2026). Upstream repository: https://github.com/FarnooshMemari/solar-filament-segmentation, immutable source commit ef37d2e93d4cc9e248595e791ee39fe520d392d0. The unchanged upstream MIT LICENSE is retained when cloned on Kaggle. This project's contribution is a date-grouped experimental protocol, adaptation, trained checkpoints, diagnostic code, conservative promotion gate, reproducible scheduling and result tracking; the upstream model design must not be claimed as independently invented.
 
-One private Nvidia T4 Kaggle notebook is scheduled for each day 2026-10-24 through 2026-11-06 UTC. Experiments vary U-Net width, resolution, positive class weight, learning exposure and random seed under fixed train/validation partitions. Every experiment preserves best.pt, last.pt, configuration and tuning results privately in Kaggle rather than pushing weights/data into the public repository. GitHub Actions executes the runs under GPU quota constraints.
+{research_schedule} Experiments vary U-Net width, resolution, positive class weight, learning exposure and random seed under fixed train/validation partitions. Every experiment preserves best.pt, last.pt, configuration and tuning results privately in Kaggle rather than pushing weights/data into the public repository. GitHub Actions executes the runs under GPU quota constraints.
 
 ## Recorded experiments
 
-Attempted/recorded days: **{attempted}**. Successful training notebooks: **{len(completed)}**.
+Attempted/recorded days: **{attempted}**. Successful training notebooks with verified COMPLETE evidence: **{len(completed)}**.
 
 | Day | Kaggle training status | Exploratory LOCAL tuning PQ | Private checkpoint SHA256 prefix |
 |---|---|---|---|
@@ -72,7 +88,7 @@ The scores in this table use a local open-source evaluator and are subject to se
 
 Chosen candidate (from LOCAL tuning only): **{selected_text}**. Independent LOCAL confirmation PQ: **{local}**. Final execution state: **{final.get('status','not yet executed')}**. Public official Kaggle result: **{official}**.
 
-The frozen one-shot final workflow is scheduled for November 7 UTC. Its promotion rule requires a valid, unused month-grouped confirmation set and local PQ >= 0.36. When those conditions pass, it generates COCO-compressed-RLE predictions for all 180 competition test images, checks IDs/masks/CSV structure, and attempts one official Kaggle upload. No successful run of that workflow is inferred merely because GitHub CI checks passed before November 7. Full evaluation and team eligibility still depend on the competition organizers.
+{final_delivery} No successful run of that workflow is inferred merely because GitHub CI checks passed before November 7. Full evaluation and team eligibility still depend on the competition organizers.
 
 ## Limitations, auditability and credit
 
