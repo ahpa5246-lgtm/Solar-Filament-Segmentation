@@ -79,7 +79,13 @@ def detect(model,image,resolution):
 
 
 @torch.inference_mode()
-def refine(model,helpers,image,rles):
+def refine(model,helpers,image,rles,overlap_policy='union'):
+    """Replay V5 by default; explicit 'none' preserves refined instance identities.
+
+    A changed policy is an experimental setting, never an accuracy claim.
+    """
+    if overlap_policy not in {'union','nms','none'}:
+        raise ValueError('Unknown overlap policy')
     tasks=[];results=[]
     for rle in rles:
         mask=coco.decode(rle)
@@ -98,7 +104,7 @@ def refine(model,helpers,image,rles):
             if not mask.any():results.append(fallback);continue
             native=np.zeros((2048,2048),np.uint8);native[y0:y1,x0:x1]=mask
             results.append(coco.encode(np.asfortranarray(native)))
-    return postprocess(results,[1.]*len(results),'union')
+    return postprocess(results,[1.]*len(results),overlap_policy)
 
 
 @torch.inference_mode()

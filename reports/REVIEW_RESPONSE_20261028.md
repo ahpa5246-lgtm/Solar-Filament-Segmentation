@@ -1,0 +1,19 @@
+# Review response — 2026-10-28
+Status: research in progress. This is not a final delivery or a claim that all seven findings are resolved.
+
+## Official result verified directly through Kaggle
+At 2026-10-28 20:58:29 Asia/Baghdad, submission 57744391 was COMPLETE with public_score 0.32. It resubmits the unchanged V5 CSV; it is not a new-model improvement. Submission 57709899 scored 0.29. Current V5 continuation v1 is RUNNING; no official submission has been made for it. Evidence: reports/KAGGLE_CURRENT_EVIDENCE.json.
+
+## Finding-by-finding disposition
+1. Any-overlap union can erase identities. Existing mask NMS and crossing-instance regression tests already cover detector proposals. The fixed-NMS confirmation left final refiner union enabled: it did not test a fully instance-preserving pipeline. refine() now accepts an explicit overlap_policy='none' to retain identities after refinement. A real CPU crop/refinement regression demonstrates that crossing instances stay distinct; baseline replay defaults to union to preserve the original reference. Joint detector-NMS/final-no-union must be evaluated before promotion. Its accuracy remains unproven.
+2. Active continuation chooses checkpoints by full-pipeline public-reference micro PQ, not Dice. The organizer helper equivalence test is in tests/test_v6.py; canonical one-to-one metrics are also reported separately. Private leaderboard equivalence is not assumed.
+3. Active continuation excludes fitting-date overlap from both tuning and confirmation (565/65/67). New training supports date-group partitions. Historical V5 model selection already reused validation: exclusion cannot retroactively create a pristine holdout. A new date-partitioned run from external pretrained weights or genuinely unseen labeled observations is required for an independent generalization estimate.
+4. Size/elongation error profiles and FP/FN are recorded in V5_SCORE_CALIBRATION_EXECUTION.json. Lowering score thresholds from .6 to .45/.3 reduced tuning PQ (.4050 -> .3784/.3485). Do not repeat that as an assumed improvement. Position/contrast stratification and a controlled hard-negative-mining training comparison remain open.
+5. No evidence establishes V6 superiority. Fixed NMS moved confirmation micro PQ .407035 -> .410096 but paired macro delta CI [-.010079,.014071] includes zero; promotion was rejected. Original V5 remains the official reference.
+6. Submitted CSV identity is established by SHA256 94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6. Archived validation checkpoint/source hashes and detector cache parity are verified. Exact scored-web checkpoint identity, end-to-end weight-to-CSV reproduction, and numerical repeatability remain distinct requirements; CSV equality alone does not establish them.
+7. Submission inventory/RLE round-trip/duplicate guards and pinned runtime packaging exist. A final clean-environment inference bundle, complete technical report, and a newly scored official submission remain outstanding.
+
+## Current experiment and next evidence
+Current v1 preserves architecture and warm-starts verified validation weights, with up to 16 continuation epochs, fixed refiner and PQ selection. Do not duplicate the running GPU job or overwrite the official baseline. Retrieve its measured outcome and checkpoints first. A failed or incomplete experiment is not a completed fix.
+
+Next instance experiment must explicitly set both proposal and refined-mask policies; compare identical observations/settings and record PQ, precision, recall, latency, hashes and paired uncertainty. Do not call detector-only NMS a complete overlap fix. If validated locally, build/test a full-data inference artifact, submit one unique CSV to Kaggle, and retrieve its completed public score. Reaching 0.50 is an official-score requirement, not a local metric or a code-test outcome.

@@ -344,3 +344,26 @@ def test_final_csv_streams_rles_and_rejects_duplicates_and_missing_images(tmp_pa
     with pytest.raises(ValueError):write_rle_submission({'a':[rle]},['a','b'],tmp_path/'missing.csv')
     wrong={**rle,'size':[1024,1024]}
     with pytest.raises(ValueError):write_rle_submission({'a':[wrong]},['a'],tmp_path/'wrong.csv')
+
+def test_refiner_preserves_crossing_instances_when_explicitly_requested(monkeypatch):
+    """Exercise complete crop refinement on CPU, including final overlap policy."""
+    import torch
+    from pycocotools import mask as coco
+    from solar.v6_resolution_audit import refine
+    monkeypatch.setattr(torch.Tensor, 'cuda', lambda self: self)
+    a=np.zeros((2048,2048),np.uint8);a[100:140,100:500]=1
+    b=np.zeros_like(a);b[110:510,290:330]=1
+    rles=[coco.encode(np.asfortranarray(x)) for x in (a,b)]
+    def bounds(mask):
+        y,x=np.nonzero(mask)
+        return int(x.min()),int(y.min()),int(x.max()+1),int(y.max()+1)
+    helpers={'square_bounds':bounds,
+             'predict_refiner_probabilities':lambda model,batch,use_tta: torch.ones(len(batch),256,256)}
+    image=np.zeros_like(a)
+    preserved=refine(None,helpers,image,rles,overlap_policy='none')
+    assert len(preserved)==2
+    np.testing.assert_array_equal(coco.decode(preserved[0]),a)
+    np.testing.assert_array_equal(coco.decode(preserved[1]),b)
+    assert len(refine(None,helpers,image,rles))==1  # Exact baseline replay remains explicit.
+    with pytest.raises(ValueError):
+        refine(None,helpers,image,[],overlap_policy='invalid')
