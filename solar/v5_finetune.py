@@ -135,6 +135,8 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
                        ANN_PATH=Path(annotation),IMAGE_DIR=images,IMAGE_SIZE=1024)
         exec(compile(ast.Module(body=definitions,type_ignores=[]),'archived_apache_v5_dataset','exec'),namespace)
         dataset=namespace['FilamentDataset'](pd.DataFrame(fitting),augment=True)
+        if len(dataset) != len(fitting):
+            raise ValueError('Dataset and fitting-row inventories differ')
         sampler = None
         if hard_negative:
             from .v5_hardnegative import sampling_weights, count_unmatched_predictions
@@ -157,6 +159,8 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
                 if index % 100 == 0:
                     print('V5 hard-negative fitting scan', index, '/', len(fitting), flush=True)
             weights = sampling_weights(training, false_positives)
+            if len(set(weights)) < 2:
+                raise RuntimeError('No variable train-only false-positive weights; refuse redundant training')
             sampler = torch.utils.data.WeightedRandomSampler(
                 torch.tensor(weights, dtype=torch.double), num_samples=len(dataset),
                 replacement=True, generator=torch.Generator().manual_seed(2031))
