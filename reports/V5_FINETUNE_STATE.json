@@ -1,0 +1,11 @@
+{
+  "status": "ACCEPTED",
+  "kernel": "minahussain111/solar-v5-finetune-pq50-20261028",
+  "training": true,
+  "official_submission": false,
+  "target_official_pq": 0.5,
+  "gpu_hours_remaining_before": 21.71741222222222,
+  "push_attempted": true,
+  "version": 1,
+  "reference": "minahussain111/solar-v5-finetune-pq50-20261028/v1"
+}
