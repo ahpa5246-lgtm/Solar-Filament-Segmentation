@@ -96,6 +96,34 @@ jobs:
                       'exact_csv_match':actual==expected,'training':False,'official_submission':False}
               print('V5_SCORED_PROVENANCE='+json.dumps(report,sort_keys=True))
           PY
+      - name: Submit unchanged verified V5 baseline
+        if: ${{ env.INSPECT_ONLY == 'true' && contains(github.event.head_commit.message, '[submit-original-v5]') }}
+        run: |
+          python -u - <<'PY'
+          import csv, hashlib, shutil, tempfile
+          from pathlib import Path
+          from kaggle.api.kaggle_api_extended import KaggleApi
+          api=KaggleApi(); api.authenticate()
+          message='Restore unchanged verified V5 baseline 0.32 - 2026-10-28'
+          previous=api.competition_submissions('filament-segmentation-2026') or []
+          matching=[r for r in previous if r.description==message]
+          if matching:
+              print('UNCHANGED_V5_SUBMISSION_ALREADY_EXISTS', str(matching[0]))
+          else:
+              with tempfile.TemporaryDirectory() as folder:
+                  api.competition_download_submission(57571678, folder, quiet=True)
+                  files=[p for p in Path(folder).rglob('*') if p.is_file()]
+                  assert len(files)==1
+                  raw=files[0].read_bytes()
+                  assert hashlib.sha256(raw).hexdigest()=='94b985ff19e0848d655d0a524265ca67d150fa203531ca18780d3a009cd586d6'
+                  target=Path(folder)/'verified-v5'/'submission.csv'
+                  target.parent.mkdir()
+                  target.write_bytes(raw)
+                  with target.open() as handle:
+                      assert next(csv.reader(handle))==['filament_id','segmentation_rle']
+                  result=api.competition_submit(str(target),message,'filament-segmentation-2026')
+                  print('UNCHANGED_V5_SUBMISSION_RESPONSE',str(result),flush=True)
+          PY
       - name: Inspect existing failed manual training version
         if: ${{ env.CHOICE == 'manual-training' }}
         run: |
