@@ -135,5 +135,6 @@
       "Original model selection reused the old validation set.",
       "No training, alternate architecture, test inference or official submission."
     ]
-  }
+  },
+  "decision": "REJECT; confirmation PQ regressed despite tuning gain"
 }
