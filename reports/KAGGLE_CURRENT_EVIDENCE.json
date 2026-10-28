@@ -1,0 +1,73 @@
+{
+  "observed_at_utc": "2026-10-28T17:58:29.402020+00:00",
+  "reference": "minahussain111/solar-v5-finetune-pq50-20261028/v1",
+  "kaggle_status": "KernelWorkerStatus.RUNNING",
+  "training_launched": false,
+  "submission_created": false,
+  "execution_evidence": [],
+  "official_submissions": [
+    {
+      "ref": 57744391,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.32",
+      "description": "Restore unchanged verified V5 baseline 0.32 - 2026-10-28",
+      "date": "2026-10-28 17:31:03.823000"
+    },
+    {
+      "ref": 57709899,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.29",
+      "description": "",
+      "date": "2026-10-27 18:12:34.933000"
+    },
+    {
+      "ref": 57709596,
+      "status": "SubmissionStatus.ERROR",
+      "public_score": "",
+      "description": "",
+      "date": "2026-10-27 18:01:06.310000"
+    },
+    {
+      "ref": 57708411,
+      "status": "SubmissionStatus.ERROR",
+      "public_score": "",
+      "description": "",
+      "date": "2026-10-27 17:15:09.620000"
+    },
+    {
+      "ref": 57706518,
+      "status": "SubmissionStatus.ERROR",
+      "public_score": "",
+      "description": "",
+      "date": "2026-10-27 15:58:09.510000"
+    },
+    {
+      "ref": 57571678,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.32",
+      "description": "",
+      "date": "2026-10-23 20:33:52.560000"
+    },
+    {
+      "ref": 57569096,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.24",
+      "description": "",
+      "date": "2026-10-23 18:13:22.803000"
+    },
+    {
+      "ref": 57562664,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.23",
+      "description": "",
+      "date": "2026-10-23 13:44:13.767000"
+    },
+    {
+      "ref": 57529927,
+      "status": "SubmissionStatus.COMPLETE",
+      "public_score": "0.08",
+      "description": "Initial Baseline - LightGBM Solar Filament Segmentation v1",
+      "date": "2026-10-22 15:29:21.237000"
+    }
+  ]
+}
