@@ -2,7 +2,7 @@
 
 **Current verified official best (2026-10-28): V5 Public PQ 0.32; target 0.50 remains unmet.** The independent manual U-Net web Version 4 scored **0.29** and is rejected as a replacement. Daily independent training is paused in the runner and ledger. A bounded, no-training comparison reuses archived V5 detector/refiner weights and matched validation observations; it does not promise a new official score. See [recovery protocol](reports/V5_RECOVERY_20261027.md).
 
-Current work: continuation training completed all 16 epochs but selected epoch zero, so its trained checkpoints were rejected. At the owner's explicit request, existing Kaggle confirmation notebook **Version 7** generated all 180 test predictions using preserved final V5 weights and refiner threshold .65. Prediction file submitted for official assessment as **57747563**; score is pending. Previous best .32 artifacts remain preserved. See [assessment evidence](reports/V5_THRESHOLD_OFFICIAL_ASSESSMENT.json) and [session handoff](reports/PQ50_SESSION_20261028.md).
+Current work: continuation training completed all 16 epochs but selected epoch zero, so its trained checkpoints were rejected. At the owner's explicit request, existing Kaggle confirmation notebook **Version 7** generated all 180 test predictions using preserved final V5 weights and refiner threshold .65. Prediction file submitted and scored as **57747563: official Public PQ 0.32**. This ties the previous best; it is not a score improvement. Previous best .32 artifacts remain preserved. See [assessment evidence](reports/V5_THRESHOLD_OFFICIAL_ASSESSMENT.json) and [session handoff](reports/PQ50_SESSION_20261028.md).
 
 ## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 

@@ -1,5 +1,5 @@
 {
-  "status": "SUBMISSION_REQUESTED",
+  "status": "OFFICIAL_SCORE_VERIFIED",
   "push_attempted": true,
   "kernel": "minahussain111/solar-filament-research-v6-confirmation",
   "training": false,
@@ -67,5 +67,9 @@
   "submission_description": "V5 final threshold .65 official assessment sha256:b9d6dbba8d8c9a82e44a5d3dcd9eb361aa4068529273715d8b8e4c554640174e",
   "submission_attempted": true,
   "official_submission_ref": 57747563,
-  "official_status": "PENDING"
+  "official_status": "COMPLETE",
+  "official_public_pq": 0.32,
+  "target_reached": false,
+  "improves_preserved_best": false,
+  "completed_at_utc": "2026-10-28T19:57:57.784492+00:00"
 }
