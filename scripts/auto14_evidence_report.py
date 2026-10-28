@@ -48,12 +48,17 @@ def report(state,final):
     official=(f"{public:.5f}" if scored else "No new official Kaggle score verified")
     baseline="0.32 (prior owner-confirmed V5 public leaderboard; not replicated in this report)"
     rows=[]
+    verified_ids={id(v) for v in completed}
     for k in sorted(records,key=lambda k:int(k) if str(k).isdigit() else 1000):
         rec=records[k]
         if not isinstance(rec,dict):continue
+        verified=id(rec) in verified_ids
         score=rec.get("local_tuning_pq")
-        tuning=f"{score:.5f}" if type(score) in (int,float) and math.isfinite(score) and 0<=score<=1 else "n/a"
-        rows.append(f"| {k} | {rec.get('status','unknown')} | {tuning} | {rec.get('checkpoint_sha256','n/a')[:16]} |")
+        tuning=(f"{score:.5f}" if verified else "n/a")
+        status=(rec.get("status","unknown") if rec.get("status")!="COMPLETE" or verified
+                else "UNVERIFIED_COMPLETE")
+        digest=rec.get("checkpoint_sha256","n/a") if verified else "n/a"
+        rows.append(f"| {k} | {status} | {tuning} | {digest[:16]} |")
     table="\n".join(rows) if rows else "| — | No recorded trials | — | — |"
     selected_text=(str(selected) if type(selected) is int else "none")
     return f"""# Solar Filament Segmentation — automatically generated evidence handoff
