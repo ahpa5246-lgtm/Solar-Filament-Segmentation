@@ -71,12 +71,13 @@ def verify_original_csv(path,predictions):
 
 
 @torch.inference_mode()
-def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000):
+def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000,candidate_policy='nms',refiner_threshold=.85):
     out=Path(out)
     if out.exists() and any(out.iterdir()):raise ValueError('Use a fresh output directory')
     out.mkdir(parents=True,exist_ok=True)
     report={'status':'running','training':False,'test_inference':True,'official_submission':False,
-            'policy':'detector mask NMS IoU0.5; 1024; score0.6/mask0.4; flip4 refiner0.85; final union'}
+            'policy':f'detector {candidate_policy}; 1024; score0.6/mask0.4; flip4 refiner{refiner_threshold}; final union',
+            'candidate_policy':candidate_policy,'refiner_threshold':refiner_threshold}
     try:
         cache=Path(cache)
         for name,expected in expected_hashes.items():
@@ -114,7 +115,7 @@ def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000):
             match=measure_rles(original[path.stem],baseline)['pq_local'];parity.append(match)
             report['baseline_parity_min']=min(parity)
             if match<.99:raise RuntimeError('Final original-pipeline parity failed; refusing candidate submission')
-            candidate=refine(refiner,helpers,image,postprocess(masks,scores,'nms'))
+            candidate=refine(refiner,helpers,image,postprocess(masks,scores,candidate_policy),threshold=refiner_threshold)
             candidate.sort(key=lambda r:(float(coco.toBbox(r)[1]),float(coco.toBbox(r)[0])))
             predictions[path.stem]=candidate
             if measure_rles(baseline,candidate)['pq_local']<1-1e-8:changed+=1
