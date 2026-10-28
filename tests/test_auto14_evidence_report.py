@@ -53,7 +53,8 @@ def test_paused_challenger_does_not_claim_scheduled_gpu_or_submission():
     assert "blocked from candidate selection and submission" in output
     assert "No new official Kaggle score verified" in output
     assert "0.40438" in output
-    assert "0.90000" not in output  # Incomplete execution cannot publish a local score.\n    assert "| 3 | UNVERIFIED_COMPLETE | n/a | n/a |" in output
+    assert "0.90000" not in output  # Incomplete execution cannot publish a local score.
+    assert "| 3 | UNVERIFIED_COMPLETE | n/a | n/a |" in output
 
 
 def test_complete_without_checkpoint_is_not_successful_training():
