@@ -1,8 +1,8 @@
 # Solar Filament Segmentation — IEEE BigDataCup 2026
 
-**Current verified official best (2026-10-28): V5 Public PQ 0.32; target 0.50 remains unmet.** The independent manual U-Net web Version 4 scored **0.29** and is rejected as a replacement. Daily independent training is paused in the runner and ledger. A bounded, no-training comparison reuses archived V5 detector/refiner weights and matched validation observations; it does not promise a new official score. See [recovery protocol](reports/V5_RECOVERY_20261027.md).
+**Current verified official best (2026-10-29): Public PQ 0.36**, submission **57760055**, versus the preserved V5 baseline **0.32**. The 0.40 milestone and 0.60 objective remain unmet. Kaggle notebook `solar-filament-research-v6/v17` trained YOLO11m-seg with the preserved CropUNet refiner; version 18 corrected overlapping masks rejected by the official evaluator. All 180 images and 1,074 instances passed disjoint-mask export checks before the corrected CSV received its official score.
 
-Current work: continuation training completed all 16 epochs but selected epoch zero, so its trained checkpoints were rejected. At the owner's explicit request, existing Kaggle confirmation notebook **Version 7** generated all 180 test predictions using preserved final V5 weights and refiner threshold .65. Prediction file submitted and scored as **57747563: official Public PQ 0.32**. This ties the previous best; it is not a score improvement. Previous best .32 artifacts remain preserved. See [assessment evidence](reports/V5_THRESHOLD_OFFICIAL_ASSESSMENT.json) and [session handoff](reports/PQ50_SESSION_20261028.md).
+The previous 0.32 model and predictions remain preserved. Local confirmation PQ 0.4416 did **not** translate into the same Public PQ; neither this training process nor further candidates are called reliable on that basis. See [official comparison and resume instructions](reports/SOLAR_OFFICIAL_COMPARISON_20261029.md) and [official result ledger](reports/YOLO_DISJOINT_REPAIR_20261029.json).
 
 ## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 

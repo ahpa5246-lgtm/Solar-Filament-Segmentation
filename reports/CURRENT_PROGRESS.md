@@ -1,3 +1,7 @@
+# Latest official result — October 29, 2026
+
+Verified through Kaggle API: submission **57760055 COMPLETE, Public PQ 0.36**, previous best **0.32**. Targets 0.40 and 0.60 remain unmet. See [current official comparison](SOLAR_OFFICIAL_COMPARISON_20261029.md). All older entries below are historical. Latest software suite: **222 passed, 1 CUDA-only skipped**.
+
 # Current implementation and verification status — October 24, 2026
 
 GitHub access has recovered: the prepared commits were pushed and authenticated Kaggle execution through Actions succeeded. No user reconnection action is currently needed. V5 remains the owner-confirmed official Public best at **0.32**. No new official submission or competition-model training run is claimed.

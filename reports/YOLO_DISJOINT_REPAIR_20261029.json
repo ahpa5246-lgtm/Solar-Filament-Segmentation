@@ -1,0 +1,12 @@
+{
+  "status": "OFFICIAL_SCORE_VERIFIED",
+  "official_submission_ref": 57760055,
+  "official_status": "COMPLETE",
+  "official_public_pq": 0.36,
+  "previous_official_best": 0.32,
+  "milestone_04_reached": false,
+  "target_06_reached": false,
+  "notebook": "minahussain111/solar-filament-research-v6/v18",
+  "verified_at_utc": "2026-10-29T05:33:00Z",
+  "note": "Detailed private artifact lineage and per-image inventories omitted from default-branch report."
+}
