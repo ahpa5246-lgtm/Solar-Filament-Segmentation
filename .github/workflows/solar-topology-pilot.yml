@@ -9,6 +9,7 @@ on:
       - 'scripts/run_v5_finetune.py'
       - 'scripts/run_v5_interpolation.py'
       - 'scripts/run_v5_hardnegative.py'
+      - 'scripts/run_v5_headonly.py'
 permissions:
   contents: write
 concurrency:
