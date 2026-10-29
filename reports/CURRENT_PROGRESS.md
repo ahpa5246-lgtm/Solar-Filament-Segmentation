@@ -1,5 +1,9 @@
 # Latest official result — October 29, 2026
 
+Submission **57762442 COMPLETE: Public PQ 0.37**, independently rechecked with the Kaggle API. Previous best 0.36; original V5 0.32. Targets 0.40 and 0.60 unmet. [Official summary](SEED_REFINER_OFFICIAL_SUMMARY_20261029.json). Existing research notebook now runs a frozen-model resolution comparison; no new official score is claimed for it. Earlier entries below are historical.
+
+# Latest official result — October 29, 2026
+
 Verified through Kaggle API: submission **57760055 COMPLETE, Public PQ 0.36**, previous best **0.32**. Targets 0.40 and 0.60 remain unmet. See [current official comparison](SOLAR_OFFICIAL_COMPARISON_20261029.md). All older entries below are historical. Latest software suite: **222 passed, 1 CUDA-only skipped**.
 
 # Current implementation and verification status — October 24, 2026
