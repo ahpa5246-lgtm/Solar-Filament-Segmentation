@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_v5_hardnegative import build, KERNEL
 
 STATE = ROOT / "reports/V5_HARDNEGATIVE_STATE.json"
+HYPOTHESIS = "Fitting-only false-positive upweighting; 4 epochs at 2e-6"
 FINETUNE = ROOT / "reports/V5_FINETUNE_STATE.json"
 INTERPOLATION = ROOT / "reports/V5_INTERPOLATION_STATE.json"
 
@@ -149,7 +150,7 @@ def main(phase):
                          official_submission=False, kernel=KERNEL,
                          source_checkpoint_sha256=training["result"]["best_checkpoint_sha256"],
                          gpu_hours_remaining_before=remaining,
-                         hypothesis="Fitting-only false-positive upweighting; 4 epochs at 2e-6")
+                         hypothesis=HYPOTHESIS)
             save(state)  # Persist write intent before any API call.
             response = api.kernels_push(folder, timeout="7200", acc="NvidiaTeslaT4", no_run=False)
             if response.error or response.invalidDatasetSources or response.invalidCompetitionSources:
