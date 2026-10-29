@@ -43,7 +43,8 @@ def test_only_roi_heads_receive_gradients():
         freeze_to_roi_heads(FakeModel(["backbone.weight", "rpn.weight"]))
 
 
-def test_private_notebook_uses_original_weights_and_headonly_driver(tmp_path):
+def test_private_notebook_uses_original_weights_and_headonly_driver(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / 'scripts'))
     from scripts.build_v5_headonly import build, KERNEL
     output = tmp_path / "headonly.ipynb"
     meta = build(output)
