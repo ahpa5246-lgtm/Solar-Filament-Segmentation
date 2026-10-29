@@ -1,0 +1,12 @@
+{
+  "status": "ACCEPTED",
+  "push_attempted": true,
+  "training": true,
+  "official_submission": false,
+  "kernel": "minahussain111/solar-v5-hardnegative-pq50",
+  "source_checkpoint_sha256": "60a8f48340cc1076710027c1b159c747035217613a61e186b8705aa6fc310a36",
+  "gpu_hours_remaining_before": 17.702515,
+  "hypothesis": "Fitting-only false-positive upweighting; 4 epochs at 2e-6",
+  "version": 1,
+  "reference": "minahussain111/solar-v5-hardnegative-pq50/v1"
+}
