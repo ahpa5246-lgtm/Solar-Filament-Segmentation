@@ -50,7 +50,7 @@ def freeze_to_roi_heads(model):
 
 
 def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
-        refiner_checkpoint, source, out, seconds=6600, hard_negative=False, head_only=False):
+        refiner_checkpoint, source, out, seconds=6600, hard_negative=False, head_only=False, stable_finetune=False, epochs=None):
     import ast, csv, hashlib, json, random, shutil, time
     from pathlib import Path
     import cv2
@@ -66,12 +66,14 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
 
     if hard_negative and head_only:
         raise ValueError('Head-only and hard-negative experiments must be independent')
-    epochs = 4 if (hard_negative or head_only) else EPOCHS
+    if stable_finetune and head_only:
+        raise ValueError('Stable-backbone and ROI-only training must be tested independently')
+    epochs = (4 if (hard_negative or head_only) else EPOCHS) if epochs is None else epochs
     learning_rate = 1e-6 if head_only else (2e-6 if hard_negative else LEARNING_RATE)
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
     report = dict(status='STARTED', training=True, test_inference=False, official_submission=False,
                   target_official_pq=.50, architecture='unchanged V5 Mask R-CNN ResNet50-FPN-v2 + fixed CropUNet ResNet18',
-                  epochs_requested=epochs, learning_rate=learning_rate,
+                  epochs_requested=epochs, learning_rate=learning_rate,stable_finetune=stable_finetune,
                   sampling='fitting-only baseline false-positive weighted sampling' if hard_negative else 'original uniform shuffled fitting',
                   hypothesis=('Frozen backbone and RPN; update only ROI classification/box/mask heads at LR 1e-6 to limit proposal drift' if head_only else
                               'Hard-negative upweighting plus smaller LR may improve V5 proposal precision without 16-epoch regression' if hard_negative else 'original V5 continuation'),
@@ -193,6 +195,9 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
             report['trainable_scope'] = 'roi_heads only; backbone and RPN frozen; RPN in inference mode during training'
             report['trainable_parameters'] = freeze_to_roi_heads(model)
             save_report()
+        if stable_finetune:
+            from .stable_detector_training import restore_training_contract
+            report['training_contract']=restore_training_contract(model);save_report()
         optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=learning_rate,weight_decay=1e-4)
         scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,epochs,eta_min=2e-7 if head_only else (5e-7 if hard_negative else 1e-6))
         scaler=torch.amp.GradScaler('cuda',init_scale=1024.); total_steps=0
@@ -202,6 +207,7 @@ def run(annotation, manifest, detector_cache, plain_cache, detector_checkpoint,
             if time.perf_counter()-started>seconds-700:
                 report['budget_stopped_before_epoch']=epoch; break
             model.train()
+            if stable_finetune:restore_training_contract(model)
             if head_only:
                 model.backbone.eval()
                 model.rpn.eval()  # Preserve inference proposal distribution and avoid RPN losses.

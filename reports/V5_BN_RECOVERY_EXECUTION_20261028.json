@@ -1,0 +1,175 @@
+{
+  "status": "COMPLETE",
+  "kernel": "minahussain111/solar-v5-weight-interpolation-pq50",
+  "training": false,
+  "test_inference": false,
+  "official_submission": false,
+  "retry_of_terminal_failure": "Nonfloating checkpoint state changed: backbone.body.bn1.num_batches_tracked",
+  "change": "Permit changed BatchNorm counters; test original running-moment restoration separately from weight interpolation",
+  "push_attempted": true,
+  "version": 2,
+  "reference": "minahussain111/solar-v5-weight-interpolation-pq50/v2",
+  "kaggle_status": "COMPLETE",
+  "result": {
+    "status": "COMPLETE",
+    "training": false,
+    "test_inference": false,
+    "official_submission": false,
+    "architecture": "V5 detector + frozen Crop U-Net",
+    "hypothesis": "Small interpolation may prevent the detector PQ regression from 16-epoch continuation",
+    "tuning_alphas": [
+      0.0,
+      0.05,
+      0.1,
+      0.2,
+      0.4,
+      0.7,
+      1.0
+    ],
+    "source_version": "v2",
+    "limitations": [
+      "Historical validation was used before; not a pristine independent holdout.",
+      "This is local PQ, not an official Kaggle score."
+    ],
+    "input_artifact_sha256": {
+      "training_manifest.csv": "356bd788d677819a81922f132b0d65b6a709e773ac0f4f8f2a28a2369e014f21",
+      "best_detector_predictions_1024.pkl": "69816e2853e28f4464cf2df3cd89ffa1c4a471d2f7e68b5e91be3d5dbfc10eef",
+      "refined_validation_predictions_2048.pkl": "139c6b348eac9295404665ae36872ad3b3251b026580910b6dbb639963670c9c"
+    },
+    "last_checkpoint_sha256": "3588d7de541873453019ac1f6ae5d91c68fa29b8957f18e6b171e7de0c34335b",
+    "split_counts": {
+      "fitting": 565,
+      "tuning": 65,
+      "confirmation": 67
+    },
+    "test_bn_restore": true,
+    "baseline_parity_min": 1.0,
+    "tuning_trials": [
+      {
+        "alpha": 0.0,
+        "restore_bn": false,
+        "tuning_micro_pq": 0.40503051142227725
+      },
+      {
+        "alpha": 0.1,
+        "restore_bn": false,
+        "tuning_micro_pq": 0.4007788285423764
+      },
+      {
+        "alpha": 0.4,
+        "restore_bn": false,
+        "tuning_micro_pq": 0.4032083529117267
+      },
+      {
+        "alpha": 1.0,
+        "restore_bn": false,
+        "tuning_micro_pq": 0.39419615913430234
+      },
+      {
+        "alpha": 0.1,
+        "restore_bn": true,
+        "tuning_micro_pq": 0.40570381070390926
+      },
+      {
+        "alpha": 0.4,
+        "restore_bn": true,
+        "tuning_micro_pq": 0.41118870126813767
+      },
+      {
+        "alpha": 1.0,
+        "restore_bn": true,
+        "tuning_micro_pq": 0.4251461218566899
+      }
+    ],
+    "selected_restore_bn": true,
+    "selected_alpha": 1.0,
+    "baseline_tuning_pq": 0.40503051142227725,
+    "selected_tuning_pq": 0.4251461218566899,
+    "confirmation_baseline": {
+      "reference_micro_pq": 0.40736969428848335,
+      "reference_tp": 458,
+      "reference_fp": 295,
+      "reference_fn": 289,
+      "canonical_micro_pq": 0.40736969428848335,
+      "canonical_tp": 458,
+      "canonical_fp": 295,
+      "canonical_fn": 289,
+      "canonical_sq": 0.667090110734416,
+      "canonical_rq": 0.6106666666666667,
+      "canonical_precision": 0.6082337317397079,
+      "canonical_recall": 0.6131191432396251,
+      "likely_splits": 10,
+      "likely_merges": 19,
+      "matched_iou_quantiles": [
+        0.5004198152812762,
+        0.5934510763375639,
+        0.6730479506089895,
+        0.7368757635197459,
+        0.876265466816648
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.38531675662201875,
+        "low": 0.3418115005958265,
+        "high": 0.42629172841072,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 67,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 67,
+      "annotation_variants": 103
+    },
+    "confirmation_candidate": {
+      "reference_micro_pq": 0.418700800679969,
+      "reference_tp": 455,
+      "reference_fp": 260,
+      "reference_fn": 292,
+      "canonical_micro_pq": 0.418700800679969,
+      "canonical_tp": 455,
+      "canonical_fp": 260,
+      "canonical_fn": 292,
+      "canonical_sq": 0.6726819457078184,
+      "canonical_rq": 0.6224350205198358,
+      "canonical_precision": 0.6363636363636364,
+      "canonical_recall": 0.6091030789825971,
+      "likely_splits": 11,
+      "likely_merges": 16,
+      "matched_iou_quantiles": [
+        0.5009523809523809,
+        0.602412795644036,
+        0.6792881484286255,
+        0.742989387878985,
+        0.8764988009592326
+      ],
+      "reference_macro_observation_ci": {
+        "estimate": 0.397367196125849,
+        "low": 0.35326387051319647,
+        "high": 0.43761168180122223,
+        "metric": "pq_reference",
+        "unit": "observation",
+        "aggregation": "macro observation; annotators averaged",
+        "observations": 67,
+        "replicates": 2000,
+        "seed": 42
+      },
+      "physical_observations": 67,
+      "annotation_variants": 103
+    },
+    "paired_macro_delta_ci": {
+      "estimate": 0.012050439503830213,
+      "low": -0.004115276259879574,
+      "high": 0.02794055992974333,
+      "unit": "physical observation",
+      "replicates": 2000,
+      "seed": 42
+    },
+    "local_gain_supported": false,
+    "official_public_pq": null,
+    "elapsed_seconds": 466.25968102699994,
+    "next_action": "Retain baseline; move to train-only hard-negative detector experiment",
+    "official_assessment_allowed": true,
+    "candidate_checkpoint_sha256": "eda578eb7c5adfcdc4f9ae14233c62f0468371e3fcc69e6b354d29b6dbcd890b"
+  }
+}

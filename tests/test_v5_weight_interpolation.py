@@ -31,11 +31,15 @@ def test_grid_is_predeclared_and_baseline_included():
     assert len(ALPHAS) == len(set(ALPHAS))
 
 
-def test_batchnorm_tracking_counters_may_drift_but_are_not_interpolated():
-    base = {"backbone.body.bn1.num_batches_tracked": torch.tensor(125, dtype=torch.int64),
-            "backbone.body.bn1.running_mean": torch.tensor([1.0])}
-    trained = {"backbone.body.bn1.num_batches_tracked": torch.tensor(240, dtype=torch.int64),
-               "backbone.body.bn1.running_mean": torch.tensor([3.0])}
-    candidate = interpolate_states(base, trained, 0.25)
-    assert candidate["backbone.body.bn1.num_batches_tracked"].item() == 125
-    assert torch.allclose(candidate["backbone.body.bn1.running_mean"], torch.tensor([1.5]))
+def test_bn_training_counter_changes_are_not_architecture_drift():
+    a={'block.weight':torch.tensor([1.]),'block.running_mean':torch.tensor([.2]),
+       'block.running_var':torch.tensor([1.]),'block.num_batches_tracked':torch.tensor(20)}
+    b={'block.weight':torch.tensor([3.]),'block.running_mean':torch.tensor([.8]),
+       'block.running_var':torch.tensor([2.]),'block.num_batches_tracked':torch.tensor(9000)}
+    result=interpolate_states(a,b,.5)
+    assert torch.equal(result['block.num_batches_tracked'],a['block.num_batches_tracked'])
+    assert torch.allclose(result['block.running_mean'],torch.tensor([.5]))
+    frozen=interpolate_states(a,b,1.,restore_bn=True)
+    assert torch.equal(frozen['block.weight'],b['block.weight'])
+    for key in ('block.running_mean','block.running_var','block.num_batches_tracked'):
+        assert torch.equal(frozen[key],a[key])

@@ -8,7 +8,7 @@ KERNEL='minahussain111/solar-v5-finetune-pq50-20261028'
 
 
 def build(output):
-    modules=['v5_finetune.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py',
+    modules=['v5_finetune.py','stable_detector_training.py','v6_audit.py','v6_cached_search.py','v6_diagnostics.py',
              'v5_replay.py','v6_refiner_audit.py','v6_resolution_audit.py']
     sources={'solar/'+name:(ROOT/'solar'/name).read_text() for name in modules}
     sources['solar/__init__.py']=''

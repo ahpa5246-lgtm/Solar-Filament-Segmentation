@@ -12,19 +12,6 @@ from build_v5_interpolation import build, KERNEL
 
 STATE = ROOT / "reports/V5_INTERPOLATION_STATE.json"
 FINETUNE = ROOT / "reports/V5_FINETUNE_STATE.json"
-FAILED_V1 = ROOT / "reports/V5_INTERPOLATION_V1_FAILED.json"
-
-
-def retry_eligible(state):
-    """Only the diagnosed, archived, terminal v1 may launch one fixed v2."""
-    return (state.get("status") == "NEEDS_DIAGNOSIS"
-            and state.get("kaggle_status") == "ERROR"
-            and state.get("version") == 1
-            and state.get("reference") == KERNEL + "/v1"
-            and FAILED_V1.exists()
-            and any("num_batches_tracked" in line for line in state.get("execution_errors", [])))
-
-
 
 
 def save(state):
@@ -42,7 +29,7 @@ def retrieve(api, reference, folder):
                 time.sleep(delay)
             try:
                 _, following = api.kernels_output(reference, str(folder),
-                    file_pattern=r"interpolation_result\.json$", page_token=token, page_size=100)
+                    file_pattern=r"interpolation_result\\.json$", page_token=token, page_size=100)
                 break
             except Exception as error:
                 if getattr(getattr(error, "response", None), "status_code", None) != 429 or delay == 120:
@@ -68,15 +55,7 @@ def main():
         raise RuntimeError("Only the verified completed no-gain v2 is eligible")
     expected_sha = result["best_checkpoint_sha256"]
     state = json.loads(STATE.read_text()) if STATE.exists() else {}
-    if not state or retry_eligible(state):
-        prior = state.get("reference") if state else None
-        if prior:
-            archived = json.loads(FAILED_V1.read_text())
-            if archived.get("reference") != prior or archived.get("kaggle_status") != "ERROR":
-                raise RuntimeError("Archived v1 identity mismatch; refuse retry")
-            previous_status = str(api.kernels_status(prior).status).split(".")[-1].upper()
-            if previous_status != "ERROR":
-                raise RuntimeError("Original Kaggle version not terminal ERROR; refuse retry")
+    if not state:
         quota = api.quota_view().gpu_quota
         remaining = (quota.total_time_allowed - quota.time_used).total_seconds() / 3600
         if remaining < 1.5:
@@ -85,9 +64,6 @@ def main():
                      official_submission=False, source_reference=training["reference"],
                      expected_best_checkpoint_sha256=expected_sha,
                      gpu_hours_remaining_before=remaining)
-        if prior:
-            state["retry_of"] = prior
-            state["fixed_failure"] = "BatchNorm num_batches_tracked counter drift"
         with tempfile.TemporaryDirectory(prefix="v5-interpolation-build-") as temp:
             build(Path(temp) / "interpolation.ipynb", expected_sha)
             save(state)  # Commit this intent before the API write; no automatic retry.
@@ -95,8 +71,8 @@ def main():
             if response.error or response.invalidDatasetSources or response.invalidCompetitionSources:
                 raise RuntimeError("Kaggle rejected interpolation inputs; intent retained")
             version = int(response.versionNumber)
-            if version < 1 or (prior and version <= 1):
-                raise RuntimeError("Ambiguous or repeated version; inspect Kaggle before retry")
+            if version < 1:
+                raise RuntimeError("Ambiguous push version; inspect before retry")
             state.update(version=version, reference=KERNEL + "/v" + str(version), status="ACCEPTED")
             save(state)
             print("V5_INTERPOLATION_ACCEPTED", state["reference"], flush=True)
@@ -117,29 +93,6 @@ def main():
         time.sleep(45)
     if state.get("kaggle_status") != "COMPLETE":
         state["status"] = "NEEDS_DIAGNOSIS"
-        # Read the already-accepted immutable version. Never push or rerun it.
-        try:
-            raw = api.kernels_logs(state["reference"])
-            events = json.loads(raw) if isinstance(raw, str) else raw
-            if isinstance(events, dict):
-                events = events.get("logs", events.get("log", [events]))
-            if not isinstance(events, list):
-                events = [events]
-            lines = []
-            for event in events:
-                entry = event.get("data", "") if isinstance(event, dict) else str(event)
-                for line in str(entry).splitlines():
-                    line = line.strip()
-                    if any(marker in line for marker in (
-                        "Traceback", "Error:", "Exception:", "ModuleNotFoundError",
-                        "ImportError", "KeyError", "AssertionError", "CUDA out of memory",
-                        "No such file", "Killed", "not found", "failed")):
-                        # Record only diagnostic lines, never full logs or signed URLs.
-                        if "http" not in line and "token" not in line.lower():
-                            lines.append(line[:500])
-            state["execution_errors"] = lines[-16:]
-        except Exception as error:
-            state["log_read_error_type"] = type(error).__name__
         save(state)
         raise RuntimeError("Kaggle interpolation incomplete; do not duplicate GPU")
     with tempfile.TemporaryDirectory(prefix="v5-interpolation-read-") as temp:
@@ -158,7 +111,7 @@ if __name__ == "__main__":
     phase = parser.parse_args().phase
     if phase == "launch" and STATE.exists():
         prior = json.loads(STATE.read_text())
-        if prior.get("push_attempted") and not retry_eligible(prior):
+        if prior.get("push_attempted"):
             print("Existing launch retained; no duplicate", flush=True)
             sys.exit(0)
     if phase == "monitor" and not STATE.exists():

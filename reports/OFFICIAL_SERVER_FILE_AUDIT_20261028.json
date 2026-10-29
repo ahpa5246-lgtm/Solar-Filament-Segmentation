@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "submission_ref": 57748305,
+      "downloaded_server_csv_sha256": "5debde99f1cede13eeee8b829024a17db53f7c6854332920d0420d42852193d7",
+      "matches_intended_predictions": true
+    },
+    {
+      "submission_ref": 57748345,
+      "downloaded_server_csv_sha256": "633a8b09048761c9f9bf667e116d6f7584c0b5877a03087171017f67b4a6fe1e",
+      "matches_intended_predictions": true
+    }
+  ],
+  "remaining_submission_slots": 1,
+  "official_scores": {
+    "57748305": 0.32,
+    "57748345": 0.32
+  }
+}

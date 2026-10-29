@@ -9,17 +9,20 @@ def overlap_promotion_supported(tuning_pq,baseline_pq,candidate_pq,delta):
             candidate_pq>baseline_pq and delta['low']>0)
 
 
-def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,seconds=6600):
+def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,seconds=6600,stable_finetune=False,final_refiner_checkpoint=None,final_refiner_expected_sha=None):
     import cv2, numpy as np, pandas as pd, torch
     from pycocotools.coco import COCO
     from .v5_finetune import safe_scaled_step
     from .v6_resolution_audit import original_detector,detect,refine
     from .v6_refiner_audit import load_components,SOURCE_SHA,REFINER_SHA
-    from .v6_submission import write_rle_submission
+    from .v6_submission import write_rle_submission,resolve_test_directory
     out=Path(out);out.mkdir(parents=True,exist_ok=True);start=time.perf_counter()
     def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
     if sha(trained)!=expected_sha or sha(source)!=SOURCE_SHA or sha(refiner_checkpoint)!=REFINER_SHA:
         raise ValueError('Frozen input fingerprint mismatch')
+    if final_refiner_checkpoint is not None:
+        if not isinstance(final_refiner_expected_sha,str) or len(final_refiner_expected_sha)!=64 or sha(final_refiner_checkpoint)!=final_refiner_expected_sha:
+            raise ValueError('Frozen final refiner fingerprint mismatch')
     if not torch.cuda.is_available():raise RuntimeError('GPU required')
     random.seed(2028);np.random.seed(2028);torch.manual_seed(2028);torch.cuda.manual_seed_all(2028)
     torch.backends.cudnn.benchmark=False;torch.set_num_threads(2);cv2.setNumThreads(0)
@@ -83,6 +86,10 @@ def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,s
     (out/'overlap_comparison.json').write_text(json.dumps(comparison,indent=2)+'\n')
     del predictions_by_policy,tuning_metrics,confirmation_metrics
     model.train()
+    if stable_finetune:
+        from .stable_detector_training import restore_training_contract
+        training_contract=restore_training_contract(model)
+    else:training_contract=None
     optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=1e-6,weight_decay=1e-4)
     scaler=torch.amp.GradScaler('cuda',init_scale=1024.);optimizer.zero_grad(set_to_none=True)
     updates=0;skipped=0;consecutive=0
@@ -102,8 +109,11 @@ def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,s
     checkpoint=out/'final_detector.pt'
     torch.save({'model':model.state_dict(),'epoch':1,'source_sha256':expected_sha},checkpoint)
     model.eval()
+    if final_refiner_checkpoint is not None:
+        refiner.load_state_dict(torch.load(final_refiner_checkpoint,map_location='cuda',weights_only=True)['model'],strict=True)
+        refiner.eval()
     from .v6_refiner_audit import postprocess
-    files=sorted(p for p in (Path(annotation).parent/'test_images').iterdir() if p.suffix.lower() in {'.jpg','.jpeg','.png','.tif','.tiff'})
+    files=sorted(p for p in resolve_test_directory(annotation).iterdir() if p.suffix.lower() in {'.jpg','.jpeg','.png','.tif','.tiff'})
     if len(files)!=180 or len({p.stem for p in files})!=180:raise ValueError('Expected 180 unique competition test images')
     predictions={}
     for i,path in enumerate(files,1):
@@ -120,7 +130,8 @@ def run(annotation,manifest,trained,refiner_checkpoint,source,out,expected_sha,s
         full_fit_epochs=1,full_fit_observations=len(dataset),learning_rate=1e-6,
         optimizer_updates=updates,overflow_skipped_updates=skipped,
         continuation_checkpoint_sha256=expected_sha,final_detector_sha256=sha(checkpoint),
-        refiner_sha256=sha(refiner_checkpoint),source_sha256=sha(source),
+        refiner_sha256=sha(final_refiner_checkpoint if final_refiner_checkpoint is not None else refiner_checkpoint),
+        validation_refiner_sha256=sha(refiner_checkpoint),stable_finetune=stable_finetune,training_contract=training_contract,source_sha256=sha(source),
         submission_sha256=sha(out/'submission.csv'),inventory=result,
         torch=str(torch.__version__),numpy=np.__version__,seed=2028,
         architecture='unchanged V5',overlap_policy=selected_policy,overlap_comparison=comparison,

@@ -17,6 +17,16 @@ from .v5_replay import load_predictions
 from .v6_audit import measure_rles
 
 
+def resolve_test_directory(annotation):
+    """Find both official sibling train/test and colocated dataset layouts."""
+    annotation=Path(annotation)
+    for root in (annotation.parent,annotation.parent.parent):
+        candidates=sorted(p for p in root.rglob('test_images') if p.is_dir())
+        if len(candidates)>1:raise ValueError('Ambiguous official test directory')
+        if len(candidates)==1:return candidates[0]
+    raise FileNotFoundError('Official test_images directory not found')
+
+
 def write_rle_submission(predictions,stems,path):
     stems=list(stems);path=Path(path)
     if len(stems)!=len(set(stems)) or set(stems)!=set(predictions):raise ValueError('Incomplete or duplicate test inventory')
@@ -27,11 +37,13 @@ def write_rle_submission(predictions,stems,path):
         with pending.open('x',newline='',encoding='utf-8') as handle:
             writer=csv.DictWriter(handle,fieldnames=['filament_id','segmentation_rle']);writer.writeheader()
             for stem in stems:
-                seen=set();counts[stem]=len(predictions[stem])
+                seen=set();counts[stem]=len(predictions[stem]);occupied=np.zeros((2048,2048),dtype=bool)
                 for number,rle in enumerate(predictions[stem],1):
                     if list(rle['size'])!=[2048,2048]:raise ValueError('Mask dimensions must be native 2048x2048')
                     decoded=coco.decode(rle)
                     if decoded.shape!=(2048,2048) or not decoded.any():raise ValueError('Empty or malformed mask')
+                    if np.any(occupied & decoded.astype(bool)):raise ValueError('Competition submission masks may not overlap')
+                    occupied |= decoded.astype(bool)
                     encoded=coco.encode(np.asfortranarray(decoded.astype(np.uint8)))
                     fingerprint=hashlib.sha256(encoded['counts']).hexdigest()
                     if fingerprint in seen:raise ValueError('Duplicate instance mask')
@@ -71,12 +83,13 @@ def verify_original_csv(path,predictions):
 
 
 @torch.inference_mode()
-def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000):
+def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000,candidate_policy='nms',refiner_threshold=.85,detector_strategy='single'):
     out=Path(out)
     if out.exists() and any(out.iterdir()):raise ValueError('Use a fresh output directory')
     out.mkdir(parents=True,exist_ok=True)
     report={'status':'running','training':False,'test_inference':True,'official_submission':False,
-            'policy':'detector mask NMS IoU0.5; 1024; score0.6/mask0.4; flip4 refiner0.85; final union'}
+            'policy':f'detector {candidate_policy}; 1024; score0.6/mask0.4; flip4 refiner{refiner_threshold}; final union',
+            'candidate_policy':candidate_policy,'refiner_threshold':refiner_threshold,'detector_strategy':detector_strategy}
     try:
         cache=Path(cache)
         for name,expected in expected_hashes.items():
@@ -109,12 +122,19 @@ def run(test_dir,cache,expected_hashes,source,out,submission_path,seconds=1000):
             if time.perf_counter()-started>seconds:raise RuntimeError('Test inference budget exhausted; no partial CSV accepted')
             image=cv2.imread(str(path),cv2.IMREAD_GRAYSCALE)
             if image is None or image.shape!=(2048,2048):raise ValueError('Missing or incorrect native test image')
-            masks,scores=detect(detector,image,1024)
+            if detector_strategy=='single':
+                masks,scores=detect(detector,image,1024);views=None
+            elif detector_strategy in {'augment','consensus'}:
+                from .detector_consensus import detect_views,fuse_views
+                views=detect_views(detector,image);masks,scores=views[0]
+            else:raise ValueError('Unknown detector strategy')
             baseline=refine(refiner,helpers,image,postprocess(masks,scores,'union'))
             match=measure_rles(original[path.stem],baseline)['pq_local'];parity.append(match)
             report['baseline_parity_min']=min(parity)
             if match<.99:raise RuntimeError('Final original-pipeline parity failed; refusing candidate submission')
-            candidate=refine(refiner,helpers,image,postprocess(masks,scores,'nms'))
+            if views is not None:
+                masks,scores=fuse_views(views,keep_base=detector_strategy=='augment')
+            candidate=refine(refiner,helpers,image,postprocess(masks,scores,candidate_policy),threshold=refiner_threshold)
             candidate.sort(key=lambda r:(float(coco.toBbox(r)[1]),float(coco.toBbox(r)[0])))
             predictions[path.stem]=candidate
             if measure_rles(baseline,candidate)['pq_local']<1-1e-8:changed+=1

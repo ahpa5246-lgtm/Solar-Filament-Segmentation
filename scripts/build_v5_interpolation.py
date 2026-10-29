@@ -37,7 +37,7 @@ run(one('MAGFiLO_1.0_Annotations_kaggle2026_train.json'),
     one('training_manifest.csv'), one('best_detector_predictions_1024.pkl'),
     one('refined_validation_predictions_2048.pkl'), cache[0], one('best_refiner.pt'),
     source_path, one('last_detector.pt'), one('finetune_result.json'),
-    expected_best_sha, WORK, seconds=3300)
+    expected_best_sha, WORK, seconds=3300,test_bn_restore=True)
 """
     ast.parse(new_driver)
     values["SOURCE"].value = ast.Constant(new_driver)

@@ -18,3 +18,7 @@ V5 achieved owner-confirmed official Public PQ **0.32**. This is our project res
 - **soft-clDice**: Shit et al., CVPR 2021, https://openaccess.thecvf.com/content/CVPR2021/html/Shit_clDice_-_A_Novel_Topology-Preserving_Loss_Function_for_Tubular_Structure_CVPR_2021_paper.html.
 
 Only official competition training annotations are used as supervised labels; publicly available competition test labels are prohibited for training.
+
+## YOLO experiment dependency
+
+Ultralytics 8.3.221 (YOLO11m-seg), https://github.com/ultralytics/ultralytics, AGPL-3.0. Installed unmodified in private Kaggle runs; project wrappers record its pinned version and checkpoint provenance. No Ultralytics source is copied into this repository.

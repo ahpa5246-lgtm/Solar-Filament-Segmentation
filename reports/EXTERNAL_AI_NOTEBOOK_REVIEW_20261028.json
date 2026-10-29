@@ -1,0 +1,43 @@
+{
+  "status": "COMPLETE",
+  "kernel": "minahussain111/solar-filament-research-v6-audit",
+  "requested_external_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+  "competition_data_shared": false,
+  "training": false,
+  "test_inference": false,
+  "official_submission": false,
+  "reference": "minahussain111/solar-filament-research-v6-audit/v3",
+  "version": 3,
+  "result": {
+    "status": "COMPLETE",
+    "external_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "model_revision": "2e1fd397ee46e1388853d2af2c993145b0f1098a",
+    "source_sha256": "c0c9d176cf8550430e1028310cd143b993e8704880acc35c495803fe8492692e",
+    "input_tokens": 8511,
+    "output_tokens": 1100,
+    "review": "### Code Audit Report\n\n#### Overview\nThe provided code snippets are implementations of various components related to solar filament instance-segmentation tasks. The main focus is on the `detect` function, which processes images using a pre-trained model and then refines the segmentation results using a custom refiner model. The code includes functions for detecting instances, refining them, running the entire pipeline, and writing submission files.\n\n#### Definite Code Bugs\n\n1. **Hash Checksum Mismatch**:\n   - In `solar/v6_resolution_audit.py`, the hash checksum for the archived detector source is verified. However, there is no corresponding verification for the refiner checkpoint in `solar/v6_refiner_audit.py`.\n\n2. **Confidence Threshold Range**:\n   - In `solar/v6_detection.py`, the confidence threshold for refinement (`threshold`) is set to 0.85, which might be too high for some cases. It should be adjusted based on the specific requirements of the task.\n\n3. **Image Scaling**:\n   - In `solar/v6_detection.py`, the image is scaled down to 1024x1024 before processing. This might lead to loss of detail in the final results.\n\n4. **Proposal NMS Configuration**:\n   - In `solar/v6_detection.py`, the proposal NMS policy is set to 'union', which might not be optimal for all scenarios. It should be tested with different policies like 'nms' or 'none'.\n\n5. **Validation Data Reuse**:\n   - In `solar/v6_submission.py`, the validation data is reused in the submission process. This might lead to inconsistencies between the original validation and the final submission.\n\n6. **Label Availability**:\n   - In `solar/v6_submission.py`, the test labels are never available, which means that the submission process relies solely on the original validation data.\n\n7. **Model Selection**:\n   - In `solar/v6_submission.py`, the original validation data is used for model selection, which might not be appropriate for all tasks. It should be tested with different datasets.\n\n8. **Overfitting**:\n   - There is no code to prevent overfitting during the training process. Overfitting can lead to poor performance on unseen data.\n\n9. **Proposal Recall**:\n   - The proposal recall metric is not calculated correctly. It should be tested with different metrics like precision-recall curves.\n\n#### Unproven Modeling Limitations\n\n1. **Grayscale Scaling**:\n   - The code does not handle grayscale images properly. Grayscale images need to be converted to RGB before processing.\n\n2. **Probability vs Logits**:\n   - The code uses probabilities directly without converting them to logits. This might affect the performance of the model.\n\n3. **Instance Identity**:\n   - The code does not handle instance identity properly. Different instances may have the same mask, leading to incorrect results.\n\n4. **Flip Inversion**:\n   - The code does not handle flip inversion properly. Flip inversion might affect the quality of the segmentation results.\n\n5. **Distinct-View Consensus**:\n   - The code does not handle distinct-view consensus properly. Distinct-view consensus might not be applicable for all tasks.\n\n6. **Shape/ID/RLE Export**:\n   - The code does not handle shape/ID/RLE export properly. Shape/ID/RLE export might not be compatible with the competition format.\n\n7. **Overfitting**:\n   - There is no code to prevent overfitting during the training process. Overfitting can lead to poor performance on unseen data.\n\n8. **Proposal Recall**:\n   - The proposal recall metric is not calculated correctly. It should be tested with different metrics like precision-recall curves.\n\n#### Recommendations\n\n1. **Verify Hash Checksums**:\n   - Add checks to verify the hash checksums for both the detector and refiner checkpoints.\n\n2. **Adjust Confidence Threshold**:\n   - Adjust the confidence threshold for refinement based on the specific requirements of the task.\n\n3. **Handle Image Scaling**:\n   - Convert grayscale images to RGB before processing.\n\n4. **Implement Proposal NMS**:\n   - Implement different proposal NMS policies like 'nms' or 'none'.\n\n5. **Reuse Validation Data**:\n   - Use different datasets for model selection and submission.\n\n6. **Prevent Overfitting**:\n   - Implement techniques like dropout, regularization, or early stopping to prevent overfitting.\n\n7. **Handle Instance Identity**:\n   - Handle instance identity properly by ensuring that each instance has a unique mask.\n\n8. **Handle Flip Inversion**:\n   - Handle flip inversion properly by ensuring that the flipped images are processed correctly.\n\n9. **Implement Distinct-View Consensus**:\n   - Implement distinct-view consensus properly by ensuring that the views are processed correctly.\n\n10. **Export Shape/ID/RLE**:\n    - Ensure that the shape/ID/RLE export is compatible with the competition format.\n\n11. **Implement Overfitting Prevention**:\n    - Implement techniques like dropout, regularization, or early stopping to prevent overfitting.\n\n12. **Calculate Proposal Recall**:\n    - Calculate the proposal recall metric correctly by implementing precision-recall curves.\n\nBy addressing these issues, the code can be improved and made more robust for the solar",
+    "elapsed_seconds": 126.42966091699998,
+    "limitations": "Independent generated advice; not verified findings or evidence of model accuracy."
+  },
+  "review_sha256": "bd722da65e9944357191479512ce90f40b976e988687a29e4a6ec4243a2f4b19",
+  "verified_disposition": {
+    "not_verified_or_incorrect": [
+      "Missing refiner hashes: existing v6_submission verifies every frozen input; v6_refiner_audit verifies checkpoint SHA.",
+      "Grayscale not replicated: code already repeats grayscale into three channels.",
+      "Probabilities must become logits: TorchVision maskrcnn_inference already applies sigmoid; inference thresholds probabilities correctly.",
+      "RLE/IDs incompatible: v7 exported and officially scored after all native-mask round trips.",
+      "Flip and distinct-view handling missing: new regression tests cover rectangular deaugmentation and duplicate-vote rejection.",
+      "Suggested lower threshold and NMS are already measured; official .65 tied .32 and other overlap variants regressed.",
+      "The cited solar/v6_detection.py does not exist."
+    ],
+    "actual_supported_limitations": [
+      "Historical validation reuse; local gains cannot establish an official score.",
+      "Decreasing detector training loss did not improve pipeline PQ; current proposal recall/precision needs direct measurement."
+    ],
+    "independently_found_root_causes": [
+      "Interpolation rejects normally changed BatchNorm integer counters.",
+      "weights=None reconstruction changes default trainable backbone stages from three to five; state_dict does not restore requires_grad.",
+      "Batch-one continuation updates running BatchNorm moments; recovery and frozen-stat retraining are explicit hypotheses under Kaggle test."
+    ]
+  }
+}

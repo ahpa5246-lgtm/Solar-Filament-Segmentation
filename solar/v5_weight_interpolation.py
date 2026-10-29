@@ -15,7 +15,7 @@ from pathlib import Path
 ALPHAS = (0.0, 0.05, 0.10, 0.20, 0.40, 0.70, 1.0)
 
 
-def interpolate_states(baseline, trained, alpha):
+def interpolate_states(baseline, trained, alpha, restore_bn=False):
     """Blend floating parameters, keep original integral counters and metadata."""
     import torch
     if not isinstance(alpha, (float, int)) or isinstance(alpha, bool) or not math.isfinite(alpha) or not 0 <= alpha <= 1:
@@ -32,11 +32,8 @@ def interpolate_states(baseline, trained, alpha):
         if torch.is_floating_point(value):
             if not torch.isfinite(value).all() or not torch.isfinite(other).all():
                 raise ValueError("Nonfinite checkpoint tensor: " + key)
-            result[key] = value.clone() if alpha == 0 else other.clone() if alpha == 1 else torch.lerp(value, other, alpha)
+            result[key] = value.clone() if alpha == 0 or (restore_bn and key.endswith(('.running_mean','.running_var'))) else other.clone() if alpha == 1 else torch.lerp(value, other, alpha)
         else:
-            # BatchNorm counters advance during continuation; they are not
-            # learnable weights and must not block safe interpolation.
-            # Preserve the baseline counter rather than blending integers.
             if not torch.equal(value, other) and not key.endswith(".num_batches_tracked"):
                 raise ValueError("Nonfloating checkpoint state changed: " + key)
             result[key] = value.clone()
@@ -45,7 +42,7 @@ def interpolate_states(baseline, trained, alpha):
 
 def run(annotation, manifest, detector_cache, plain_cache, baseline_checkpoint,
         refiner_checkpoint, source, final_checkpoint, finetune_report,
-        expected_best_sha, out, seconds=3300):
+        expected_best_sha, out, seconds=3300,test_bn_restore=False):
     import csv
     import cv2
     import numpy as np
@@ -141,25 +138,29 @@ def run(annotation, manifest, detector_cache, plain_cache, baseline_checkpoint,
 
         trials = []
         baseline_stats = None
-        for alpha in ALPHAS:
-            model.load_state_dict(interpolate_states(base, trained, alpha), strict=True)
+        strategies=[(alpha,False) for alpha in ((0.,.1,.4,1.) if test_bn_restore else ALPHAS)]
+        if test_bn_restore:strategies += [(alpha,True) for alpha in (.1,.4,1.)]
+        report['test_bn_restore']=test_bn_restore
+        for alpha,restore_bn in strategies:
+            model.load_state_dict(interpolate_states(base, trained, alpha,restore_bn=restore_bn), strict=True)
             stats, parity = assess(tuning, check_parity=(alpha == 0))
             if alpha == 0:
                 baseline_stats = stats
                 report["baseline_parity_min"] = parity
-            trials.append({"alpha": alpha, "tuning_micro_pq": micro(stats)})
+            trials.append({"alpha": alpha,"restore_bn":restore_bn, "tuning_micro_pq": micro(stats)})
             report["tuning_trials"] = trials
             save()
             print("V5_INTERPOLATION_TUNING", json.dumps(trials[-1]), flush=True)
         winner = max(trials, key=lambda t: (t["tuning_micro_pq"], -t["alpha"]))
-        alpha = winner["alpha"]
+        alpha = winner["alpha"];restore_bn=winner["restore_bn"]
+        report["selected_restore_bn"]=restore_bn
         report["selected_alpha"] = alpha
         report["baseline_tuning_pq"] = trials[0]["tuning_micro_pq"]
         report["selected_tuning_pq"] = winner["tuning_micro_pq"]
         model.load_state_dict(interpolate_states(base, trained, 0.0), strict=True)
         baseline_confirmation, _ = assess(confirmation)
         if alpha > 0 and winner["tuning_micro_pq"] > trials[0]["tuning_micro_pq"]:
-            model.load_state_dict(interpolate_states(base, trained, alpha), strict=True)
+            model.load_state_dict(interpolate_states(base, trained, alpha,restore_bn=restore_bn), strict=True)
             selected_confirmation, _ = assess(confirmation)
             interval = paired_ci(baseline_confirmation, selected_confirmation)
             supported = micro(selected_confirmation) > micro(baseline_confirmation) and interval["low"] > 0
@@ -173,8 +174,9 @@ def run(annotation, manifest, detector_cache, plain_cache, baseline_checkpoint,
                       official_public_pq=None, elapsed_seconds=time.perf_counter() - started,
                       next_action="Evaluate independently before full fit; no submission yet" if supported
                                   else "Retain baseline; move to train-only hard-negative detector experiment")
-        if supported:
-            torch.save({"model": interpolate_states(base, trained, alpha),
+        report["official_assessment_allowed"]=alpha>0 and micro(selected_confirmation)>micro(baseline_confirmation)
+        if report["official_assessment_allowed"]:
+            torch.save({"model": interpolate_states(base, trained, alpha,restore_bn=restore_bn),"restore_bn":restore_bn,
                         "interpolation_alpha": alpha, "source_epoch": 16}, out / "candidate_detector.pt")
             report["candidate_checkpoint_sha256"] = hashlib.sha256((out / "candidate_detector.pt").read_bytes()).hexdigest()
         save()
