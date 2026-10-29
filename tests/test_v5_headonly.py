@@ -90,3 +90,15 @@ def test_headonly_requires_completed_failed_hardnegative(tmp_path, monkeypatch):
     state.write_text(json.dumps(hard))
     with pytest.raises(ValueError, match="no-gain"):
         runner.prerequisites(training, interpolation)
+
+
+def test_headonly_direct_cli_import():
+    """Match the actual GitHub Actions command, not pytest's import path."""
+    import subprocess
+    import sys
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, 'scripts/run_v5_headonly.py', '--help'],
+        cwd=root, capture_output=True, text=True, timeout=20, check=False)
+    assert result.returncode == 0, result.stderr
+    assert '--phase' in result.stdout
