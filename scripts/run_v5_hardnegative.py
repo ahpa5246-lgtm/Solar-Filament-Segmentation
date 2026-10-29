@@ -60,18 +60,64 @@ def retrieve(api, ref, folder):
     raise RuntimeError("Completed immutable output unavailable; never repush")
 
 
-def refuse_untracked_kernel(api):
-    """Fail closed if Kaggle has an existing version but GitHub has no launch identity."""
+def _unversioned(reference):
+    """Strip only the trailing Kaggle /vN version, preserving the owner and slug."""
+    import re
+    return re.sub(r"/v[0-9]+$", "", reference)
+
+
+def _owned_kernel_inventory(api):
+    """Enumerate *all* authenticated-profile notebooks, including private ones.
+
+    In Kaggle CLI 2.2.5 a missing private notebook may return kernels.get=403
+    rather than 404. A 403 alone is never proof that the slug is available.
+    """
+    refs = set()
+    token = None
+    seen_tokens = set()
+    for _ in range(100):
+        response = api.kernels_list_with_response(
+            mine=True, page_size=100, page_token=token)
+        if response is None or response.kernels is None:
+            raise RuntimeError("Kaggle profile inventory unavailable; refuse GPU write")
+        for kernel in response.kernels:
+            if kernel is None or not getattr(kernel, "ref", None):
+                raise RuntimeError("Incomplete Kaggle profile entry; refuse GPU write")
+            refs.add(_unversioned(str(kernel.ref)))
+        next_token = getattr(response, "next_page_token", None)
+        if not next_token:
+            return refs
+        if next_token in seen_tokens:
+            raise RuntimeError("Repeated Kaggle inventory cursor; refuse GPU write")
+        seen_tokens.add(next_token)
+        token = next_token
+    raise RuntimeError("Kaggle profile inventory pagination limit; refuse GPU write")
+
+
+def refuse_untracked_kernel(api, known_references):
+    """Require authoritative profile absence plus ownership before first push."""
+    known = {_unversioned(ref) for ref in known_references}
+    if len(known) != 2 or any(not ref.startswith("minahussain111/") for ref in known):
+        raise RuntimeError("Missing or invalid immutable prerequisite identities")
     try:
         api.kernels_status(KERNEL)
     except Exception as error:
         status = getattr(error, "status", None)
         if status is None:
             status = getattr(getattr(error, "response", None), "status_code", None)
-        if str(status) == "404":
-            return
-        raise  # Network, authentication, rate limits and other uncertainty are not absence.
-    raise RuntimeError("Untracked Kaggle hard-negative kernel exists; reconcile its version before any push")
+        denied_get = (isinstance(error, ValueError)
+                      and "Permission 'kernels.get' was denied" in str(error))
+        if str(status) not in {"403", "404"} and not denied_get:
+            raise  # 429, 5xx, network errors and unrelated failures remain fatal.
+    else:
+        raise RuntimeError("Untracked Kaggle hard-negative kernel exists; reconcile before any push")
+
+    owned = _owned_kernel_inventory(api)
+    if not known.issubset(owned):
+        raise RuntimeError("Cannot verify Kaggle account/complete private inventory; refuse GPU write")
+    if KERNEL in owned:
+        raise RuntimeError("Untracked Kaggle hard-negative kernel exists; reconcile its version before any push")
+    # Only a complete, authenticated, prerequisite-attested profile listing proves absence.
 
 
 def main(phase):
@@ -86,7 +132,7 @@ def main(phase):
         if state:
             print("Existing hard-negative launch intent retained; never duplicate", flush=True)
             return
-        refuse_untracked_kernel(api)
+        refuse_untracked_kernel(api, (training["reference"], interpolation["reference"]))
         for reference in (training["reference"], interpolation["reference"]):
             observed = str(api.kernels_status(reference).status).split(".")[-1].upper()
             if observed != "COMPLETE":

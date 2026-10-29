@@ -66,20 +66,52 @@ def test_new_experiment_requires_two_completed_no_gain_precursors():
 
 
 def test_hardnegative_launch_fails_closed_on_existing_or_uncertain_kernel():
+    from types import SimpleNamespace
     from scripts.run_v5_hardnegative import refuse_untracked_kernel
+    known = ("minahussain111/solar-v5-finetune-pq50-20261028/v2",
+             "minahussain111/solar-v5-weight-interpolation-pq50/v3")
+    base = [ref.rsplit("/v", 1)[0] for ref in known]
+    target = "minahussain111/solar-v5-hardnegative-pq50"
+
     class FakeApi:
-        def __init__(self, status): self.status = status
+        def __init__(self, status, pages=None):
+            self.status = status
+            self.pages = pages if pages is not None else [base]
+            self.calls = 0
         def kernels_status(self, slug):
-            assert slug == "minahussain111/solar-v5-hardnegative-pq50"
+            assert slug == target
             if self.status == 200:
                 return object()
+            if self.status == "wrapped403":
+                raise ValueError("Cannot access kernel (Permission 'kernels.get' was denied)")
             error = RuntimeError("API response")
             error.status = self.status
             raise error
-    refuse_untracked_kernel(FakeApi(404))
+        def kernels_list_with_response(self, *, mine, page_size, page_token):
+            assert mine is True and page_size == 100
+            assert page_token == (str(self.calls) if self.calls else None)
+            page = self.pages[self.calls]
+            self.calls += 1
+            return SimpleNamespace(
+                kernels=[SimpleNamespace(ref=ref) for ref in page],
+                next_page_token=str(self.calls) if self.calls < len(self.pages) else "")
+
+    # Both a literal 404 and the CLI's wrapped 403 require full owner inventory.
+    for status in (404, 403, "wrapped403"):
+        api = FakeApi(status, [base[:1], base[1:]])
+        refuse_untracked_kernel(api, known)
+        assert api.calls == 2
+    for status in (200, 429, 500):
+        with pytest.raises(RuntimeError):
+            refuse_untracked_kernel(FakeApi(status), known)
     with pytest.raises(RuntimeError, match="Untracked Kaggle"):
-        refuse_untracked_kernel(FakeApi(200))
-    with pytest.raises(RuntimeError, match="API response"):
-        refuse_untracked_kernel(FakeApi(429))
-    with pytest.raises(RuntimeError, match="API response"):
-        refuse_untracked_kernel(FakeApi(500))
+        refuse_untracked_kernel(FakeApi("wrapped403", [base + [target]]), known)
+    with pytest.raises(RuntimeError, match="Cannot verify Kaggle account"):
+        refuse_untracked_kernel(FakeApi(403, [base[:1]]), known)
+    with pytest.raises(RuntimeError, match="Missing or invalid"):
+        refuse_untracked_kernel(FakeApi(404), known[:1])
+    class BrokenInventory(FakeApi):
+        def kernels_list_with_response(self, **kwargs):
+            raise RuntimeError("profile API 429")
+    with pytest.raises(RuntimeError, match="profile API 429"):
+        refuse_untracked_kernel(BrokenInventory(403), known)
