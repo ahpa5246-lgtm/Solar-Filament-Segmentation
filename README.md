@@ -4,7 +4,7 @@
 
 The new refiner uses grayscale, CLAHE and a rectangular proposal seed, with training-only negative crops and explicit rejection of empty predictions. Earlier models and predictions remain preserved. Local PQ is diagnostic and does not establish official improvement or a reliable training process. See the [official result summary](reports/SEED_REFINER_OFFICIAL_SUMMARY_20261029.json) and [earlier official comparison](reports/SOLAR_OFFICIAL_COMPARISON_20261029.md).
 
-Current experiment reuses the existing research notebook to compare frozen models at 1024, 1536, 2048 and combined proposal resolutions, then requests official evaluation of the selected new prediction file. Its score is unknown.
+Frozen-model resolution comparison completed as submission **57763513: Public PQ 0.37**, a tie. It is not promoted as an improvement. The next experiment reuses the existing refiner notebook for training with actual fitting-only false proposals and annotation-free guarded contexts; its official score is unknown.
 
 ## V5: pretrained Mask R-CNN + U-Net refiner (best verified baseline)
 

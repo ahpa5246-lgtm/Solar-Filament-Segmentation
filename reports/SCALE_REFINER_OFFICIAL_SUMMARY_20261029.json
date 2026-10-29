@@ -1,0 +1,15 @@
+{
+  "status": "OFFICIAL_SCORE_VERIFIED",
+  "official_submission_ref": 57763513,
+  "official_public_pq": 0.37,
+  "previous_official_best": 0.37,
+  "improved": false,
+  "notebook": "minahussain111/solar-filament-research-v6/v19",
+  "selected_scales": [
+    1024,
+    1536
+  ],
+  "confidence": 0.35,
+  "interpretation": "Tie in official Public PQ. Higher-resolution inference does not establish an improvement. Retain the simpler earlier 0.37 model.",
+  "next_experiment": "Train the seeded refiner with actual fitting-only false proposals, guarded against every known annotation variant; assess officially before switching approaches."
+}
