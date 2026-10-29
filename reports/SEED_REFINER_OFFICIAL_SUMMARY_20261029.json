@@ -1,0 +1,17 @@
+{
+  "status": "OFFICIAL_SCORE_VERIFIED",
+  "official_submission_ref": 57762442,
+  "official_public_pq": 0.37,
+  "previous_official_best": 0.36,
+  "original_baseline": 0.32,
+  "milestone_04_reached": false,
+  "target_06_reached": false,
+  "notebook": "minahussain111/solar-filament-research-v6-refiner/v2",
+  "model": "Frozen YOLO11m-seg proposals; newly trained gray/CLAHE/box-seed CropUNet; empty refinement rejects proposals",
+  "training_epochs": 8,
+  "full_fit_epochs": 1,
+  "optimizer_updates": 2401,
+  "overflow_skips": 0,
+  "training_and_inference": "Kaggle COMPLETE; 180 test observations",
+  "limitations": "One official improvement does not establish repeated-training reliability. Individual contributions are not isolated by this bundled experiment."
+}
