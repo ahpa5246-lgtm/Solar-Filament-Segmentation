@@ -42,3 +42,10 @@ def build(output):
     meta.update(id=KERNEL, title=KERNEL.split("/")[1])
     (output.parent / "kernel-metadata.json").write_text(json.dumps(meta, indent=2) + "\n")
     return meta
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", required=True)
+    build(parser.parse_args().output)
