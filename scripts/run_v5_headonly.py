@@ -5,7 +5,14 @@ path; keep the previously completed hard-negative version untouched.
 """
 import argparse
 import json
+import sys
 from pathlib import Path
+
+# Direct `python scripts/run_v5_headonly.py` runs with scripts/ as sys.path[0].
+# Include the repository root before importing the shared package.
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from scripts import run_v5_hardnegative as engine
 from scripts.build_v5_headonly import build, KERNEL
